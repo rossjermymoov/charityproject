@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, FileText, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,9 @@ export default async function EventDetailPage({
       donations: {
         include: { contact: true },
         orderBy: { date: "desc" },
+      },
+      registrationForm: {
+        include: { _count: { select: { orders: true } } },
       },
       createdBy: true,
     },
@@ -166,6 +169,22 @@ export default async function EventDetailPage({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <Link href={`/events/${id}/registration`}>
+            <Button variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Registration Form
+            </Button>
+          </Link>
+          {event.registrationForm && (
+            <Link href={`/register/${event.registrationForm.id}`} target="_blank">
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Public Form ({event.registrationForm._count.orders} orders)
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Event Info Card */}

@@ -31,6 +31,8 @@ export default async function ContactDetailPage({
       volunteerProfile: true,
       giftAids: { orderBy: { createdAt: "desc" }, take: 5 },
       donations: { orderBy: { date: "desc" }, take: 5 },
+      eventAttendees: { include: { event: true }, orderBy: { createdAt: "desc" }, take: 5 },
+      eventOrders: { include: { event: true, lineItems: { include: { item: true } } }, orderBy: { createdAt: "desc" }, take: 5 },
       relationshipsFrom: { include: { toContact: true } },
       relationshipsTo: { include: { fromContact: true } },
     },
@@ -713,6 +715,93 @@ export default async function ContactDetailPage({
                         "bg-red-100 text-red-800"
                       }>{ga.status}</Badge>
                     </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Event Registrations & Orders */}
+      {(contact.eventAttendees.length > 0 || contact.eventOrders.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Event Registrations */}
+          {contact.eventAttendees.length > 0 && (
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold text-gray-900">Event Registrations</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {contact.eventAttendees.map((ea) => (
+                    <Link
+                      key={ea.id}
+                      href={`/events/${ea.event.id}`}
+                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{ea.event.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(ea.event.startDate)}
+                          {ea.event.location ? ` • ${ea.event.location}` : ""}
+                        </p>
+                      </div>
+                      <Badge className={
+                        ea.status === "CONFIRMED" || ea.status === "ATTENDED" ? "bg-green-100 text-green-800" :
+                        ea.status === "REGISTERED" ? "bg-blue-100 text-blue-800" :
+                        ea.status === "CANCELLED" || ea.status === "NO_SHOW" ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
+                      }>{ea.status}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Order History */}
+          {contact.eventOrders.length > 0 && (
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold text-gray-900">Event Orders</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {contact.eventOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{order.event.name}</p>
+                          <p className="text-xs text-gray-500 font-mono">{order.orderNumber}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">£{order.totalAmount.toFixed(2)}</p>
+                          <Badge className={
+                            order.paymentStatus === "PAID" || order.paymentStatus === "FREE" ? "bg-green-100 text-green-800" :
+                            order.paymentStatus === "UNPAID" ? "bg-yellow-100 text-yellow-800" :
+                            "bg-red-100 text-red-800"
+                          }>{order.paymentStatus}</Badge>
+                        </div>
+                      </div>
+                      {order.lineItems.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-600">
+                          {order.lineItems.map((li) => (
+                            <span key={li.id} className="mr-2">
+                              {li.item.name}{li.quantity > 1 ? ` x${li.quantity}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {order.giftAidDeclared && order.giftAidTotal > 0 && (
+                        <p className="text-xs text-amber-700 mt-1">
+                          Gift Aid: £{(order.giftAidTotal * 0.25).toFixed(2)} claimable
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </CardContent>

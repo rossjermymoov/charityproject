@@ -141,6 +141,7 @@ model Contact {
   relationshipsFrom  ContactRelationship[] @relation("RelationshipFrom")
   relationshipsTo    ContactRelationship[] @relation("RelationshipTo")
   tributeGuardians   TributeFundGuardian[]
+  eventOrders        EventOrder[]
 }
 
 model Organisation {
@@ -572,9 +573,11 @@ model Event {
   campaign    Campaign?       @relation(fields: [campaignId], references: [id])
   ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
   createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])
-  attendees   EventAttendee[]
-  donations   Donation[]
-  merchandise EventMerchandise[]
+  attendees        EventAttendee[]
+  donations        Donation[]
+  merchandise      EventMerchandise[]
+  registrationForm EventRegistrationForm?
+  orders           EventOrder[]
 }
 
 model EventAttendee {
@@ -605,6 +608,131 @@ model EventMerchandise {
   updatedAt   DateTime @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// EVENT REGISTRATION FORMS
+// ============================================
+
+model EventRegistrationForm {
+  id              String   @id @default(cuid())
+  eventId         String   @unique
+  title           String
+  description     String?
+
+  // Branding
+  logoUrl         String?
+  primaryColor    String   @default("#4F46E5")
+  accentColor     String   @default("#10B981")
+  headerText      String?
+  thankYouMessage String?
+
+  // Settings
+  isActive        Boolean  @default(true)
+  requiresPayment Boolean  @default(true)
+  allowDonations  Boolean  @default(true)
+  collectPhone    Boolean  @default(true)
+  collectAddress  Boolean  @default(false)
+  giftAidEnabled  Boolean  @default(true)
+
+  // Payment gateways
+  stripeEnabled     Boolean @default(false)
+  goCardlessEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event  Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  items  EventFormItem[]
+  orders EventOrder[]
+}
+
+model EventFormItem {
+  id                String   @id @default(cuid())
+  formId            String
+  name              String
+  description       String?
+  type              String   // REGISTRATION_FEE | MERCHANDISE | DONATION
+  price             Float?   // null for DONATION (user enters amount)
+  isRequired        Boolean  @default(false)
+  isGiftAidEligible Boolean  @default(false)
+  maxQuantity       Int?     // stock limit for merchandise
+  sortOrder         Int      @default(0)
+  options           String?  // JSON for variants e.g. ["S","M","L","XL"]
+  imageUrl          String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  form      EventRegistrationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  lineItems OrderLineItem[]
+}
+
+model EventOrder {
+  id               String   @id @default(cuid())
+  formId           String
+  contactId        String
+  eventId          String
+  orderNumber      String   @unique
+
+  // Totals
+  subtotal         Float
+  giftAidTotal     Float    @default(0)
+  totalAmount      Float
+
+  // Status
+  status           String   @default("PENDING")  // PENDING | CONFIRMED | CANCELLED | REFUNDED
+  paymentStatus    String   @default("UNPAID")    // UNPAID | PAID | PARTIAL | REFUNDED | FREE
+  paymentMethod    String?                        // STRIPE | GOCARDLESS | FREE
+  paymentReference String?                        // external payment ID
+
+  // Attendee info
+  attendeeName     String
+  attendeeEmail    String
+  attendeePhone    String?
+  attendeeAddress  String?
+
+  // Gift Aid
+  giftAidDeclared  Boolean  @default(false)
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form      EventRegistrationForm @relation(fields: [formId], references: [id])
+  contact   Contact               @relation(fields: [contactId], references: [id])
+  event     Event                 @relation(fields: [eventId], references: [id])
+  lineItems OrderLineItem[]
+  payments  EventPayment[]
+}
+
+model OrderLineItem {
+  id                String   @id @default(cuid())
+  orderId           String
+  itemId            String
+  quantity          Int      @default(1)
+  unitPrice         Float
+  total             Float
+  isGiftAidEligible Boolean  @default(false)
+  variant           String?  // e.g. "Size: L"
+  createdAt         DateTime @default(now())
+
+  order EventOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item  EventFormItem @relation(fields: [itemId], references: [id])
+}
+
+model EventPayment {
+  id        String   @id @default(cuid())
+  orderId   String
+  amount    Float
+  method    String   // STRIPE | GOCARDLESS
+  status    String   // PENDING | SUCCEEDED | FAILED | REFUNDED
+  reference String?  // external payment ID (pi_xxx, pm_xxx)
+  metadata  String?  // JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order EventOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // ============================================
