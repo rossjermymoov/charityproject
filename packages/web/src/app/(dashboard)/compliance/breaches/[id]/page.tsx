@@ -57,7 +57,7 @@ export default async function BreachDetailPage({
         icoNotifiedAt: new Date(),
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function updateICOReference(formData: FormData) {
@@ -71,7 +71,7 @@ export default async function BreachDetailPage({
         icoReference: (formData.get("icoReference") as string) || null,
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function notifyDataSubjects() {
@@ -86,7 +86,7 @@ export default async function BreachDetailPage({
         dataSubjectsNotifiedAt: new Date(),
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function updateResponse(formData: FormData) {
@@ -101,7 +101,7 @@ export default async function BreachDetailPage({
         lessonsLearned: (formData.get("lessonsLearned") as string) || null,
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function updateDPOReview(formData: FormData) {
@@ -115,7 +115,7 @@ export default async function BreachDetailPage({
         dpoReview: (formData.get("dpoReview") as string) || null,
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function updateStatus(formData: FormData) {
@@ -129,7 +129,7 @@ export default async function BreachDetailPage({
         status: formData.get("status") as string,
       },
     });
-    revalidatePath(`/dashboard/compliance/breaches/${id}`);
+    revalidatePath(`/compliance/breaches/${id}`);
   }
 
   async function deleteBreach() {
@@ -138,13 +138,13 @@ export default async function BreachDetailPage({
     if (!session) redirect("/login");
 
     await prisma.dataBreach.delete({ where: { id } });
-    redirect("/dashboard/compliance/breaches");
+    redirect("/compliance/breaches");
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/compliance/breaches" className="text-gray-400 hover:text-gray-600">
+        <Link href="/compliance/breaches" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Breach Details</h1>

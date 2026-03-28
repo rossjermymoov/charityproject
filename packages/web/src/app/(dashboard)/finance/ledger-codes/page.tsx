@@ -30,7 +30,7 @@ export default async function LedgerCodesPage() {
       },
     });
 
-    revalidatePath("/dashboard/finance/ledger-codes");
+    revalidatePath("/finance/ledger-codes");
   }
 
   async function toggleLedgerCode(id: string, isActive: boolean) {
@@ -42,7 +42,7 @@ export default async function LedgerCodesPage() {
       data: { isActive: !isActive },
     });
 
-    revalidatePath("/dashboard/finance/ledger-codes");
+    revalidatePath("/finance/ledger-codes");
   }
 
   return (

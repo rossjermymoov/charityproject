@@ -65,7 +65,7 @@ export default async function DonationsPage({
           <h1 className="text-2xl font-bold text-gray-900">Donations</h1>
           <p className="text-gray-500 mt-1">Track donations, payments, and gifts</p>
         </div>
-        <Link href="/dashboard/finance/donations/new">
+        <Link href="/finance/donations/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Donation
@@ -114,7 +114,7 @@ export default async function DonationsPage({
           title="No donations found"
           description="Get started by recording your first donation."
           actionLabel="Add Donation"
-          actionHref="/dashboard/finance/donations/new"
+          actionHref="/finance/donations/new"
         />
       ) : (
         <Card>
@@ -147,7 +147,7 @@ export default async function DonationsPage({
                   <tr key={donation.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <Link
-                        href={`/dashboard/finance/donations/${donation.id}`}
+                        href={`/finance/donations/${donation.id}`}
                         className="font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         {formatDate(donation.date)}

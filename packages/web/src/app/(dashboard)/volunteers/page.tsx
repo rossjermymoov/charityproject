@@ -51,7 +51,7 @@ export default async function VolunteersPage({
           <h1 className="text-2xl font-bold text-gray-900">Volunteers</h1>
           <p className="text-gray-500 mt-1">Manage your volunteer workforce</p>
         </div>
-        <Link href="/dashboard/volunteers/new">
+        <Link href="/volunteers/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Volunteer
@@ -93,14 +93,14 @@ export default async function VolunteersPage({
           title="No volunteers found"
           description="Start building your volunteer team."
           actionLabel="Add Volunteer"
-          actionHref="/dashboard/volunteers/new"
+          actionHref="/volunteers/new"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {volunteers.map((vol) => {
             const totalHours = vol.hoursLogs.reduce((sum, log) => sum + log.hours, 0);
             return (
-              <Link key={vol.id} href={`/dashboard/volunteers/${vol.id}`}>
+              <Link key={vol.id} href={`/volunteers/${vol.id}`}>
                 <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="flex items-start gap-3">
                     <Avatar firstName={vol.contact.firstName} lastName={vol.contact.lastName} />

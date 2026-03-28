@@ -56,7 +56,7 @@ export default async function CampaignsPage({
           <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
           <p className="text-gray-500 mt-1">Manage your fundraising campaigns</p>
         </div>
-        <Link href="/dashboard/campaigns/new">
+        <Link href="/campaigns/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Campaign
@@ -116,7 +116,7 @@ export default async function CampaignsPage({
           title="No campaigns found"
           description="Get started by creating your first campaign."
           actionLabel="Create Campaign"
-          actionHref="/dashboard/campaigns/new"
+          actionHref="/campaigns/new"
         />
       ) : (
         <Card>
@@ -157,7 +157,7 @@ export default async function CampaignsPage({
                     <tr key={campaign.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <Link
-                          href={`/dashboard/campaigns/${campaign.id}`}
+                          href={`/campaigns/${campaign.id}`}
                           className="text-sm font-medium text-blue-600 hover:underline"
                         >
                           {campaign.name}

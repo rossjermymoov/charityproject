@@ -58,7 +58,7 @@ export default async function SARsPage({
           <h1 className="text-2xl font-bold text-gray-900">Subject Access Requests</h1>
           <p className="text-gray-500 mt-1">Manage data subject access requests (GDPR)</p>
         </div>
-        <Link href="/dashboard/compliance/sars/new">
+        <Link href="/compliance/sars/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New SAR
@@ -123,7 +123,7 @@ export default async function SARsPage({
           title="No SARs found"
           description="No subject access requests match your search criteria."
           actionLabel="Create SAR"
-          actionHref="/dashboard/compliance/sars/new"
+          actionHref="/compliance/sars/new"
         />
       ) : (
         <Card>
@@ -158,7 +158,7 @@ export default async function SARsPage({
                     <tr key={sar.id} className={`hover:bg-gray-50 transition-colors ${isPastDue ? "bg-orange-50" : ""}`}>
                       <td className="px-6 py-4">
                         <Link
-                          href={`/dashboard/compliance/sars/${sar.id}`}
+                          href={`/compliance/sars/${sar.id}`}
                           className="text-sm font-medium text-indigo-600 hover:underline"
                         >
                           {sar.requesterName}

@@ -57,7 +57,7 @@ export default async function EventsPage({
           <h1 className="text-2xl font-bold text-gray-900">Events</h1>
           <p className="text-gray-500 mt-1">Manage your events and attendees</p>
         </div>
-        <Link href="/dashboard/events/new">
+        <Link href="/events/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Event
@@ -117,7 +117,7 @@ export default async function EventsPage({
           title="No events found"
           description="Get started by creating your first event."
           actionLabel="Create Event"
-          actionHref="/dashboard/events/new"
+          actionHref="/events/new"
         />
       ) : (
         <Card>
@@ -153,7 +153,7 @@ export default async function EventsPage({
                   <tr key={event.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/events/${event.id}`}
+                        href={`/events/${event.id}`}
                         className="text-sm font-medium text-blue-600 hover:underline"
                       >
                         {event.name}

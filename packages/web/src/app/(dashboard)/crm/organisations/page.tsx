@@ -25,7 +25,7 @@ export default async function OrganisationsPage() {
         website: (formData.get("website") as string) || null,
       },
     });
-    redirect("/dashboard/crm/organisations");
+    redirect("/crm/organisations");
   }
 
   return (

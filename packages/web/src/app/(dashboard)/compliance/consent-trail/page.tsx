@@ -164,7 +164,7 @@ export default async function ConsentTrailPage({
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <Link
-                          href={`/dashboard/crm/contacts/${record.contactId}`}
+                          href={`/crm/contacts/${record.contactId}`}
                           className="text-indigo-600 hover:text-indigo-700"
                         >
                           {contactName}

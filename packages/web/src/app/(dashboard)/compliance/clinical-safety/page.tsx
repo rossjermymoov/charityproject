@@ -76,7 +76,7 @@ export default async function ClinicalSafetyPage({
           <h1 className="text-2xl font-bold text-gray-900">Clinical Safety Hazard Log</h1>
           <p className="text-gray-500 mt-1">DCB0129/DCB0160 - Medical device hazard management</p>
         </div>
-        <Link href="/dashboard/compliance/clinical-safety/new">
+        <Link href="/compliance/clinical-safety/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Hazard
@@ -131,7 +131,7 @@ export default async function ClinicalSafetyPage({
           title="No hazards"
           description="Create a hazard log to document and manage clinical safety risks."
           actionLabel="Add Hazard"
-          actionHref="/dashboard/compliance/clinical-safety/new"
+          actionHref="/compliance/clinical-safety/new"
         />
       ) : (
         <Card>
@@ -167,7 +167,7 @@ export default async function ClinicalSafetyPage({
                   <tr key={hazard.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/clinical-safety/${hazard.id}`}
+                        href={`/compliance/clinical-safety/${hazard.id}`}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         {hazard.hazardNumber}
@@ -175,7 +175,7 @@ export default async function ClinicalSafetyPage({
                     </td>
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/clinical-safety/${hazard.id}`}
+                        href={`/compliance/clinical-safety/${hazard.id}`}
                         className="text-sm text-gray-900 hover:text-indigo-700"
                       >
                         {hazard.name}

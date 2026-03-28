@@ -17,7 +17,7 @@ export default async function RopaDetailPage({ params }: { params: Promise<{ id:
   });
 
   if (!activity) {
-    redirect("/dashboard/compliance/ropa");
+    redirect("/compliance/ropa");
   }
 
   async function toggleActive() {
@@ -31,7 +31,7 @@ export default async function RopaDetailPage({ params }: { params: Promise<{ id:
       data: { isActive: !current?.isActive },
     });
 
-    redirect(`/dashboard/compliance/ropa/${id}`);
+    redirect(`/compliance/ropa/${id}`);
   }
 
   async function updateReview(formData: FormData) {
@@ -52,7 +52,7 @@ export default async function RopaDetailPage({ params }: { params: Promise<{ id:
       },
     });
 
-    redirect(`/dashboard/compliance/ropa/${id}`);
+    redirect(`/compliance/ropa/${id}`);
   }
 
   async function deleteActivity() {
@@ -64,7 +64,7 @@ export default async function RopaDetailPage({ params }: { params: Promise<{ id:
       where: { id },
     });
 
-    redirect("/dashboard/compliance/ropa");
+    redirect("/compliance/ropa");
   }
 
   const legalBasisColors: Record<string, string> = {
@@ -80,7 +80,7 @@ export default async function RopaDetailPage({ params }: { params: Promise<{ id:
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/compliance/ropa">
+          <Link href="/compliance/ropa">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>

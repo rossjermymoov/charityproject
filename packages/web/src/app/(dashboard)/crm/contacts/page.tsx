@@ -55,7 +55,7 @@ export default async function ContactsPage({
           <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
           <p className="text-gray-500 mt-1">Manage your contacts, donors, and supporters</p>
         </div>
-        <Link href="/dashboard/crm/contacts/new">
+        <Link href="/crm/contacts/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Contact
@@ -101,7 +101,7 @@ export default async function ContactsPage({
           title="No contacts found"
           description="Get started by adding your first contact to the CRM."
           actionLabel="Add Contact"
-          actionHref="/dashboard/crm/contacts/new"
+          actionHref="/crm/contacts/new"
         />
       ) : (
         <Card>
@@ -131,7 +131,7 @@ export default async function ContactsPage({
                   <tr key={contact.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/crm/contacts/${contact.id}`}
+                        href={`/crm/contacts/${contact.id}`}
                         className="flex items-center gap-3"
                       >
                         <Avatar firstName={contact.firstName} lastName={contact.lastName} size="sm" />

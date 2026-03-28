@@ -75,7 +75,7 @@ export default async function BroadcastDetailPage({
       });
     }
 
-    redirect(`/dashboard/broadcasts/${id}`);
+    redirect(`/broadcasts/${id}`);
   }
 
   async function cancelBroadcast() {
@@ -84,7 +84,7 @@ export default async function BroadcastDetailPage({
       where: { id },
       data: { status: "CANCELLED" },
     });
-    redirect(`/dashboard/broadcasts/${id}`);
+    redirect(`/broadcasts/${id}`);
   }
 
   const accepted = broadcast.responses.filter((r) => r.response === "ACCEPTED");
@@ -107,7 +107,7 @@ export default async function BroadcastDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/broadcasts" className="text-gray-400 hover:text-gray-600">
+        <Link href="/broadcasts" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Broadcast Details</h1>

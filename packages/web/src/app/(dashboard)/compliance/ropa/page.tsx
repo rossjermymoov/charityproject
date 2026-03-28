@@ -41,7 +41,7 @@ export default async function RopaPage({
           <h1 className="text-2xl font-bold text-gray-900">Record of Processing Activities</h1>
           <p className="text-gray-500 mt-1">GDPR Article 30 - Document all processing activities</p>
         </div>
-        <Link href="/dashboard/compliance/ropa/new">
+        <Link href="/compliance/ropa/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Activity
@@ -88,7 +88,7 @@ export default async function RopaPage({
           title="No processing activities"
           description="Document your data processing activities to maintain GDPR compliance."
           actionLabel="Add Activity"
-          actionHref="/dashboard/compliance/ropa/new"
+          actionHref="/compliance/ropa/new"
         />
       ) : (
         <Card>
@@ -124,7 +124,7 @@ export default async function RopaPage({
                   <tr key={activity.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/ropa/${activity.id}`}
+                        href={`/compliance/ropa/${activity.id}`}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         {activity.name}

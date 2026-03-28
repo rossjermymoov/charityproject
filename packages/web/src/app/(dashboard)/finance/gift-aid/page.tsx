@@ -51,7 +51,7 @@ export default async function GiftAidPage({
           <h1 className="text-2xl font-bold text-gray-900">Gift Aid Declarations</h1>
           <p className="text-gray-500 mt-1">Manage Gift Aid declarations from donors</p>
         </div>
-        <Link href="/dashboard/finance/gift-aid/new">
+        <Link href="/finance/gift-aid/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New Declaration
@@ -95,7 +95,7 @@ export default async function GiftAidPage({
           title="No Gift Aid declarations"
           description="Get started by recording your first Gift Aid declaration."
           actionLabel="New Declaration"
-          actionHref="/dashboard/finance/gift-aid/new"
+          actionHref="/finance/gift-aid/new"
         />
       ) : (
         <Card>
@@ -125,7 +125,7 @@ export default async function GiftAidPage({
                   <tr key={giftAid.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/finance/gift-aid/${giftAid.id}`}
+                        href={`/finance/gift-aid/${giftAid.id}`}
                         className="font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         {giftAid.contact.firstName} {giftAid.contact.lastName}

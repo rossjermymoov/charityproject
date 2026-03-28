@@ -49,13 +49,13 @@ export default async function NewVolunteerPage() {
       },
     });
 
-    redirect(`/dashboard/volunteers/${volunteer.id}`);
+    redirect(`/volunteers/${volunteer.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/volunteers" className="text-gray-400 hover:text-gray-600">
+        <Link href="/volunteers" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Add Volunteer</h1>
@@ -109,7 +109,7 @@ export default async function NewVolunteerPage() {
             )}
 
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/volunteers">
+              <Link href="/volunteers">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
               <Button type="submit">Create Volunteer</Button>

@@ -53,7 +53,7 @@ export default async function VolunteerDetailPage({
         departmentId: (formData.get("departmentId") as string) || null,
       },
     });
-    redirect(`/dashboard/volunteers/${id}`);
+    redirect(`/volunteers/${id}`);
   }
 
   const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -65,7 +65,7 @@ export default async function VolunteerDetailPage({
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/volunteers" className="text-gray-400 hover:text-gray-600">
+        <Link href="/volunteers" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Volunteer Profile</h1>
@@ -82,7 +82,7 @@ export default async function VolunteerDetailPage({
                   {volunteer.contact.firstName} {volunteer.contact.lastName}
                 </h2>
                 <Badge className={getStatusColor(volunteer.status)}>{volunteer.status}</Badge>
-                <Link href={`/dashboard/crm/contacts/${volunteer.contactId}`}>
+                <Link href={`/crm/contacts/${volunteer.contactId}`}>
                   <Badge variant="outline" className="cursor-pointer hover:bg-gray-50">CRM Profile →</Badge>
                 </Link>
               </div>

@@ -44,7 +44,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
   });
 
   if (!hazard) {
-    redirect("/dashboard/compliance/clinical-safety");
+    redirect("/compliance/clinical-safety");
   }
 
   async function updateAcceptability(formData: FormData) {
@@ -59,7 +59,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
       },
     });
 
-    redirect(`/dashboard/compliance/clinical-safety/${id}`);
+    redirect(`/compliance/clinical-safety/${id}`);
   }
 
   async function signOff(formData: FormData) {
@@ -76,7 +76,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
       },
     });
 
-    redirect(`/dashboard/compliance/clinical-safety/${id}`);
+    redirect(`/compliance/clinical-safety/${id}`);
   }
 
   async function updateStatus(formData: FormData) {
@@ -91,7 +91,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
       },
     });
 
-    redirect(`/dashboard/compliance/clinical-safety/${id}`);
+    redirect(`/compliance/clinical-safety/${id}`);
   }
 
   async function deleteHazard() {
@@ -103,7 +103,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
       where: { id },
     });
 
-    redirect("/dashboard/compliance/clinical-safety");
+    redirect("/compliance/clinical-safety");
   }
 
   const riskLevelColors: Record<string, string> = {
@@ -130,7 +130,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/compliance/clinical-safety">
+          <Link href="/compliance/clinical-safety">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>

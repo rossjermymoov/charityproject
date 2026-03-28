@@ -33,13 +33,13 @@ export default async function NewBreachPage() {
       },
     });
 
-    redirect(`/dashboard/compliance/breaches/${breach.id}`);
+    redirect(`/compliance/breaches/${breach.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/compliance/breaches" className="text-gray-400 hover:text-gray-600">
+        <Link href="/compliance/breaches" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Report Data Breach</h1>
@@ -104,7 +104,7 @@ export default async function NewBreachPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/compliance/breaches">
+              <Link href="/compliance/breaches">
                 <Button variant="outline" type="button">
                   Cancel
                 </Button>

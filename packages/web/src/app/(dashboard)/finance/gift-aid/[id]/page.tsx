@@ -37,7 +37,7 @@ export default async function GiftAidDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/finance/gift-aid/${id}`);
+    revalidatePath(`/finance/gift-aid/${id}`);
   }
 
   async function deleteGiftAid() {
@@ -48,8 +48,8 @@ export default async function GiftAidDetailPage({
       where: { id },
     });
 
-    revalidatePath("/dashboard/finance/gift-aid");
-    redirect("/dashboard/finance/gift-aid");
+    revalidatePath("/finance/gift-aid");
+    redirect("/finance/gift-aid");
   }
 
   const statusColors: Record<string, string> = {
@@ -61,7 +61,7 @@ export default async function GiftAidDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/gift-aid" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/gift-aid" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Gift Aid Declaration</h1>
@@ -76,7 +76,7 @@ export default async function GiftAidDetailPage({
                   Contact
                 </p>
                 <Link
-                  href={`/dashboard/crm/contacts/${giftAid.contact.id}`}
+                  href={`/crm/contacts/${giftAid.contact.id}`}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-700 mt-1 block"
                 >
                   {giftAid.contact.firstName} {giftAid.contact.lastName}
@@ -157,7 +157,7 @@ export default async function GiftAidDetailPage({
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Link href="/dashboard/finance/gift-aid">
+        <Link href="/finance/gift-aid">
           <Button variant="outline">Back</Button>
         </Link>
         <form action={deleteGiftAid}>

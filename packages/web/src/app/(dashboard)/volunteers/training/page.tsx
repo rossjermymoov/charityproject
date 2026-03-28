@@ -58,7 +58,7 @@ export default async function TrainingPage() {
       },
     });
 
-    redirect("/dashboard/volunteers/training");
+    redirect("/volunteers/training");
   }
 
   async function toggleMandatory(formData: FormData) {
@@ -73,7 +73,7 @@ export default async function TrainingPage() {
       data: { isMandatory: !currentValue },
     });
 
-    redirect("/dashboard/volunteers/training");
+    redirect("/volunteers/training");
   }
 
   async function deleteCourse(formData: FormData) {
@@ -85,7 +85,7 @@ export default async function TrainingPage() {
       where: { id },
     });
 
-    redirect("/dashboard/volunteers/training");
+    redirect("/volunteers/training");
   }
 
   return (

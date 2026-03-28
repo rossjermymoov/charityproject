@@ -52,14 +52,14 @@ export default async function NewDonationPage() {
       },
     });
 
-    revalidatePath("/dashboard/finance/donations");
-    redirect(`/dashboard/finance/donations/${donation.id}`);
+    revalidatePath("/finance/donations");
+    redirect(`/finance/donations/${donation.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/donations" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/donations" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Record Donation</h1>
@@ -171,7 +171,7 @@ export default async function NewDonationPage() {
             <Input label="Notes" name="notes" placeholder="Additional notes..." />
 
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/finance/donations">
+              <Link href="/finance/donations">
                 <Button variant="outline" type="button">
                   Cancel
                 </Button>

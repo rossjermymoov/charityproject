@@ -61,7 +61,7 @@ export default async function BreachesPage({
           <h1 className="text-2xl font-bold text-gray-900">Data Breach Log</h1>
           <p className="text-gray-500 mt-1">Manage and track data breaches and security incidents</p>
         </div>
-        <Link href="/dashboard/compliance/breaches/new">
+        <Link href="/compliance/breaches/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Report Breach
@@ -135,7 +135,7 @@ export default async function BreachesPage({
           title="No breaches found"
           description="No data breaches match your search criteria."
           actionLabel="Report Breach"
-          actionHref="/dashboard/compliance/breaches/new"
+          actionHref="/compliance/breaches/new"
         />
       ) : (
         <Card>
@@ -168,7 +168,7 @@ export default async function BreachesPage({
                   <tr key={breach.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/breaches/${breach.id}`}
+                        href={`/compliance/breaches/${breach.id}`}
                         className="text-sm font-medium text-indigo-600 hover:underline"
                       >
                         {breach.title}

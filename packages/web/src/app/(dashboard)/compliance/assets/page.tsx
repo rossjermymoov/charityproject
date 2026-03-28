@@ -56,7 +56,7 @@ export default async function AssetsPage({
           <h1 className="text-2xl font-bold text-gray-900">Information Asset Register</h1>
           <p className="text-gray-500 mt-1">Inventory and control of information assets</p>
         </div>
-        <Link href="/dashboard/compliance/assets/new">
+        <Link href="/compliance/assets/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Asset
@@ -114,7 +114,7 @@ export default async function AssetsPage({
           title="No information assets"
           description="Create an information asset register to document and control your data assets."
           actionLabel="Add Asset"
-          actionHref="/dashboard/compliance/assets/new"
+          actionHref="/compliance/assets/new"
         />
       ) : (
         <Card>
@@ -153,7 +153,7 @@ export default async function AssetsPage({
                   <tr key={asset.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/assets/${asset.id}`}
+                        href={`/compliance/assets/${asset.id}`}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         {asset.name}

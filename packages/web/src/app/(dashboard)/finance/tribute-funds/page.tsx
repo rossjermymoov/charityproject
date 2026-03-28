@@ -56,7 +56,7 @@ export default async function TributeFundsPage({
           <h1 className="text-2xl font-bold text-gray-900">Tribute Funds</h1>
           <p className="text-gray-500 mt-1">Manage tribute and memorial funds</p>
         </div>
-        <Link href="/dashboard/finance/tribute-funds/new">
+        <Link href="/finance/tribute-funds/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New Fund
@@ -108,7 +108,7 @@ export default async function TributeFundsPage({
           title="No tribute funds found"
           description="Get started by creating your first tribute fund."
           actionLabel="New Fund"
-          actionHref="/dashboard/finance/tribute-funds/new"
+          actionHref="/finance/tribute-funds/new"
         />
       ) : (
         <Card>
@@ -141,7 +141,7 @@ export default async function TributeFundsPage({
                   <tr key={fund.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/finance/tribute-funds/${fund.id}`}
+                        href={`/finance/tribute-funds/${fund.id}`}
                         className="text-sm font-medium text-blue-600 hover:underline"
                       >
                         {fund.name}

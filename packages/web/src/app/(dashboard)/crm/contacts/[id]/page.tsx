@@ -53,8 +53,8 @@ export default async function ContactDetailPage({
         createdById: session.id,
       },
     });
-    revalidatePath(`/dashboard/crm/contacts/${id}`);
-    redirect(`/dashboard/crm/contacts/${id}`);
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
   }
 
   async function addInteraction(formData: FormData) {
@@ -72,8 +72,8 @@ export default async function ContactDetailPage({
         createdById: session.id,
       },
     });
-    revalidatePath(`/dashboard/crm/contacts/${id}`);
-    redirect(`/dashboard/crm/contacts/${id}`);
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
   }
 
   async function updateConsent(formData: FormData) {
@@ -93,7 +93,7 @@ export default async function ContactDetailPage({
     });
 
     if (!currentContact) {
-      redirect(`/dashboard/crm/contacts/${id}`);
+      redirect(`/crm/contacts/${id}`);
     }
 
     // Parse new consent values from form
@@ -140,8 +140,8 @@ export default async function ContactDetailPage({
         consentUpdatedAt: new Date(),
       },
     });
-    revalidatePath(`/dashboard/crm/contacts/${id}`);
-    redirect(`/dashboard/crm/contacts/${id}`);
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
   }
 
   async function addRelationship(formData: FormData) {
@@ -160,8 +160,8 @@ export default async function ContactDetailPage({
         type,
       },
     });
-    revalidatePath(`/dashboard/crm/contacts/${id}`);
-    redirect(`/dashboard/crm/contacts/${id}`);
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
   }
 
   async function removeRelationship(formData: FormData) {
@@ -171,8 +171,8 @@ export default async function ContactDetailPage({
 
     const relId = formData.get("relationshipId") as string;
     await prisma.contactRelationship.delete({ where: { id: relId } });
-    revalidatePath(`/dashboard/crm/contacts/${id}`);
-    redirect(`/dashboard/crm/contacts/${id}`);
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
   }
 
   const typeColors: Record<string, string> = {
@@ -213,7 +213,7 @@ export default async function ContactDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/crm/contacts" className="text-gray-400 hover:text-gray-600">
+        <Link href="/crm/contacts" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Contact Details</h1>
@@ -234,7 +234,7 @@ export default async function ContactDetailPage({
                   <Badge className="bg-red-100 text-red-800">Archived</Badge>
                 )}
                 {contact.volunteerProfile && (
-                  <Link href={`/dashboard/volunteers/${contact.volunteerProfile.id}`}>
+                  <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
                     <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
                       View Volunteer Profile →
                     </Badge>
@@ -388,7 +388,7 @@ export default async function ContactDetailPage({
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-gray-400" />
                       <Link
-                        href={`/dashboard/crm/contacts/${rel.contact.id}`}
+                        href={`/crm/contacts/${rel.contact.id}`}
                         className="text-sm font-medium text-indigo-600 hover:underline"
                       >
                         {rel.contact.firstName} {rel.contact.lastName}
@@ -417,7 +417,7 @@ export default async function ContactDetailPage({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Recent Donations</h3>
-                  <Link href="/dashboard/finance/donations" className="text-sm text-indigo-600 hover:underline">
+                  <Link href="/finance/donations" className="text-sm text-indigo-600 hover:underline">
                     View All
                   </Link>
                 </div>
@@ -427,7 +427,7 @@ export default async function ContactDetailPage({
                   {contact.donations.map((d) => (
                     <Link
                       key={d.id}
-                      href={`/dashboard/finance/donations/${d.id}`}
+                      href={`/finance/donations/${d.id}`}
                       className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
                     >
                       <div>
@@ -448,7 +448,7 @@ export default async function ContactDetailPage({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Gift Aid Declarations</h3>
-                  <Link href="/dashboard/finance/gift-aid" className="text-sm text-indigo-600 hover:underline">
+                  <Link href="/finance/gift-aid" className="text-sm text-indigo-600 hover:underline">
                     View All
                   </Link>
                 </div>
@@ -458,7 +458,7 @@ export default async function ContactDetailPage({
                   {contact.giftAids.map((ga) => (
                     <Link
                       key={ga.id}
-                      href={`/dashboard/finance/gift-aid/${ga.id}`}
+                      href={`/finance/gift-aid/${ga.id}`}
                       className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
                     >
                       <div>

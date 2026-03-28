@@ -42,13 +42,13 @@ export default async function NewAssetPage() {
       },
     });
 
-    redirect("/dashboard/compliance/assets");
+    redirect("/compliance/assets");
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard/compliance/assets">
+        <Link href="/compliance/assets">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -314,7 +314,7 @@ export default async function NewAssetPage() {
         {/* Actions */}
         <div className="flex gap-3">
           <Button type="submit">Create Asset</Button>
-          <Link href="/dashboard/compliance/assets">
+          <Link href="/compliance/assets">
             <Button variant="outline">Cancel</Button>
           </Link>
         </div>

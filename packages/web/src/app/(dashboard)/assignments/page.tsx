@@ -26,7 +26,7 @@ export default async function AssignmentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
           <p className="text-gray-500 mt-1">Schedule and manage volunteer shifts</p>
         </div>
-        <Link href="/dashboard/assignments/new">
+        <Link href="/assignments/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New Assignment
@@ -40,7 +40,7 @@ export default async function AssignmentsPage() {
           title="No assignments"
           description="Create assignments to schedule volunteer shifts."
           actionLabel="New Assignment"
-          actionHref="/dashboard/assignments/new"
+          actionHref="/assignments/new"
         />
       ) : (
         <Card>

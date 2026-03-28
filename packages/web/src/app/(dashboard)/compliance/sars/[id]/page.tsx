@@ -65,7 +65,7 @@ export default async function SARDetailPage({
         idVerifiedAt: new Date(),
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function assignToStaff(formData: FormData) {
@@ -80,7 +80,7 @@ export default async function SARDetailPage({
         assignedToId: assignedToId || null,
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function updateStatus(formData: FormData) {
@@ -94,7 +94,7 @@ export default async function SARDetailPage({
         status: formData.get("status") as string,
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function applyExtension(formData: FormData) {
@@ -114,7 +114,7 @@ export default async function SARDetailPage({
         dueDate: newDueDate,
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function updateResponse(formData: FormData) {
@@ -128,7 +128,7 @@ export default async function SARDetailPage({
         responseNotes: (formData.get("responseNotes") as string) || null,
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function markAsSent(formData: FormData) {
@@ -144,7 +144,7 @@ export default async function SARDetailPage({
         status: "SENT",
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function refuseRequest(formData: FormData) {
@@ -162,7 +162,7 @@ export default async function SARDetailPage({
         refusalReason,
       },
     });
-    revalidatePath(`/dashboard/compliance/sars/${id}`);
+    revalidatePath(`/compliance/sars/${id}`);
   }
 
   async function deleteSAR() {
@@ -171,13 +171,13 @@ export default async function SARDetailPage({
     if (!session) redirect("/login");
 
     await prisma.subjectAccessRequest.delete({ where: { id } });
-    redirect("/dashboard/compliance/sars");
+    redirect("/compliance/sars");
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/compliance/sars" className="text-gray-400 hover:text-gray-600">
+        <Link href="/compliance/sars" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">SAR Details</h1>
@@ -243,7 +243,7 @@ export default async function SARDetailPage({
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Matched Contact</p>
               <Link
-                href={`/dashboard/crm/contacts/${matchedContact.id}`}
+                href={`/crm/contacts/${matchedContact.id}`}
                 className="text-sm text-indigo-600 hover:underline"
               >
                 {matchedContact.firstName} {matchedContact.lastName}

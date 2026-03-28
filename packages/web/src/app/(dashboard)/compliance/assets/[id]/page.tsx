@@ -17,7 +17,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
   });
 
   if (!asset) {
-    redirect("/dashboard/compliance/assets");
+    redirect("/compliance/assets");
   }
 
   async function updateAsset(formData: FormData) {
@@ -38,7 +38,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
       },
     });
 
-    redirect(`/dashboard/compliance/assets/${id}`);
+    redirect(`/compliance/assets/${id}`);
   }
 
   async function deleteAsset() {
@@ -50,7 +50,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
       where: { id },
     });
 
-    redirect("/dashboard/compliance/assets");
+    redirect("/compliance/assets");
   }
 
   const assetTypeColors: Record<string, string> = {
@@ -79,7 +79,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/compliance/assets">
+          <Link href="/compliance/assets">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>

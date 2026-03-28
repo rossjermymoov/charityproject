@@ -31,7 +31,7 @@ export default async function SkillsPage() {
         departmentId: (formData.get("departmentId") as string) || null,
       },
     });
-    redirect("/dashboard/volunteers/skills");
+    redirect("/volunteers/skills");
   }
 
   return (

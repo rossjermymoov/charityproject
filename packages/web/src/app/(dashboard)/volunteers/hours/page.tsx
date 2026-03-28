@@ -32,7 +32,7 @@ export default async function HoursPage() {
       where: { id: logId },
       data: { status: "VERIFIED", verifiedById: s.id },
     });
-    redirect("/dashboard/volunteers/hours");
+    redirect("/volunteers/hours");
   }
 
   return (

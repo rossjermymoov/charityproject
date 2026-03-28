@@ -79,7 +79,7 @@ export default async function DpiaDetailPage({
       data: { status: newStatus },
     });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function signOffDpo(formData: FormData) {
@@ -97,7 +97,7 @@ export default async function DpiaDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function signOffCso(formData: FormData) {
@@ -113,7 +113,7 @@ export default async function DpiaDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function overruleDpo(formData: FormData) {
@@ -130,7 +130,7 @@ export default async function DpiaDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function addRisk(formData: FormData) {
@@ -155,7 +155,7 @@ export default async function DpiaDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function deleteRisk(formData: FormData) {
@@ -166,7 +166,7 @@ export default async function DpiaDetailPage({
     const riskId = formData.get("riskId") as string;
     await prisma.dpiaRisk.delete({ where: { id: riskId } });
 
-    revalidatePath(`/dashboard/compliance/dpias/${id}`);
+    revalidatePath(`/compliance/dpias/${id}`);
   }
 
   async function deleteDpia() {
@@ -175,13 +175,13 @@ export default async function DpiaDetailPage({
     if (!session) redirect("/login");
 
     await prisma.dpia.delete({ where: { id } });
-    redirect("/dashboard/compliance/dpias");
+    redirect("/compliance/dpias");
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/compliance/dpias" className="text-gray-400 hover:text-gray-600">
+        <Link href="/compliance/dpias" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">

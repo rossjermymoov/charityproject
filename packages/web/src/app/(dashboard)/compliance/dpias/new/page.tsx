@@ -42,13 +42,13 @@ export default async function NewDpiaPage() {
       },
     });
 
-    redirect(`/dashboard/compliance/dpias/${dpia.id}`);
+    redirect(`/compliance/dpias/${dpia.id}`);
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/compliance/dpias" className="text-gray-400 hover:text-gray-600">
+        <Link href="/compliance/dpias" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">
@@ -212,7 +212,7 @@ export default async function NewDpiaPage() {
 
         {/* Form Actions */}
         <div className="flex justify-end gap-3">
-          <Link href="/dashboard/compliance/dpias">
+          <Link href="/compliance/dpias">
             <Button variant="outline" type="button">
               Cancel
             </Button>

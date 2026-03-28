@@ -36,8 +36,8 @@ export default async function DonationDetailPage({
       where: { id },
     });
 
-    revalidatePath("/dashboard/finance/donations");
-    redirect("/dashboard/finance/donations");
+    revalidatePath("/finance/donations");
+    redirect("/finance/donations");
   }
 
   const typeColors: Record<string, string> = {
@@ -61,7 +61,7 @@ export default async function DonationDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/donations" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/donations" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Donation Details</h1>
@@ -80,7 +80,7 @@ export default async function DonationDetailPage({
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</p>
                 <Link
-                  href={`/dashboard/crm/contacts/${donation.contact.id}`}
+                  href={`/crm/contacts/${donation.contact.id}`}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-700 mt-1 block"
                 >
                   {donation.contact.firstName} {donation.contact.lastName}
@@ -153,7 +153,7 @@ export default async function DonationDetailPage({
                     Campaign
                   </p>
                   <Link
-                    href={`/dashboard/finance/campaigns/${donation.campaign.id}`}
+                    href={`/finance/campaigns/${donation.campaign.id}`}
                     className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 block"
                   >
                     {donation.campaign.name}
@@ -166,7 +166,7 @@ export default async function DonationDetailPage({
                     Event
                   </p>
                   <Link
-                    href={`/dashboard/finance/events/${donation.event.id}`}
+                    href={`/finance/events/${donation.event.id}`}
                     className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 block"
                   >
                     {donation.event.name}
@@ -192,7 +192,7 @@ export default async function DonationDetailPage({
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Link href="/dashboard/finance/donations">
+        <Link href="/finance/donations">
           <Button variant="outline">Back</Button>
         </Link>
         <form action={deleteDonation}>

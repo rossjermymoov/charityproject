@@ -45,13 +45,13 @@ export default async function NewRopaPage() {
       },
     });
 
-    redirect("/dashboard/compliance/ropa");
+    redirect("/compliance/ropa");
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard/compliance/ropa">
+        <Link href="/compliance/ropa">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -306,7 +306,7 @@ export default async function NewRopaPage() {
         {/* Actions */}
         <div className="flex gap-3">
           <Button type="submit">Create Activity</Button>
-          <Link href="/dashboard/compliance/ropa">
+          <Link href="/compliance/ropa">
             <Button variant="outline">Cancel</Button>
           </Link>
         </div>

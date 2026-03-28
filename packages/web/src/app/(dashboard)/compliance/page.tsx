@@ -122,7 +122,7 @@ export default async function ComplianceDashboardPage() {
       alert: overdueDpias > 0,
       alertText: overdueDpias > 0 ? `${overdueDpias} overdue for review` : null,
       alertColor: "text-red-600",
-      href: "/dashboard/compliance/dpias",
+      href: "/compliance/dpias",
     },
     {
       icon: AlertTriangle,
@@ -135,7 +135,7 @@ export default async function ComplianceDashboardPage() {
           ? `${highCriticalBreaches} HIGH/CRITICAL severity`
           : null,
       alertColor: "text-red-600",
-      href: "/dashboard/compliance/breaches",
+      href: "/compliance/breaches",
     },
     {
       icon: Clock,
@@ -145,7 +145,7 @@ export default async function ComplianceDashboardPage() {
       alert: pastDueSars > 0,
       alertText: pastDueSars > 0 ? `${pastDueSars} past due date` : null,
       alertColor: "text-amber-600",
-      href: "/dashboard/compliance/sars",
+      href: "/compliance/sars",
     },
     {
       icon: Database,
@@ -156,7 +156,7 @@ export default async function ComplianceDashboardPage() {
       alertText:
         activitiesWithoutDpa > 0 ? `${activitiesWithoutDpa} need approval` : null,
       alertColor: "text-amber-600",
-      href: "/dashboard/compliance/dpias",
+      href: "/compliance/dpias",
     },
     {
       icon: Shield,
@@ -167,7 +167,7 @@ export default async function ComplianceDashboardPage() {
       alertText:
         highCriticalRisks > 0 ? `${highCriticalRisks} high risk items` : null,
       alertColor: "text-red-600",
-      href: "/dashboard/compliance/dpias",
+      href: "/compliance/dpias",
     },
     {
       icon: Zap,
@@ -176,7 +176,7 @@ export default async function ComplianceDashboardPage() {
       subtext: "No hazards recorded",
       alert: false,
       alertText: null,
-      href: "/dashboard/compliance/hazards",
+      href: "/compliance/hazards",
     },
   ];
 
@@ -247,7 +247,7 @@ export default async function ComplianceDashboardPage() {
                   {overdueSars.map((sar) => (
                     <Link
                       key={sar.id}
-                      href={`/dashboard/compliance/sars/${sar.id}`}
+                      href={`/compliance/sars/${sar.id}`}
                       className="flex items-center justify-between p-3 bg-white rounded border border-red-200 hover:bg-red-50 transition-colors"
                     >
                       <div>
@@ -282,7 +282,7 @@ export default async function ComplianceDashboardPage() {
                     return (
                       <Link
                         key={breach.id}
-                        href={`/dashboard/compliance/breaches/${breach.id}`}
+                        href={`/compliance/breaches/${breach.id}`}
                         className="flex items-center justify-between p-3 bg-white rounded border border-red-200 hover:bg-red-50 transition-colors"
                       >
                         <div>

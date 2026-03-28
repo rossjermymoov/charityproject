@@ -53,7 +53,7 @@ export default async function CollectionTinsPage({
           <h1 className="text-2xl font-bold text-gray-900">Collection Tins</h1>
           <p className="text-gray-500 mt-1">Manage collection tins and track deployments</p>
         </div>
-        <Link href="/dashboard/finance/collection-tins/new">
+        <Link href="/finance/collection-tins/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Tin
@@ -100,7 +100,7 @@ export default async function CollectionTinsPage({
           title="No collection tins found"
           description="Get started by adding your first collection tin."
           actionLabel="Add Tin"
-          actionHref="/dashboard/finance/collection-tins/new"
+          actionHref="/finance/collection-tins/new"
         />
       ) : (
         <Card>
@@ -130,7 +130,7 @@ export default async function CollectionTinsPage({
                   <tr key={tin.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/finance/collection-tins/${tin.id}`}
+                        href={`/finance/collection-tins/${tin.id}`}
                         className="text-sm font-medium text-blue-600 hover:underline"
                       >
                         {tin.tinNumber}

@@ -40,7 +40,7 @@ export default async function TributeFundDetailPage({
       data: { status: newStatus },
     });
 
-    redirect(`/dashboard/finance/tribute-funds/${id}`);
+    redirect(`/finance/tribute-funds/${id}`);
   }
 
   async function addGuardian(formData: FormData) {
@@ -67,7 +67,7 @@ export default async function TributeFundDetailPage({
       },
     });
 
-    redirect(`/dashboard/finance/tribute-funds/${id}`);
+    redirect(`/finance/tribute-funds/${id}`);
   }
 
   async function removeGuardian(formData: FormData) {
@@ -81,7 +81,7 @@ export default async function TributeFundDetailPage({
       where: { id: guardianId },
     });
 
-    redirect(`/dashboard/finance/tribute-funds/${id}`);
+    redirect(`/finance/tribute-funds/${id}`);
   }
 
   async function addMilestone(formData: FormData) {
@@ -98,7 +98,7 @@ export default async function TributeFundDetailPage({
       },
     });
 
-    redirect(`/dashboard/finance/tribute-funds/${id}`);
+    redirect(`/finance/tribute-funds/${id}`);
   }
 
   async function deleteFund() {
@@ -110,7 +110,7 @@ export default async function TributeFundDetailPage({
       where: { id },
     });
 
-    redirect("/dashboard/finance/tribute-funds");
+    redirect("/finance/tribute-funds");
   }
 
   const typeColors: Record<string, string> = {
@@ -137,7 +137,7 @@ export default async function TributeFundDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/tribute-funds" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/tribute-funds" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Fund Details</h1>

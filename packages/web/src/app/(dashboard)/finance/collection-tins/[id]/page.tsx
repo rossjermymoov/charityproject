@@ -59,7 +59,7 @@ export default async function CollectionTinDetailPage({
       });
     }
 
-    redirect(`/dashboard/finance/collection-tins/${id}`);
+    redirect(`/finance/collection-tins/${id}`);
   }
 
   async function addMovement(formData: FormData) {
@@ -77,7 +77,7 @@ export default async function CollectionTinDetailPage({
       },
     });
 
-    redirect(`/dashboard/finance/collection-tins/${id}`);
+    redirect(`/finance/collection-tins/${id}`);
   }
 
   async function deleteTin() {
@@ -89,7 +89,7 @@ export default async function CollectionTinDetailPage({
       where: { id },
     });
 
-    redirect("/dashboard/finance/collection-tins");
+    redirect("/finance/collection-tins");
   }
 
   const statusColors: Record<string, string> = {
@@ -113,7 +113,7 @@ export default async function CollectionTinDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/collection-tins" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/collection-tins" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Tin Details</h1>

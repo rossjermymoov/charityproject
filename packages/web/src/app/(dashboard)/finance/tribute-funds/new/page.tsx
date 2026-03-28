@@ -26,13 +26,13 @@ export default async function NewTributeFundPage() {
       },
     });
 
-    redirect(`/dashboard/finance/tribute-funds/${fund.id}`);
+    redirect(`/finance/tribute-funds/${fund.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/tribute-funds" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/tribute-funds" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Create Tribute Fund</h1>
@@ -61,7 +61,7 @@ export default async function NewTributeFundPage() {
               placeholder="Details about the fund (optional)"
             />
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/finance/tribute-funds">
+              <Link href="/finance/tribute-funds">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
               <Button type="submit">Create Fund</Button>

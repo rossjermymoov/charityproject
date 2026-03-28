@@ -31,7 +31,7 @@ export default async function DataRetentionPage() {
       },
     });
 
-    redirect("/dashboard/settings/data-retention");
+    redirect("/settings/data-retention");
   }
 
   async function toggleActive(formData: FormData) {
@@ -46,7 +46,7 @@ export default async function DataRetentionPage() {
       data: { isActive: !currentValue },
     });
 
-    redirect("/dashboard/settings/data-retention");
+    redirect("/settings/data-retention");
   }
 
   async function deletePolicy(formData: FormData) {
@@ -58,7 +58,7 @@ export default async function DataRetentionPage() {
       where: { id },
     });
 
-    redirect("/dashboard/settings/data-retention");
+    redirect("/settings/data-retention");
   }
 
   const actionOptions = ["ARCHIVE", "ANONYMISE", "DELETE"];

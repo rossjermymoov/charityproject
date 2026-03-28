@@ -36,13 +36,13 @@ export default async function NewAssignmentPage() {
       },
     });
 
-    redirect("/dashboard/assignments");
+    redirect("/assignments");
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/assignments" className="text-gray-400 hover:text-gray-600">
+        <Link href="/assignments" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">New Assignment</h1>
@@ -83,7 +83,7 @@ export default async function NewAssignmentPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/assignments">
+              <Link href="/assignments">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
               <Button type="submit">Create Assignment</Button>

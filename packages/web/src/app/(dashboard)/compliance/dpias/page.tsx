@@ -51,7 +51,7 @@ export default async function DpiasPage({
             Manage your DPIAs and associated risks
           </p>
         </div>
-        <Link href="/dashboard/compliance/dpias/new">
+        <Link href="/compliance/dpias/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New DPIA
@@ -98,7 +98,7 @@ export default async function DpiasPage({
           title="No DPIAs found"
           description="Get started by creating your first Data Protection Impact Assessment."
           actionLabel="Create DPIA"
-          actionHref="/dashboard/compliance/dpias/new"
+          actionHref="/compliance/dpias/new"
         />
       ) : (
         <Card>
@@ -140,7 +140,7 @@ export default async function DpiasPage({
                   >
                     <td className="px-6 py-4">
                       <Link
-                        href={`/dashboard/compliance/dpias/${dpia.id}`}
+                        href={`/compliance/dpias/${dpia.id}`}
                         className="text-sm font-medium text-indigo-600 hover:underline"
                       >
                         {dpia.title}

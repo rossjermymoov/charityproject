@@ -25,13 +25,13 @@ export default async function NewCollectionTinPage() {
       },
     });
 
-    redirect(`/dashboard/finance/collection-tins/${tin.id}`);
+    redirect(`/finance/collection-tins/${tin.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/finance/collection-tins" className="text-gray-400 hover:text-gray-600">
+        <Link href="/finance/collection-tins" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Add Collection Tin</h1>
@@ -45,7 +45,7 @@ export default async function NewCollectionTinPage() {
             <Input label="Location Address" name="locationAddress" placeholder="Full address (optional)" />
             <Textarea label="Notes" name="notes" placeholder="Additional notes (optional)" />
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/finance/collection-tins">
+              <Link href="/finance/collection-tins">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
               <Button type="submit">Create Tin</Button>

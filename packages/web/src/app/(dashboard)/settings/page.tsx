@@ -18,13 +18,13 @@ export default async function SettingsPage() {
       icon: Shield,
       title: "Audit Log",
       description: "Review all system activities and changes",
-      href: "/dashboard/settings/audit-log",
+      href: "/settings/audit-log",
     },
     {
       icon: FileText,
       title: "Data Retention Policies",
       description: "Manage how long data is kept before archiving or deletion",
-      href: "/dashboard/settings/data-retention",
+      href: "/settings/data-retention",
     },
     {
       icon: Zap,

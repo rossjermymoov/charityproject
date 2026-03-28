@@ -74,7 +74,7 @@ export default async function EventDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath(`/events/${id}`);
   }
 
   async function removeAttendee(formData: FormData) {
@@ -88,7 +88,7 @@ export default async function EventDetailPage({
       where: { id: attendeeId },
     });
 
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath(`/events/${id}`);
   }
 
   async function addMerchandise(formData: FormData) {
@@ -106,7 +106,7 @@ export default async function EventDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath(`/events/${id}`);
   }
 
   async function removeMerchandise(formData: FormData) {
@@ -120,7 +120,7 @@ export default async function EventDetailPage({
       where: { id: merchandiseId },
     });
 
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath(`/events/${id}`);
   }
 
   async function updateStatus(formData: FormData) {
@@ -135,7 +135,7 @@ export default async function EventDetailPage({
       data: { status: newStatus },
     });
 
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath(`/events/${id}`);
   }
 
   async function deleteEvent() {
@@ -147,7 +147,7 @@ export default async function EventDetailPage({
       where: { id },
     });
 
-    redirect("/dashboard/events");
+    redirect("/events");
   }
 
   const totalMerchandiseRevenue = event.merchandise.reduce((sum, item) => {
@@ -159,7 +159,7 @@ export default async function EventDetailPage({
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/events" className="text-gray-400 hover:text-gray-600">
+        <Link href="/events" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
@@ -205,7 +205,7 @@ export default async function EventDetailPage({
               {event.campaign && (
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Campaign</p>
-                  <Link href={`/dashboard/campaigns/${event.campaign.id}`}>
+                  <Link href={`/campaigns/${event.campaign.id}`}>
                     <p className="text-sm font-medium text-blue-600 hover:underline">
                       {event.campaign.name}
                     </p>
@@ -392,7 +392,7 @@ export default async function EventDetailPage({
           ) : (
             <div className="space-y-2">
               {event.donations.map((donation) => (
-                <Link key={donation.id} href={`/dashboard/finance/donations/${donation.id}`}>
+                <Link key={donation.id} href={`/finance/donations/${donation.id}`}>
                   <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">

@@ -40,13 +40,13 @@ export default async function NewBroadcastPage() {
       },
     });
 
-    redirect(`/dashboard/broadcasts/${broadcast.id}`);
+    redirect(`/broadcasts/${broadcast.id}`);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/broadcasts" className="text-gray-400 hover:text-gray-600">
+        <Link href="/broadcasts" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">New Broadcast</h1>
@@ -106,7 +106,7 @@ export default async function NewBroadcastPage() {
             )}
 
             <div className="flex justify-end gap-3">
-              <Link href="/dashboard/broadcasts">
+              <Link href="/broadcasts">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
               <Button type="submit" className="bg-red-600 hover:bg-red-700">Send Broadcast</Button>

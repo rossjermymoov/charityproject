@@ -65,7 +65,7 @@ export default async function CampaignDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/campaigns/${id}`);
+    revalidatePath(`/campaigns/${id}`);
   }
 
   async function removeSegment(formData: FormData) {
@@ -83,7 +83,7 @@ export default async function CampaignDetailPage({
       },
     });
 
-    revalidatePath(`/dashboard/campaigns/${id}`);
+    revalidatePath(`/campaigns/${id}`);
   }
 
   async function updateStatus(formData: FormData) {
@@ -98,7 +98,7 @@ export default async function CampaignDetailPage({
       data: { status: newStatus },
     });
 
-    revalidatePath(`/dashboard/campaigns/${id}`);
+    revalidatePath(`/campaigns/${id}`);
   }
 
   async function deleteCampaign() {
@@ -110,7 +110,7 @@ export default async function CampaignDetailPage({
       where: { id },
     });
 
-    redirect("/dashboard/campaigns");
+    redirect("/campaigns");
   }
 
   const roi = campaign.budgetTarget && campaign.budgetTarget > 0
@@ -127,7 +127,7 @@ export default async function CampaignDetailPage({
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/campaigns" className="text-gray-400 hover:text-gray-600">
+        <Link href="/campaigns" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Campaign Details</h1>
@@ -286,7 +286,7 @@ export default async function CampaignDetailPage({
             ) : (
               <div className="space-y-2">
                 {campaign.events.map((event) => (
-                  <Link key={event.id} href={`/dashboard/events/${event.id}`}>
+                  <Link key={event.id} href={`/events/${event.id}`}>
                     <div className="p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
                       <p className="text-sm font-medium text-blue-600 hover:underline">
                         {event.name}
@@ -317,7 +317,7 @@ export default async function CampaignDetailPage({
               {campaign.donations.map((donation) => (
                 <Link
                   key={donation.id}
-                  href={`/dashboard/finance/donations/${donation.id}`}
+                  href={`/finance/donations/${donation.id}`}
                 >
                   <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
                     <div className="flex-1 min-w-0">

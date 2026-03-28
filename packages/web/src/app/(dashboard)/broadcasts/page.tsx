@@ -26,7 +26,7 @@ export default async function BroadcastsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Broadcasts</h1>
           <p className="text-gray-500 mt-1">Send urgent cover requests to volunteers</p>
         </div>
-        <Link href="/dashboard/broadcasts/new">
+        <Link href="/broadcasts/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             New Broadcast
@@ -40,7 +40,7 @@ export default async function BroadcastsPage() {
           title="No broadcasts yet"
           description="Create a broadcast when you need urgent volunteer cover."
           actionLabel="New Broadcast"
-          actionHref="/dashboard/broadcasts/new"
+          actionHref="/broadcasts/new"
         />
       ) : (
         <div className="space-y-4">
@@ -50,7 +50,7 @@ export default async function BroadcastsPage() {
             const tentative = b.responses.filter((r) => r.response === "TENTATIVE").length;
 
             return (
-              <Link key={b.id} href={`/dashboard/broadcasts/${b.id}`}>
+              <Link key={b.id} href={`/broadcasts/${b.id}`}>
                 <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer mb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

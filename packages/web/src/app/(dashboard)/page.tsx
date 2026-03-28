@@ -49,7 +49,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Recent Broadcasts</h2>
-              <Link href="/dashboard/broadcasts" className="text-sm text-indigo-600 hover:text-indigo-800">
+              <Link href="/broadcasts" className="text-sm text-indigo-600 hover:text-indigo-800">
                 View all
               </Link>
             </div>
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
                 {recentBroadcasts.map((broadcast) => (
                   <Link
                     key={broadcast.id}
-                    href={`/dashboard/broadcasts/${broadcast.id}`}
+                    href={`/broadcasts/${broadcast.id}`}
                     className="flex items-center justify-between py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors"
                   >
                     <div>
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Upcoming Assignments</h2>
-              <Link href="/dashboard/assignments" className="text-sm text-indigo-600 hover:text-indigo-800">
+              <Link href="/assignments" className="text-sm text-indigo-600 hover:text-indigo-800">
                 View all
               </Link>
             </div>

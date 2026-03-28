@@ -27,7 +27,7 @@ export default async function DepartmentsPage() {
         description: (formData.get("description") as string) || null,
       },
     });
-    redirect("/dashboard/volunteers/departments");
+    redirect("/volunteers/departments");
   }
 
   return (

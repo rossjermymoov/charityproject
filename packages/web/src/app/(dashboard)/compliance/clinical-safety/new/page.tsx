@@ -71,13 +71,13 @@ export default async function NewHazardPage() {
       },
     });
 
-    redirect("/dashboard/compliance/clinical-safety");
+    redirect("/compliance/clinical-safety");
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard/compliance/clinical-safety">
+        <Link href="/compliance/clinical-safety">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -298,7 +298,7 @@ export default async function NewHazardPage() {
         {/* Actions */}
         <div className="flex gap-3">
           <Button type="submit">Create Hazard</Button>
-          <Link href="/dashboard/compliance/clinical-safety">
+          <Link href="/compliance/clinical-safety">
             <Button variant="outline">Cancel</Button>
           </Link>
         </div>
