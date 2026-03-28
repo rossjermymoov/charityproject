@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { Clock } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { Clock, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,18 @@ export default async function HoursPage() {
       where: { id: logId },
       data: { status: "VERIFIED", verifiedById: s.id },
     });
-    redirect("/volunteers/hours");
+    revalidatePath("/volunteers/hours");
+  }
+
+  async function deleteHours(formData: FormData) {
+    "use server";
+    const s = await getSession();
+    if (!s) redirect("/login");
+    const logId = formData.get("logId") as string;
+    await prisma.volunteerHoursLog.delete({
+      where: { id: logId },
+    });
+    revalidatePath("/volunteers/hours");
   }
 
   return (
@@ -72,15 +84,31 @@ export default async function HoursPage() {
                     <Badge className={getStatusColor(log.status)}>{log.status}</Badge>
                   </td>
                   <td className="px-6 py-4">
-                    {log.status === "LOGGED" && (
-                      <form action={verifyHours}>
+                    <div className="flex items-center gap-2">
+                      {log.status === "LOGGED" && (
+                        <form action={verifyHours} className="inline">
+                          <input type="hidden" name="logId" value={log.id} />
+                          <Button type="submit" size="sm" variant="outline">Verify</Button>
+                        </form>
+                      )}
+                      <form
+                        action={deleteHours}
+                        className="inline"
+                        onSubmit={(e) => {
+                          if (!confirm("Are you sure you want to delete this hours log?")) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
                         <input type="hidden" name="logId" value={log.id} />
-                        <Button type="submit" size="sm" variant="outline">Verify</Button>
+                        <Button type="submit" size="sm" variant="ghost" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </form>
-                    )}
-                    {log.verifiedBy && (
-                      <span className="text-xs text-gray-400">by {log.verifiedBy.name}</span>
-                    )}
+                      {log.verifiedBy && (
+                        <span className="text-xs text-gray-400">by {log.verifiedBy.name}</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, Edit2, Trash2 } from "lucide-react";
+import { LedgerCodeActionButton } from "./ledger-code-actions";
 
 export default async function LedgerCodesPage() {
   const ledgerCodes = await prisma.ledgerCode.findMany({
@@ -33,13 +34,52 @@ export default async function LedgerCodesPage() {
     revalidatePath("/finance/ledger-codes");
   }
 
-  async function toggleLedgerCode(id: string, isActive: boolean) {
+  async function toggleLedgerCode(formData: FormData) {
     "use server";
     const session = await requireAuth();
+
+    const id = formData.get("id") as string;
+    const isActive = formData.get("isActive") === "true";
 
     await prisma.ledgerCode.update({
       where: { id },
       data: { isActive: !isActive },
+    });
+
+    revalidatePath("/finance/ledger-codes");
+  }
+
+  async function updateLedgerCode(formData: FormData) {
+    "use server";
+    const session = await requireAuth();
+
+    const id = formData.get("id") as string;
+    const code = (formData.get("code") as string).trim();
+    const name = (formData.get("name") as string).trim();
+    const description = (formData.get("description") as string) || null;
+
+    if (!code || !name) return;
+
+    await prisma.ledgerCode.update({
+      where: { id },
+      data: {
+        code,
+        name,
+        description,
+      },
+    });
+
+    revalidatePath("/finance/ledger-codes");
+  }
+
+  async function deleteLedgerCode(formData: FormData) {
+    "use server";
+    const session = await requireAuth();
+
+    const id = formData.get("id") as string;
+
+    await prisma.ledgerCode.delete({
+      where: { id },
     });
 
     revalidatePath("/finance/ledger-codes");
@@ -83,71 +123,44 @@ export default async function LedgerCodesPage() {
               <p className="text-gray-500">No ledger codes yet. Create one above.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {ledgerCodes.map((code) => (
-                    <tr key={code.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-900">{code.code}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900">{code.name}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-500">{code.description || "—"}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge
-                          className={
-                            code.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {code.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <form
-                          action={async () => {
-                            await toggleLedgerCode(code.id, code.isActive);
-                          }}
-                          className="inline"
-                        >
-                          <Button
-                            type="submit"
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            {code.isActive ? "Deactivate" : "Activate"}
-                          </Button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {ledgerCodes.map((code) => (
+                <div key={code.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="grid grid-cols-4 gap-4 items-start">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Code</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{code.code}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Name</p>
+                      <p className="text-sm text-gray-900 mt-1">{code.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Status</p>
+                      <Badge
+                        className={`mt-1 ${
+                          code.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {code.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <LedgerCodeActionButton
+                        code={code}
+                        updateLedgerCode={updateLedgerCode}
+                        toggleLedgerCode={toggleLedgerCode}
+                        deleteLedgerCode={deleteLedgerCode}
+                      />
+                    </div>
+                  </div>
+                  {code.description && (
+                    <p className="text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">{code.description}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

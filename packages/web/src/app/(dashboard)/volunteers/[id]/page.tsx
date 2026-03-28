@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Clock, Calendar, Wrench, Shield, Bell, Plus } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Wrench, Shield, Bell, Plus, X, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,28 +12,166 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusColor, formatDate } from "@/lib/utils";
 
+async function changeStatus(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const newStatus = formData.get("status") as string;
+
+  await prisma.volunteerProfile.update({
+    where: { id: volunteerId },
+    data: { status: newStatus },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function editBasicInfo(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const desiredHoursPerWeek = formData.get("desiredHoursPerWeek") as string;
+  const startDate = formData.get("startDate") as string;
+  const endDate = formData.get("endDate") as string;
+
+  await prisma.volunteerProfile.update({
+    where: { id: volunteerId },
+    data: {
+      desiredHoursPerWeek: desiredHoursPerWeek ? parseFloat(desiredHoursPerWeek) : null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function addSkill(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const skillId = formData.get("skillId") as string;
+
+  await prisma.volunteerSkill.create({
+    data: {
+      volunteerId,
+      skillId,
+      proficiency: "BEGINNER",
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function removeSkill(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const skillId = formData.get("skillId") as string;
+
+  await prisma.volunteerSkill.deleteMany({
+    where: {
+      volunteerId,
+      skillId,
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function addDepartment(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const departmentId = formData.get("departmentId") as string;
+
+  await prisma.volunteerDepartment.create({
+    data: {
+      volunteerId,
+      departmentId,
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function removeDepartment(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+  const departmentId = formData.get("departmentId") as string;
+
+  await prisma.volunteerDepartment.delete({
+    where: {
+      volunteerId_departmentId: {
+        volunteerId,
+        departmentId,
+      },
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function deleteVolunteer(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+
+  await prisma.volunteerProfile.delete({
+    where: { id: volunteerId },
+  });
+
+  redirect("/volunteers");
+}
+
 export default async function VolunteerDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const volunteer = await prisma.volunteerProfile.findUnique({
-    where: { id },
-    include: {
-      contact: true,
-      departments: { include: { department: true } },
-      skills: { include: { skill: true } },
-      availability: true,
-      specialConsiderations: true,
-      hoursLogs: { include: { department: true }, orderBy: { date: "desc" }, take: 20 },
-      activityRecords: { include: { department: true }, orderBy: { date: "desc" }, take: 20 },
-      assignments: { include: { department: true }, orderBy: { date: "desc" }, take: 10 },
-      reminders: { orderBy: { triggerDate: "desc" }, take: 10 },
-    },
-  });
+  const [volunteer, allSkills, allDepartments] = await Promise.all([
+    prisma.volunteerProfile.findUnique({
+      where: { id },
+      include: {
+        contact: true,
+        departments: { include: { department: true } },
+        skills: { include: { skill: true } },
+        availability: true,
+        specialConsiderations: true,
+        hoursLogs: { include: { department: true }, orderBy: { date: "desc" }, take: 20 },
+        activityRecords: { include: { department: true }, orderBy: { date: "desc" }, take: 20 },
+        assignments: { include: { department: true }, orderBy: { date: "desc" }, take: 10 },
+        reminders: { orderBy: { triggerDate: "desc" }, take: 10 },
+      },
+    }),
+    prisma.skill.findMany({ orderBy: { name: "asc" } }),
+    prisma.department.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+  ]);
 
   if (!volunteer) notFound();
+
+  // Get skills and departments the volunteer doesn't have yet
+  const volunteerSkillIds = volunteer.skills.map((vs) => vs.skillId);
+  const availableSkills = allSkills.filter((s) => !volunteerSkillIds.includes(s.id));
+
+  const volunteerDepartmentIds = volunteer.departments.map((vd) => vd.departmentId);
+  const availableDepartments = allDepartments.filter((d) => !volunteerDepartmentIds.includes(d.id));
 
   const totalHours = volunteer.hoursLogs.reduce((sum, log) => sum + log.hours, 0);
   const verifiedHours = volunteer.hoursLogs
@@ -81,7 +220,21 @@ export default async function VolunteerDetailPage({
                 <h2 className="text-xl font-bold text-gray-900">
                   {volunteer.contact.firstName} {volunteer.contact.lastName}
                 </h2>
-                <Badge className={getStatusColor(volunteer.status)}>{volunteer.status}</Badge>
+                <form action={changeStatus} className="inline-flex items-center gap-2">
+                  <input type="hidden" name="volunteerId" value={id} />
+                  <select
+                    name="status"
+                    defaultValue={volunteer.status}
+                    onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                    className="text-sm font-medium rounded-full px-3 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="APPLICANT">APPLICANT</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ON_LEAVE">ON_LEAVE</option>
+                    <option value="DEPARTED">DEPARTED</option>
+                  </select>
+                </form>
                 <Link href={`/crm/contacts/${volunteer.contactId}`}>
                   <Badge variant="outline" className="cursor-pointer hover:bg-gray-50">CRM Profile →</Badge>
                 </Link>
@@ -107,6 +260,47 @@ export default async function VolunteerDetailPage({
         </CardContent>
       </Card>
 
+      {/* Edit Basic Info */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+        </CardHeader>
+        <CardContent>
+          <form action={editBasicInfo} className="space-y-4">
+            <input type="hidden" name="volunteerId" value={id} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <Input
+                  type="date"
+                  name="startDate"
+                  defaultValue={volunteer.startDate || ""}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <Input
+                  type="date"
+                  name="endDate"
+                  defaultValue={volunteer.endDate || ""}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Desired Hours/Week</label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  name="desiredHoursPerWeek"
+                  defaultValue={volunteer.desiredHoursPerWeek || ""}
+                  placeholder="e.g. 5"
+                />
+              </div>
+            </div>
+            <Button type="submit" size="sm">Save Changes</Button>
+          </form>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Skills */}
         <Card>
@@ -116,21 +310,49 @@ export default async function VolunteerDetailPage({
               <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {volunteer.skills.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">No skills assigned</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 pb-4 border-b border-gray-100">
                 {volunteer.skills.map((vs) => (
-                  <div key={vs.id} className="flex items-center justify-between py-1">
-                    <span className="text-sm font-medium text-gray-900">{vs.skill.name}</span>
+                  <div key={vs.id} className="flex items-center justify-between py-2">
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-900">{vs.skill.name}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">{vs.proficiency}</Badge>
                       {vs.verifiedAt && <Badge className="bg-green-100 text-green-800 text-xs">Verified</Badge>}
+                      <form action={removeSkill} className="inline">
+                        <input type="hidden" name="volunteerId" value={id} />
+                        <input type="hidden" name="skillId" value={vs.skillId} />
+                        <button
+                          type="submit"
+                          className="text-gray-400 hover:text-red-500 transition"
+                          title="Remove skill"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </form>
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+            {availableSkills.length > 0 && (
+              <form action={addSkill} className="flex items-end gap-2">
+                <input type="hidden" name="volunteerId" value={id} />
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Add Skill</label>
+                  <select name="skillId" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Select a skill...</option>
+                    {availableSkills.map((skill) => (
+                      <option key={skill.id} value={skill.id}>{skill.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <Button type="submit" size="sm"><Plus className="h-4 w-4" /></Button>
+              </form>
             )}
           </CardContent>
         </Card>
@@ -165,6 +387,55 @@ export default async function VolunteerDetailPage({
                   );
                 })}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Departments */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900">Departments</h3>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {volunteer.departments.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">Not assigned to any departments</p>
+            ) : (
+              <div className="space-y-2 pb-4 border-b border-gray-100">
+                {volunteer.departments.map((vd) => (
+                  <div key={vd.departmentId} className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-gray-900">{vd.department.name}</span>
+                    <form action={removeDepartment} className="inline">
+                      <input type="hidden" name="volunteerId" value={id} />
+                      <input type="hidden" name="departmentId" value={vd.departmentId} />
+                      <button
+                        type="submit"
+                        className="text-gray-400 hover:text-red-500 transition"
+                        title="Remove department"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+            {availableDepartments.length > 0 && (
+              <form action={addDepartment} className="flex items-end gap-2">
+                <input type="hidden" name="volunteerId" value={id} />
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Add Department</label>
+                  <select name="departmentId" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Select a department...</option>
+                    {availableDepartments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <Button type="submit" size="sm"><Plus className="h-4 w-4" /></Button>
+              </form>
             )}
           </CardContent>
         </Card>
@@ -295,6 +566,29 @@ export default async function VolunteerDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Volunteer */}
+      <Card className="border-red-200 bg-red-50">
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-red-900">Danger Zone</h3>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-red-700 mb-4">
+            Permanently delete this volunteer profile. This action cannot be undone. The associated contact will remain.
+          </p>
+          <form action={deleteVolunteer} onSubmit={(e) => {
+            if (!window.confirm("Are you sure you want to delete this volunteer profile? This action cannot be undone.")) {
+              e.preventDefault();
+            }
+          }}>
+            <input type="hidden" name="volunteerId" value={id} />
+            <Button type="submit" size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Volunteer Profile
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

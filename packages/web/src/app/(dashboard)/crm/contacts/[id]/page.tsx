@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle, Edit3, Trash2, Archive, ArchiveX } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -39,6 +39,11 @@ export default async function ContactDetailPage({
     where: { id: { not: id } },
     orderBy: { firstName: "asc" },
     select: { id: true, firstName: true, lastName: true },
+  });
+
+  const allOrganisations = await prisma.organisation.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
   });
 
   async function addNote(formData: FormData) {
@@ -198,6 +203,65 @@ export default async function ContactDetailPage({
     redirect(`/crm/contacts/${id}`);
   }
 
+  async function updateContact(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    await prisma.contact.update({
+      where: { id },
+      data: {
+        firstName: formData.get("firstName") as string,
+        lastName: formData.get("lastName") as string,
+        email: (formData.get("email") as string) || null,
+        phone: (formData.get("phone") as string) || null,
+        type: formData.get("type") as string,
+        dateOfBirth: (formData.get("dateOfBirth") as string) || null,
+        addressLine1: (formData.get("addressLine1") as string) || null,
+        city: (formData.get("city") as string) || null,
+        postcode: (formData.get("postcode") as string) || null,
+        country: (formData.get("country") as string) || null,
+        organisationId: (formData.get("organisationId") as string) || null,
+      },
+    });
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
+  }
+
+  async function deleteContact() {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    await prisma.contact.delete({
+      where: { id },
+    });
+    redirect("/crm/contacts");
+  }
+
+  async function toggleArchive() {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const currentContact = await prisma.contact.findUnique({
+      where: { id },
+      select: { isArchived: true },
+    });
+
+    if (!currentContact) redirect("/crm/contacts");
+
+    await prisma.contact.update({
+      where: { id },
+      data: {
+        isArchived: !currentContact.isArchived,
+        archivedAt: !currentContact.isArchived ? new Date() : null,
+      },
+    });
+    revalidatePath(`/crm/contacts/${id}`);
+    redirect(`/crm/contacts/${id}`);
+  }
+
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
     SUPPORTER: "bg-blue-100 text-blue-800",
@@ -248,27 +312,57 @@ export default async function ContactDetailPage({
           <div className="flex items-start gap-4">
             <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
             <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {contact.firstName} {contact.lastName}
-                </h2>
-                <Badge className={typeColors[contact.type]}>{contact.type}</Badge>
-                {contact.isArchived && (
-                  <Badge className="bg-red-100 text-red-800">Archived</Badge>
-                )}
-                {contact.volunteerProfile ? (
-                  <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
-                    <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
-                      View Volunteer Profile →
-                    </Badge>
-                  </Link>
-                ) : contact.type === "VOLUNTEER" ? (
-                  <form action={createVolunteerProfile}>
-                    <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
-                      <Plus className="h-3 w-3" /> Create Volunteer Profile
-                    </button>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {contact.firstName} {contact.lastName}
+                    </h2>
+                    <Badge className={typeColors[contact.type]}>{contact.type}</Badge>
+                    {contact.isArchived && (
+                      <Badge className="bg-red-100 text-red-800">Archived</Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {contact.volunteerProfile ? (
+                      <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
+                        <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
+                          View Volunteer Profile →
+                        </Badge>
+                      </Link>
+                    ) : contact.type === "VOLUNTEER" ? (
+                      <form action={createVolunteerProfile}>
+                        <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+                          <Plus className="h-3 w-3" /> Create Volunteer Profile
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <form action={toggleArchive}>
+                    <Button type="submit" variant="outline" size="sm" className="gap-2">
+                      {contact.isArchived ? (
+                        <>
+                          <ArchiveX className="h-4 w-4" /> Unarchive
+                        </>
+                      ) : (
+                        <>
+                          <Archive className="h-4 w-4" /> Archive
+                        </>
+                      )}
+                    </Button>
                   </form>
-                ) : null}
+                  <form action={deleteContact} onSubmit={(e) => {
+                    if (!confirm("Are you sure you want to delete this contact? This action cannot be undone.")) {
+                      e.preventDefault();
+                    }
+                  }}>
+                    <Button type="submit" variant="destructive" size="sm" className="gap-2">
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </Button>
+                  </form>
+                </div>
               </div>
               <div className="mt-3 space-y-1.5">
                 {contact.email && (
@@ -307,6 +401,103 @@ export default async function ContactDetailPage({
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Contact Form */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Edit3 className="h-5 w-5" />
+            <h3 className="text-lg font-semibold text-gray-900">Edit Contact</h3>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form action={updateContact} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <Input name="firstName" defaultValue={contact.firstName} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <Input name="lastName" defaultValue={contact.lastName} required />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <Input name="email" type="email" defaultValue={contact.email || ""} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <Input name="phone" defaultValue={contact.phone || ""} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select
+                  name="type"
+                  defaultValue={contact.type}
+                  required
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="DONOR">Donor</option>
+                  <option value="SUPPORTER">Supporter</option>
+                  <option value="BENEFICIARY">Beneficiary</option>
+                  <option value="VOLUNTEER">Volunteer</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                <Input name="dateOfBirth" type="date" defaultValue={contact.dateOfBirth || ""} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+                <Input name="addressLine1" defaultValue={contact.addressLine1 || ""} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <Input name="city" defaultValue={contact.city || ""} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
+                <Input name="postcode" defaultValue={contact.postcode || ""} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <Input name="country" defaultValue={contact.country || ""} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
+              <select
+                name="organisationId"
+                defaultValue={contact.organisationId || ""}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">No organisation</option>
+                {allOrganisations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Button type="submit" className="w-full">Update Contact</Button>
+          </form>
         </CardContent>
       </Card>
 

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Plus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,27 @@ export default async function DepartmentsPage() {
         description: (formData.get("description") as string) || null,
       },
     });
-    redirect("/volunteers/departments");
+    revalidatePath("/volunteers/departments");
+  }
+
+  async function deleteDepartment(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const departmentId = formData.get("departmentId") as string;
+
+    // Delete all volunteer department associations first
+    await prisma.volunteerDepartment.deleteMany({
+      where: { departmentId },
+    });
+
+    // Delete the department
+    await prisma.department.delete({
+      where: { id: departmentId },
+    });
+
+    revalidatePath("/volunteers/departments");
   }
 
   return (
@@ -56,10 +77,27 @@ export default async function DepartmentsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {departments.map((dept) => (
-            <Card key={dept.id} className="p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold text-gray-900">{dept.name}</h3>
-                {!dept.isActive && <Badge className="bg-gray-100 text-gray-600 text-xs">Inactive</Badge>}
+            <Card key={dept.id} className="p-6 flex flex-col">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <h3 className="font-semibold text-gray-900">{dept.name}</h3>
+                  {!dept.isActive && <Badge className="bg-gray-100 text-gray-600 text-xs">Inactive</Badge>}
+                </div>
+                <form action={deleteDepartment} className="inline">
+                  <input type="hidden" name="departmentId" value={dept.id} />
+                  <button
+                    type="submit"
+                    className="text-gray-400 hover:text-red-500 transition"
+                    title="Delete department"
+                    onClick={(e) => {
+                      if (!window.confirm(`Delete department "${dept.name}"? This will remove it from all volunteers and related records.`)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </form>
               </div>
               {dept.description && <p className="text-sm text-gray-500 mb-3">{dept.description}</p>}
               <div className="flex items-center gap-4 text-xs text-gray-400">

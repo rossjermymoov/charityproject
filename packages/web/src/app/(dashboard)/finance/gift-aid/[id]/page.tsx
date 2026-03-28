@@ -3,10 +3,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Edit2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 
@@ -25,6 +26,25 @@ export default async function GiftAidDetailPage({
   });
 
   if (!giftAid) notFound();
+
+  async function updateDeclaration(formData: FormData) {
+    "use server";
+    const session = await requireAuth();
+
+    const endDate = formData.get("endDate") as string;
+
+    await prisma.giftAid.update({
+      where: { id },
+      data: {
+        declarationDate: new Date(formData.get("declarationDate") as string),
+        startDate: new Date(formData.get("startDate") as string),
+        endDate: endDate ? new Date(endDate) : null,
+        notes: (formData.get("notes") as string) || null,
+      },
+    });
+
+    revalidatePath(`/finance/gift-aid/${id}`);
+  }
 
   async function updateStatus(formData: FormData) {
     "use server";
@@ -133,10 +153,57 @@ export default async function GiftAidDetailPage({
         </CardContent>
       </Card>
 
+      {/* Edit Declaration Details */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Edit Declaration</h3>
+        </CardHeader>
+        <CardContent>
+          <form action={updateDeclaration} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Declaration Date"
+                name="declarationDate"
+                type="date"
+                required
+                defaultValue={giftAid.declarationDate.toISOString().split("T")[0]}
+              />
+              <Input
+                label="Start Date"
+                name="startDate"
+                type="date"
+                required
+                defaultValue={giftAid.startDate.toISOString().split("T")[0]}
+              />
+            </div>
+
+            <Input
+              label="End Date (optional - leave blank for ongoing)"
+              name="endDate"
+              type="date"
+              placeholder="Leave blank if ongoing"
+              defaultValue={giftAid.endDate ? giftAid.endDate.toISOString().split("T")[0] : ""}
+            />
+
+            <Input
+              label="Notes"
+              name="notes"
+              placeholder="Additional notes..."
+              defaultValue={giftAid.notes || ""}
+            />
+
+            <Button type="submit">
+              <Edit2 className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Status update */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Update Status</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Change Status</h3>
         </CardHeader>
         <CardContent>
           <form action={updateStatus} className="flex items-end gap-4">
@@ -144,6 +211,7 @@ export default async function GiftAidDetailPage({
               <Select
                 label="Status"
                 name="status"
+                defaultValue={giftAid.status}
                 options={[
                   { value: "ACTIVE", label: "Active" },
                   { value: "EXPIRED", label: "Expired" },
@@ -151,7 +219,7 @@ export default async function GiftAidDetailPage({
                 ]}
               />
             </div>
-            <Button type="submit">Update</Button>
+            <Button type="submit">Update Status</Button>
           </form>
         </CardContent>
       </Card>
@@ -160,7 +228,14 @@ export default async function GiftAidDetailPage({
         <Link href="/finance/gift-aid">
           <Button variant="outline">Back</Button>
         </Link>
-        <form action={deleteGiftAid}>
+        <form
+          action={deleteGiftAid}
+          onSubmit={(e) => {
+            if (!confirm("Are you sure you want to delete this declaration?")) {
+              e.preventDefault();
+            }
+          }}
+        >
           <Button variant="destructive" type="submit">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete

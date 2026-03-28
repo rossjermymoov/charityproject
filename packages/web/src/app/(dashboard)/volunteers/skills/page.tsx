@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
-import { Wrench, Plus } from "lucide-react";
+import { Wrench, Plus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,27 @@ export default async function SkillsPage() {
         departmentId: (formData.get("departmentId") as string) || null,
       },
     });
-    redirect("/volunteers/skills");
+    revalidatePath("/volunteers/skills");
+  }
+
+  async function deleteSkill(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const skillId = formData.get("skillId") as string;
+
+    // Delete all volunteer skill associations first
+    await prisma.volunteerSkill.deleteMany({
+      where: { skillId },
+    });
+
+    // Delete the skill
+    await prisma.skill.delete({
+      where: { id: skillId },
+    });
+
+    revalidatePath("/volunteers/skills");
   }
 
   return (
@@ -69,8 +90,25 @@ export default async function SkillsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {skills.map((skill) => (
-            <Card key={skill.id} className="p-6">
-              <h3 className="font-semibold text-gray-900">{skill.name}</h3>
+            <Card key={skill.id} className="p-6 flex flex-col">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold text-gray-900">{skill.name}</h3>
+                <form action={deleteSkill}>
+                  <input type="hidden" name="skillId" value={skill.id} />
+                  <button
+                    type="submit"
+                    className="text-gray-400 hover:text-red-500 transition"
+                    title="Delete skill"
+                    onClick={(e) => {
+                      if (!window.confirm(`Delete skill "${skill.name}"? This will remove it from all volunteers.`)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </form>
+              </div>
               {skill.description && <p className="text-sm text-gray-500 mt-1">{skill.description}</p>}
               <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
                 <span>{skill._count.volunteerSkills} volunteers</span>
