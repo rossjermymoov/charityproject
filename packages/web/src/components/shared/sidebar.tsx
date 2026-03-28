@@ -48,7 +48,7 @@ const navigation = [
   { name: "Skills", href: "/volunteers/skills", icon: Wrench },
   { name: "Training", href: "/volunteers/training", icon: GraduationCap },
   { name: "Assignments", href: "/assignments", icon: Calendar },
-  { name: "Hours", href: "/volunteers/hours", icon: Clock },
+  { name: "Log Hours", href: "/volunteers/hours", icon: Clock },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Finance" },
   { name: "Donations", href: "/finance/donations", icon: PoundSterling },

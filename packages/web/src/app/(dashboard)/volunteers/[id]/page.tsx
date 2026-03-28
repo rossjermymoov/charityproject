@@ -270,10 +270,17 @@ export default async function VolunteerDetailPage({
                 ))}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-indigo-600">{totalHours.toFixed(1)}</p>
-              <p className="text-xs text-gray-500">total hours</p>
-              <p className="text-sm font-medium text-green-600 mt-1">{verifiedHours.toFixed(1)} verified</p>
+            <div className="text-right space-y-2">
+              <div>
+                <p className="text-2xl font-bold text-indigo-600">{totalHours.toFixed(1)}</p>
+                <p className="text-xs text-gray-500">total hours</p>
+                <p className="text-sm font-medium text-green-600 mt-1">{verifiedHours.toFixed(1)} verified</p>
+              </div>
+              <Link href={`/volunteers/hours?volunteer=${id}`}>
+                <Button size="sm" variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50">
+                  <Clock className="h-3 w-3 mr-1" /> View All Hours
+                </Button>
+              </Link>
             </div>
           </div>
         </CardContent>
@@ -485,9 +492,14 @@ export default async function VolunteerDetailPage({
         {/* Hours Log */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900">Hours Log</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900">Hours Log</h3>
+              </div>
+              <Link href={`/volunteers/hours?volunteer=${id}`} className="text-sm text-indigo-600 hover:underline">
+                View All →
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -523,9 +535,14 @@ export default async function VolunteerDetailPage({
         {/* Upcoming Assignments */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900">Assignments</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900">Assignments</h3>
+              </div>
+              <Link href="/assignments" className="text-sm text-indigo-600 hover:underline">
+                View All →
+              </Link>
             </div>
           </CardHeader>
           <CardContent>

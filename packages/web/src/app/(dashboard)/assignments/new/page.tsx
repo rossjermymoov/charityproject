@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export default async function NewAssignmentPage() {
   const [volunteers, departments] = await Promise.all([
@@ -54,26 +55,30 @@ export default async function NewAssignmentPage() {
             <Input label="Title" name="title" required placeholder="e.g. Morning kitchen shift" />
             <Textarea label="Description" name="description" placeholder="Optional details..." />
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Volunteer</label>
-              <select name="volunteerId" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Select volunteer</option>
-                {volunteers.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.contact.firstName} {v.contact.lastName}
-                  </option>
-                ))}
-              </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Volunteer</label>
+              <SearchableSelect
+                name="volunteerId"
+                required
+                placeholder="Search volunteers..."
+                options={volunteers.map((v) => ({
+                  value: v.id,
+                  label: `${v.contact.firstName} ${v.contact.lastName}`,
+                }))}
+              />
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Department</label>
-              <select name="departmentId" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Select department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <SearchableSelect
+                name="departmentId"
+                required
+                placeholder="Search departments..."
+                options={departments.map((d) => ({
+                  value: d.id,
+                  label: d.name,
+                }))}
+              />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
