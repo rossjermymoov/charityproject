@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusColor, formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
 
 async function changeStatus(formData: FormData) {
   "use server";
@@ -223,18 +224,17 @@ export default async function VolunteerDetailPage({
                 </h2>
                 <form action={changeStatus} className="inline-flex items-center gap-2">
                   <input type="hidden" name="volunteerId" value={id} />
-                  <select
+                  <AutoSubmitSelect
                     name="status"
                     defaultValue={volunteer.status}
-                    onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                    className="text-sm font-medium rounded-full px-3 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="APPLICANT">APPLICANT</option>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                    <option value="ON_LEAVE">ON_LEAVE</option>
-                    <option value="DEPARTED">DEPARTED</option>
-                  </select>
+                    options={[
+                      { value: "APPLICANT", label: "APPLICANT" },
+                      { value: "ACTIVE", label: "ACTIVE" },
+                      { value: "INACTIVE", label: "INACTIVE" },
+                      { value: "ON_LEAVE", label: "ON_LEAVE" },
+                      { value: "DEPARTED", label: "DEPARTED" },
+                    ]}
+                  />
                 </form>
                 <Link href={`/crm/contacts/${volunteer.contactId}`}>
                   <Badge variant="outline" className="cursor-pointer hover:bg-gray-50">CRM Profile →</Badge>

@@ -129,15 +129,6 @@ export default async function OrganisationsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => {
-                      const dialog = document.getElementById(`edit-dialog-${org.id}`) as HTMLDialogElement;
-                      if (dialog) dialog.showModal();
-                    }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Edit3 className="h-4 w-4" /> Edit
-                  </button>
                   <form action={deleteOrg} className="inline">
                     <input type="hidden" name="orgId" value={org.id} />
                     <ConfirmButton message={`Are you sure you want to delete "${org.name}"? This action cannot be undone.`} variant="destructive" size="sm" className="gap-2">
@@ -147,19 +138,21 @@ export default async function OrganisationsPage() {
                 </div>
               </div>
 
-              {/* Edit Dialog */}
-              <dialog id={`edit-dialog-${org.id}`} className="rounded-lg shadow-xl backdrop:bg-black/50 p-0">
-                <div className="w-full max-w-md p-6">
-                  <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Organisation</h2>
-                  <form action={updateOrg} className="space-y-4">
-                    <input type="hidden" name="orgId" value={org.id} />
+              {/* Inline Edit Form */}
+              <details className="mt-4 border-t border-gray-100 pt-4">
+                <summary className="cursor-pointer text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                  <Edit3 className="h-4 w-4" /> Edit Organisation
+                </summary>
+                <form action={updateOrg} className="space-y-3 mt-3">
+                  <input type="hidden" name="orgId" value={org.id} />
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
                       <Input name="name" required defaultValue={org.name} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                      <select name="type" defaultValue={org.type || ""} className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <select name="type" defaultValue={org.type || ""} className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full">
                         <option value="">Select type</option>
                         <option value="Corporate">Corporate</option>
                         <option value="Foundation">Foundation</option>
@@ -169,25 +162,13 @@ export default async function OrganisationsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Website</label>
                       <Input name="website" defaultValue={org.website || ""} placeholder="https://..." />
                     </div>
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" className="flex-1">Save Changes</Button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          const dialog = e.currentTarget.closest("dialog") as HTMLDialogElement;
-                          if (dialog) dialog.close();
-                        }}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </dialog>
+                  </div>
+                  <Button type="submit" size="sm">Save Changes</Button>
+                </form>
+              </details>
             </Card>
           ))}
         </div>

@@ -215,13 +215,10 @@ export default async function EventDetailPage({
             </div>
 
             <div className="flex gap-3">
-              <form action={updateStatus}>
+              <form action={updateStatus} className="flex items-center gap-2">
                 <select
                   name="newStatus"
                   defaultValue={event.status}
-                  onChange={(e) => {
-                    e.currentTarget.form?.requestSubmit();
-                  }}
                   className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 >
                   <option value="PLANNED">Planned</option>
@@ -230,6 +227,7 @@ export default async function EventDetailPage({
                   <option value="COMPLETED">Completed</option>
                   <option value="CANCELLED">Cancelled</option>
                 </select>
+                <Button type="submit" size="sm">Update</Button>
               </form>
 
               <form action={deleteEvent}>
