@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, PoundSterling } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, PoundSterling, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 
 export default async function CollectionTinDetailPage({
   params,
@@ -77,6 +79,7 @@ export default async function CollectionTinDetailPage({
       });
     }
 
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "CollectionTin", entityId: id, details: { status: newStatus } });
     redirect(`/finance/collection-tins/${id}`);
   }
 
@@ -99,6 +102,7 @@ export default async function CollectionTinDetailPage({
       },
     });
 
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "CollectionTinMovement", entityId: id, details: { amount, type: "COUNTED" } });
     redirect(`/finance/collection-tins/${id}`);
   }
 
@@ -127,27 +131,51 @@ export default async function CollectionTinDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
-    const locationId = (formData.get("locationId") as string) || null;
+    const existingLocationId = (formData.get("locationId") as string) || null;
+    const newLocationName = (formData.get("newLocationName") as string)?.trim() || null;
+    const newLocationAddress = (formData.get("newLocationAddress") as string)?.trim() || null;
+    const newLocationType = (formData.get("newLocationType") as string) || "OTHER";
+
+    let locationId: string | null = existingLocationId;
+    let locationName = "";
+    let locationAddress: string | null = null;
+
+    if (existingLocationId) {
+      const loc = await prisma.tinLocation.findUnique({
+        where: { id: existingLocationId },
+      });
+      if (loc) {
+        locationName = loc.name;
+        locationAddress = loc.address;
+      }
+    } else if (newLocationName) {
+      // Auto-create a new TinLocation
+      const newLoc = await prisma.tinLocation.create({
+        data: {
+          name: newLocationName,
+          address: newLocationAddress,
+          type: newLocationType,
+        },
+      });
+      locationId = newLoc.id;
+      locationName = newLoc.name;
+      locationAddress = newLoc.address;
+      await logAudit({ userId: session.id, action: "CREATE", entityType: "TinLocation", entityId: newLoc.id, details: { name: newLocationName, autoCreated: true } });
+    }
 
     if (locationId) {
-      const loc = await prisma.tinLocation.findUnique({
-        where: { id: locationId },
-      });
       await prisma.collectionTin.update({
         where: { id },
-        data: {
-          locationId,
-          locationName: loc?.name || "",
-          locationAddress: loc?.address || null,
-        },
+        data: { locationId, locationName, locationAddress },
       });
     } else {
       await prisma.collectionTin.update({
         where: { id },
-        data: { locationId: null },
+        data: { locationId: null, locationName: "", locationAddress: null },
       });
     }
 
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "CollectionTin", entityId: id, details: { locationId } });
     revalidatePath(`/finance/collection-tins/${id}`);
   }
 
@@ -160,13 +188,11 @@ export default async function CollectionTinDetailPage({
       where: { id },
       data: {
         tinNumber: formData.get("tinNumber") as string,
-        locationName: formData.get("locationName") as string,
-        locationAddress:
-          (formData.get("locationAddress") as string) || null,
         notes: (formData.get("notes") as string) || null,
       },
     });
 
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "CollectionTin", entityId: id, details: { tinNumber: formData.get("tinNumber") } });
     revalidatePath(`/finance/collection-tins/${id}`);
   }
 
@@ -179,6 +205,7 @@ export default async function CollectionTinDetailPage({
       where: { id },
     });
 
+    await logAudit({ userId: session.id, action: "DELETE", entityType: "CollectionTin", entityId: id });
     redirect("/finance/collection-tins");
   }
 
@@ -322,24 +349,6 @@ export default async function CollectionTinDetailPage({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location Name
-                </label>
-                <Input
-                  name="locationName"
-                  defaultValue={tin.locationName}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location Address
-                </label>
-                <Input
-                  name="locationAddress"
-                  defaultValue={tin.locationAddress || ""}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Notes
                 </label>
                 <Textarea
@@ -369,12 +378,15 @@ export default async function CollectionTinDetailPage({
         </Card>
 
         <div className="space-y-6">
-          {/* Assign to Location */}
+          {/* Location - single source of truth */}
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Assigned Location
-              </h3>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Location
+                </h3>
+              </div>
             </CardHeader>
             <CardContent>
               {tin.location && (
@@ -386,33 +398,75 @@ export default async function CollectionTinDetailPage({
                     {tin.location.name}
                   </Link>
                   {tin.location.address && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 mt-1">
                       {tin.location.address}
                     </p>
                   )}
+                  {tin.location.type && tin.location.type !== "OTHER" && (
+                    <Badge className="mt-2 bg-gray-100 text-gray-700 text-xs">
+                      {tin.location.type}
+                    </Badge>
+                  )}
                 </div>
               )}
-              <form action={assignLocation} className="flex items-end gap-2">
-                <div className="flex-1">
+
+              <form action={assignLocation} className="space-y-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {tin.location ? "Change Location" : "Assign to Location"}
+                    {tin.location ? "Change to Existing Location" : "Select Existing Location"}
                   </label>
-                  <select
+                  <SearchableSelect
                     name="locationId"
+                    placeholder="Search locations..."
                     defaultValue={tin.locationId || ""}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    <option value="">No location</option>
-                    {allLocations.map((loc) => (
-                      <option key={loc.id} value={loc.id}>
-                        {loc.name}
-                        {loc.type !== "OTHER" ? ` (${loc.type})` : ""}
-                      </option>
-                    ))}
-                  </select>
+                    options={allLocations.map((loc) => ({
+                      value: loc.id,
+                      label: `${loc.name}${loc.type !== "OTHER" ? ` (${loc.type})` : ""}`,
+                    }))}
+                  />
                 </div>
-                <Button type="submit" size="sm" variant="outline">
-                  Update
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-2 text-gray-500">or create new</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Input
+                    label="New Location Name"
+                    name="newLocationName"
+                    placeholder="e.g., The Red Lion Pub"
+                  />
+                  <Input
+                    label="Address"
+                    name="newLocationAddress"
+                    placeholder="Full address (optional)"
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type
+                    </label>
+                    <select
+                      name="newLocationType"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      <option value="OTHER">Other</option>
+                      <option value="SHOP">Shop</option>
+                      <option value="PUB">Pub</option>
+                      <option value="RESTAURANT">Restaurant</option>
+                      <option value="OFFICE">Office</option>
+                      <option value="SCHOOL">School</option>
+                      <option value="CHURCH">Church</option>
+                    </select>
+                  </div>
+                </div>
+
+                <Button type="submit" size="sm">
+                  {tin.location ? "Update Location" : "Set Location"}
                 </Button>
               </form>
             </CardContent>
