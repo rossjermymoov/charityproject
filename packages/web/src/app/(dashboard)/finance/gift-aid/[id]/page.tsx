@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function GiftAidDetailPage({
   params,
@@ -230,16 +231,11 @@ export default async function GiftAidDetailPage({
         </Link>
         <form
           action={deleteGiftAid}
-          onSubmit={(e) => {
-            if (!confirm("Are you sure you want to delete this declaration?")) {
-              e.preventDefault();
-            }
-          }}
         >
-          <Button variant="destructive" type="submit">
+          <ConfirmButton message="Are you sure you want to delete this declaration?" variant="destructive">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
-          </Button>
+          </ConfirmButton>
         </form>
       </div>
     </div>

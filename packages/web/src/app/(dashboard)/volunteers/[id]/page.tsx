@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusColor, formatDate } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 async function changeStatus(formData: FormData) {
   "use server";
@@ -576,16 +577,12 @@ export default async function VolunteerDetailPage({
           <p className="text-sm text-red-700 mb-4">
             Permanently delete this volunteer profile. This action cannot be undone. The associated contact will remain.
           </p>
-          <form action={deleteVolunteer} onSubmit={(e) => {
-            if (!window.confirm("Are you sure you want to delete this volunteer profile? This action cannot be undone.")) {
-              e.preventDefault();
-            }
-          }}>
+          <form action={deleteVolunteer}>
             <input type="hidden" name="volunteerId" value={id} />
-            <Button type="submit" size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+            <ConfirmButton message="Are you sure you want to delete this volunteer profile? This action cannot be undone." variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700 text-white">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Volunteer Profile
-            </Button>
+            </ConfirmButton>
           </form>
         </CardContent>
       </Card>

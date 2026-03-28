@@ -7,6 +7,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getStatusColor } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function HoursPage() {
   const session = await getSession();
@@ -94,16 +95,11 @@ export default async function HoursPage() {
                       <form
                         action={deleteHours}
                         className="inline"
-                        onSubmit={(e) => {
-                          if (!confirm("Are you sure you want to delete this hours log?")) {
-                            e.preventDefault();
-                          }
-                        }}
                       >
                         <input type="hidden" name="logId" value={log.id} />
-                        <Button type="submit" size="sm" variant="ghost" className="text-red-600 hover:text-red-700">
+                        <ConfirmButton message="Are you sure you want to delete this hours log?" variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </ConfirmButton>
                       </form>
                       {log.verifiedBy && (
                         <span className="text-xs text-gray-400">by {log.verifiedBy.name}</span>

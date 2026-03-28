@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function DepartmentsPage() {
   const departments = await prisma.department.findMany({
@@ -85,18 +86,15 @@ export default async function DepartmentsPage() {
                 </div>
                 <form action={deleteDepartment} className="inline">
                   <input type="hidden" name="departmentId" value={dept.id} />
-                  <button
-                    type="submit"
-                    className="text-gray-400 hover:text-red-500 transition"
+                  <ConfirmButton
+                    message={`Delete department "${dept.name}"? This will remove it from all volunteers and related records.`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-red-500 transition p-0 h-auto"
                     title="Delete department"
-                    onClick={(e) => {
-                      if (!window.confirm(`Delete department "${dept.name}"? This will remove it from all volunteers and related records.`)) {
-                        e.preventDefault();
-                      }
-                    }}
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </ConfirmButton>
                 </form>
               </div>
               {dept.description && <p className="text-sm text-gray-500 mb-3">{dept.description}</p>}

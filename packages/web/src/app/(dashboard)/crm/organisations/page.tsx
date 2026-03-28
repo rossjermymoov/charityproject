@@ -8,6 +8,7 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Input } from "@/components/ui/input";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function OrganisationsPage() {
   const organisations = await prisma.organisation.findMany({
@@ -137,15 +138,11 @@ export default async function OrganisationsPage() {
                   >
                     <Edit3 className="h-4 w-4" /> Edit
                   </button>
-                  <form action={deleteOrg} onSubmit={(e) => {
-                    if (!confirm(`Are you sure you want to delete "${org.name}"? This action cannot be undone.`)) {
-                      e.preventDefault();
-                    }
-                  }} className="inline">
+                  <form action={deleteOrg} className="inline">
                     <input type="hidden" name="orgId" value={org.id} />
-                    <Button type="submit" variant="destructive" size="sm" className="gap-2">
+                    <ConfirmButton message={`Are you sure you want to delete "${org.name}"? This action cannot be undone.`} variant="destructive" size="sm" className="gap-2">
                       <Trash2 className="h-4 w-4" /> Delete
-                    </Button>
+                    </ConfirmButton>
                   </form>
                 </div>
               </div>

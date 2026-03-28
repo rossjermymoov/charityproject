@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 function calculateRiskLevel(severity: string, likelihood: string): string {
   const severityOrder: Record<string, number> = {
@@ -143,19 +144,14 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
         <form action={deleteHazard}>
-          <Button
-            type="submit"
+          <ConfirmButton
+            message="Are you sure you want to delete this hazard?"
             variant="outline"
             size="sm"
             className="text-red-600 hover:text-red-700"
-            onClick={(e) => {
-              if (!confirm("Are you sure you want to delete this hazard?")) {
-                e.preventDefault();
-              }
-            }}
           >
             <Trash2 className="h-4 w-4" />
-          </Button>
+          </ConfirmButton>
         </form>
       </div>
 

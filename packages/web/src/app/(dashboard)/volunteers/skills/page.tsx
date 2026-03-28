@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function SkillsPage() {
   const [skills, departments] = await Promise.all([
@@ -95,18 +96,15 @@ export default async function SkillsPage() {
                 <h3 className="font-semibold text-gray-900">{skill.name}</h3>
                 <form action={deleteSkill}>
                   <input type="hidden" name="skillId" value={skill.id} />
-                  <button
-                    type="submit"
-                    className="text-gray-400 hover:text-red-500 transition"
+                  <ConfirmButton
+                    message={`Delete skill "${skill.name}"? This will remove it from all volunteers.`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-red-500 transition p-0 h-auto"
                     title="Delete skill"
-                    onClick={(e) => {
-                      if (!window.confirm(`Delete skill "${skill.name}"? This will remove it from all volunteers.`)) {
-                        e.preventDefault();
-                      }
-                    }}
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </ConfirmButton>
                 </form>
               </div>
               {skill.description && <p className="text-sm text-gray-500 mt-1">{skill.description}</p>}

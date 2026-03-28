@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function ContactDetailPage({
   params,
@@ -353,14 +354,10 @@ export default async function ContactDetailPage({
                       )}
                     </Button>
                   </form>
-                  <form action={deleteContact} onSubmit={(e) => {
-                    if (!confirm("Are you sure you want to delete this contact? This action cannot be undone.")) {
-                      e.preventDefault();
-                    }
-                  }}>
-                    <Button type="submit" variant="destructive" size="sm" className="gap-2">
+                  <form action={deleteContact}>
+                    <ConfirmButton message="Are you sure you want to delete this contact? This action cannot be undone." variant="destructive" size="sm" className="gap-2">
                       <Trash2 className="h-4 w-4" /> Delete
-                    </Button>
+                    </ConfirmButton>
                   </form>
                 </div>
               </div>
