@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -69,15 +70,18 @@ export default async function NewDonationPage() {
         <CardContent className="pt-6">
           <form action={createDonation} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Contact"
-                name="contactId"
-                required
-                options={contacts.map((contact) => ({
-                  value: contact.id,
-                  label: `${contact.firstName} ${contact.lastName}`,
-                }))}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                <SearchableSelect
+                  name="contactId"
+                  required
+                  placeholder="Search contacts..."
+                  options={contacts.map((contact) => ({
+                    value: contact.id,
+                    label: `${contact.firstName} ${contact.lastName}`,
+                  }))}
+                />
+              </div>
               <Input label="Date" name="date" type="date" required />
             </div>
 

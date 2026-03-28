@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 
@@ -247,16 +248,19 @@ export default async function DonationDetailPage({
         <CardContent>
           <form action={updateDonation} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Contact"
-                name="contactId"
-                required
-                defaultValue={donation.contactId}
-                options={contacts.map((contact) => ({
-                  value: contact.id,
-                  label: `${contact.firstName} ${contact.lastName}`,
-                }))}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                <SearchableSelect
+                  name="contactId"
+                  required
+                  defaultValue={donation.contactId}
+                  placeholder="Search contacts..."
+                  options={contacts.map((contact) => ({
+                    value: contact.id,
+                    label: `${contact.firstName} ${contact.lastName}`,
+                  }))}
+                />
+              </div>
               <Input
                 label="Date"
                 name="date"

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export default async function ContactDetailPage({
   params,
@@ -507,18 +508,12 @@ export default async function ContactDetailPage({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
-              <select
+              <SearchableSelect
                 name="organisationId"
                 defaultValue={contact.organisationId || ""}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">No organisation</option>
-                {allOrganisations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select organisation..."
+                options={allOrganisations.map((org) => ({ value: org.id, label: org.name }))}
+              />
             </div>
 
             <Button type="submit" className="w-full">Update Contact</Button>
@@ -591,18 +586,12 @@ export default async function ContactDetailPage({
           <CardContent>
             <form action={addRelationship} className="space-y-3 mb-4 pb-4 border-b border-gray-100">
               <div className="grid grid-cols-2 gap-3">
-                <select
+                <SearchableSelect
                   name="toContactId"
                   required
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
-                  <option value="">Select contact...</option>
-                  {allContacts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select contact..."
+                  options={allContacts.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
+                />
                 <select
                   name="relType"
                   required

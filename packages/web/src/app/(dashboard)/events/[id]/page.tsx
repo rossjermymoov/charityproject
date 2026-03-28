@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatDate } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
@@ -249,15 +249,18 @@ export default async function EventDetailPage({
           </CardHeader>
           <CardContent>
             <form action={addAttendee} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-              <Select
-                label="Contact"
-                name="contactId"
-                options={contacts.map((contact) => ({
-                  value: contact.id,
-                  label: `${contact.firstName} ${contact.lastName}`,
-                }))}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                <SearchableSelect
+                  name="contactId"
+                  placeholder="Search contacts..."
+                  options={contacts.map((contact) => ({
+                    value: contact.id,
+                    label: `${contact.firstName} ${contact.lastName}`,
+                  }))}
+                  required
+                />
+              </div>
               <Input
                 label="Ticket Type"
                 name="ticketType"

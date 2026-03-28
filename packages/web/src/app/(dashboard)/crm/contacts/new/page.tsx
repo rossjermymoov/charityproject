@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -107,12 +107,14 @@ export default async function NewContactPage() {
             </div>
 
             <Input label="Date of Birth" name="dateOfBirth" type="date" />
-            <Select
-              label="Organisation"
-              name="organisationId"
-              placeholder="Select organisation (optional)"
-              options={organisations.map((org) => ({ value: org.id, label: org.name }))}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
+              <SearchableSelect
+                name="organisationId"
+                placeholder="Select organisation (optional)"
+                options={organisations.map((org) => ({ value: org.id, label: org.name }))}
+              />
+            </div>
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700">Address</h3>
               <Input label="Address Line 1" name="addressLine1" />
