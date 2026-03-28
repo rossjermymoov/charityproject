@@ -209,6 +209,8 @@ export default async function ContactDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const selectedTypes = formData.getAll("types") as string[];
+
     await prisma.contact.update({
       where: { id },
       data: {
@@ -216,7 +218,8 @@ export default async function ContactDetailPage({
         lastName: formData.get("lastName") as string,
         email: (formData.get("email") as string) || null,
         phone: (formData.get("phone") as string) || null,
-        type: formData.get("type") as string,
+        type: selectedTypes[0] || "OTHER",
+        types: selectedTypes,
         dateOfBirth: (formData.get("dateOfBirth") as string) || null,
         addressLine1: (formData.get("addressLine1") as string) || null,
         city: (formData.get("city") as string) || null,
@@ -225,6 +228,22 @@ export default async function ContactDetailPage({
         organisationId: (formData.get("organisationId") as string) || null,
       },
     });
+
+    // Auto-create volunteer profile if newly tagged as VOLUNTEER
+    if (selectedTypes.includes("VOLUNTEER")) {
+      const existing = await prisma.volunteerProfile.findUnique({
+        where: { contactId: id },
+      });
+      if (!existing) {
+        await prisma.volunteerProfile.create({
+          data: {
+            contactId: id,
+            status: "APPLICANT",
+          },
+        });
+      }
+    }
+
     revalidatePath(`/crm/contacts/${id}`);
     redirect(`/crm/contacts/${id}`);
   }
@@ -265,10 +284,7 @@ export default async function ContactDetailPage({
 
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
-    SUPPORTER: "bg-blue-100 text-blue-800",
-    BENEFICIARY: "bg-purple-100 text-purple-800",
     VOLUNTEER: "bg-indigo-100 text-indigo-800",
-    OTHER: "bg-gray-100 text-gray-800",
   };
 
   const interactionIcons: Record<string, string> = {
@@ -319,7 +335,9 @@ export default async function ContactDetailPage({
                     <h2 className="text-xl font-bold text-gray-900">
                       {contact.firstName} {contact.lastName}
                     </h2>
-                    <Badge className={typeColors[contact.type]}>{contact.type}</Badge>
+                    {contact.types.map((t) => (
+                      <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>{t}</Badge>
+                    ))}
                     {contact.isArchived && (
                       <Badge className="bg-red-100 text-red-800">Archived</Badge>
                     )}
@@ -331,7 +349,7 @@ export default async function ContactDetailPage({
                           View Volunteer Profile →
                         </Badge>
                       </Link>
-                    ) : contact.type === "VOLUNTEER" ? (
+                    ) : contact.types.includes("VOLUNTEER") ? (
                       <form action={createVolunteerProfile}>
                         <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
                           <Plus className="h-3 w-3" /> Create Volunteer Profile
@@ -435,19 +453,29 @@ export default async function ContactDetailPage({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select
-                  name="type"
-                  defaultValue={contact.type}
-                  required
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="DONOR">Donor</option>
-                  <option value="SUPPORTER">Supporter</option>
-                  <option value="BENEFICIARY">Beneficiary</option>
-                  <option value="VOLUNTEER">Volunteer</option>
-                  <option value="OTHER">Other</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Type(s)</label>
+                <div className="flex gap-4 mt-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="types"
+                      value="VOLUNTEER"
+                      defaultChecked={contact.types.includes("VOLUNTEER")}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    Volunteer
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="types"
+                      value="DONOR"
+                      defaultChecked={contact.types.includes("DONOR")}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    Donor
+                  </label>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>

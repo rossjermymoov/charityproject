@@ -93,18 +93,18 @@ async function main() {
     data: { name: "City Council", type: "Government", city: "Birmingham", country: "UK" },
   });
 
-  // Contacts — mix of donors, supporters, and volunteers
+  // Contacts — mix of donors and volunteers (a contact can be both)
   const contacts = await Promise.all([
-    prisma.contact.create({ data: { firstName: "Alice", lastName: "Johnson", email: "alice@example.com", phone: "07700 900001", type: "VOLUNTEER", city: "London", postcode: "SW1A 1AA", country: "UK", createdById: admin.id } }),
-    prisma.contact.create({ data: { firstName: "Bob", lastName: "Smith", email: "bob@example.com", phone: "07700 900002", type: "VOLUNTEER", city: "Manchester", postcode: "M1 1AA", country: "UK", createdById: admin.id } }),
-    prisma.contact.create({ data: { firstName: "Charlie", lastName: "Davis", email: "charlie@example.com", phone: "07700 900003", type: "VOLUNTEER", city: "London", postcode: "EC1A 1BB", country: "UK", createdById: staff1.id } }),
-    prisma.contact.create({ data: { firstName: "Diana", lastName: "Williams", email: "diana@example.com", phone: "07700 900004", type: "VOLUNTEER", city: "Birmingham", postcode: "B1 1AA", country: "UK", createdById: staff1.id } }),
-    prisma.contact.create({ data: { firstName: "Edward", lastName: "Brown", email: "edward@example.com", phone: "07700 900005", type: "VOLUNTEER", city: "Leeds", postcode: "LS1 1AA", country: "UK", createdById: staff2.id } }),
-    prisma.contact.create({ data: { firstName: "Fiona", lastName: "Taylor", email: "fiona@example.com", phone: "07700 900006", type: "VOLUNTEER", city: "London", postcode: "N1 1AA", country: "UK", createdById: admin.id } }),
-    prisma.contact.create({ data: { firstName: "George", lastName: "Anderson", email: "george@acme.com", phone: "07700 900007", type: "DONOR", organisationId: org1.id, city: "London", country: "UK", createdById: admin.id } }),
-    prisma.contact.create({ data: { firstName: "Hannah", lastName: "Smith", email: "hannah@smithfoundation.org", phone: "07700 900008", type: "DONOR", organisationId: org2.id, city: "Manchester", country: "UK", createdById: staff1.id } }),
-    prisma.contact.create({ data: { firstName: "Ian", lastName: "Clark", email: "ian.clark@council.gov.uk", phone: "07700 900009", type: "SUPPORTER", organisationId: org3.id, city: "Birmingham", country: "UK", createdById: staff2.id } }),
-    prisma.contact.create({ data: { firstName: "Julia", lastName: "Martin", email: "julia@example.com", phone: "07700 900010", type: "BENEFICIARY", city: "London", country: "UK", createdById: admin.id } }),
+    prisma.contact.create({ data: { firstName: "Alice", lastName: "Johnson", email: "alice@example.com", phone: "07700 900001", type: "VOLUNTEER", types: ["VOLUNTEER"], city: "London", postcode: "SW1A 1AA", country: "UK", createdById: admin.id } }),
+    prisma.contact.create({ data: { firstName: "Bob", lastName: "Smith", email: "bob@example.com", phone: "07700 900002", type: "VOLUNTEER", types: ["VOLUNTEER"], city: "Manchester", postcode: "M1 1AA", country: "UK", createdById: admin.id } }),
+    prisma.contact.create({ data: { firstName: "Charlie", lastName: "Davis", email: "charlie@example.com", phone: "07700 900003", type: "VOLUNTEER", types: ["VOLUNTEER", "DONOR"], city: "London", postcode: "EC1A 1BB", country: "UK", createdById: staff1.id } }),
+    prisma.contact.create({ data: { firstName: "Diana", lastName: "Williams", email: "diana@example.com", phone: "07700 900004", type: "VOLUNTEER", types: ["VOLUNTEER"], city: "Birmingham", postcode: "B1 1AA", country: "UK", createdById: staff1.id } }),
+    prisma.contact.create({ data: { firstName: "Edward", lastName: "Brown", email: "edward@example.com", phone: "07700 900005", type: "VOLUNTEER", types: ["VOLUNTEER"], city: "Leeds", postcode: "LS1 1AA", country: "UK", createdById: staff2.id } }),
+    prisma.contact.create({ data: { firstName: "Fiona", lastName: "Taylor", email: "fiona@example.com", phone: "07700 900006", type: "VOLUNTEER", types: ["VOLUNTEER"], city: "London", postcode: "N1 1AA", country: "UK", createdById: admin.id } }),
+    prisma.contact.create({ data: { firstName: "George", lastName: "Anderson", email: "george@acme.com", phone: "07700 900007", type: "DONOR", types: ["DONOR"], organisationId: org1.id, city: "London", country: "UK", createdById: admin.id } }),
+    prisma.contact.create({ data: { firstName: "Hannah", lastName: "Smith", email: "hannah@smithfoundation.org", phone: "07700 900008", type: "DONOR", types: ["DONOR"], organisationId: org2.id, city: "Manchester", country: "UK", createdById: staff1.id } }),
+    prisma.contact.create({ data: { firstName: "Ian", lastName: "Clark", email: "ian.clark@council.gov.uk", phone: "07700 900009", type: "DONOR", types: ["DONOR"], organisationId: org3.id, city: "Birmingham", country: "UK", createdById: staff2.id } }),
+    prisma.contact.create({ data: { firstName: "Julia", lastName: "Martin", email: "julia@example.com", phone: "07700 900010", type: "DONOR", types: ["DONOR", "VOLUNTEER"], city: "London", country: "UK", createdById: admin.id } }),
   ]);
 
   // Contact tags

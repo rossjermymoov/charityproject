@@ -22,13 +22,13 @@ export default async function ContactsPage({
         search
           ? {
               OR: [
-                { firstName: { contains: search } },
-                { lastName: { contains: search } },
-                { email: { contains: search } },
+                { firstName: { contains: search, mode: "insensitive" } },
+                { lastName: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
               ],
             }
           : {},
-        typeFilter ? { type: typeFilter } : {},
+        typeFilter ? { types: { has: typeFilter } } : {},
       ],
     },
     include: {
@@ -42,10 +42,7 @@ export default async function ContactsPage({
 
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
-    SUPPORTER: "bg-blue-100 text-blue-800",
-    BENEFICIARY: "bg-purple-100 text-purple-800",
     VOLUNTEER: "bg-indigo-100 text-indigo-800",
-    OTHER: "bg-gray-100 text-gray-800",
   };
 
   return (
@@ -53,7 +50,7 @@ export default async function ContactsPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-500 mt-1">Manage your contacts, donors, and supporters</p>
+          <p className="text-gray-500 mt-1">Manage your contacts, donors, and volunteers</p>
         </div>
         <Link href="/crm/contacts/new">
           <Button>
@@ -82,11 +79,8 @@ export default async function ContactsPage({
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="">All Types</option>
-            <option value="DONOR">Donor</option>
-            <option value="SUPPORTER">Supporter</option>
-            <option value="BENEFICIARY">Beneficiary</option>
             <option value="VOLUNTEER">Volunteer</option>
-            <option value="OTHER">Other</option>
+            <option value="DONOR">Donor</option>
           </select>
           <Button type="submit" variant="outline" size="sm">
             Filter
@@ -116,7 +110,7 @@ export default async function ContactsPage({
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
+                    Types
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Organisation
@@ -147,7 +141,17 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{contact.email || "—"}</td>
                     <td className="px-6 py-4">
-                      <Badge className={typeColors[contact.type] || ""}>{contact.type}</Badge>
+                      <div className="flex gap-1 flex-wrap">
+                        {contact.types.length > 0 ? (
+                          contact.types.map((t) => (
+                            <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>
+                              {t}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {contact.organisation?.name || "—"}

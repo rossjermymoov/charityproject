@@ -26,6 +26,7 @@ export default async function NewVolunteerPage() {
         email: (formData.get("email") as string) || null,
         phone: (formData.get("phone") as string) || null,
         type: "VOLUNTEER",
+        types: ["VOLUNTEER"],
         createdById: session.id,
       },
     });

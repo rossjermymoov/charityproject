@@ -18,7 +18,7 @@ export default async function NewContactPage() {
     const session = await getSession();
     if (!session) redirect("/login");
 
-    const contactType = formData.get("type") as string;
+    const selectedTypes = formData.getAll("types") as string[];
 
     const contact = await prisma.contact.create({
       data: {
@@ -26,7 +26,8 @@ export default async function NewContactPage() {
         lastName: formData.get("lastName") as string,
         email: (formData.get("email") as string) || null,
         phone: (formData.get("phone") as string) || null,
-        type: contactType,
+        type: selectedTypes[0] || "OTHER",
+        types: selectedTypes,
         dateOfBirth: (formData.get("dateOfBirth") as string) || null,
         addressLine1: (formData.get("addressLine1") as string) || null,
         city: (formData.get("city") as string) || null,
@@ -42,8 +43,8 @@ export default async function NewContactPage() {
       },
     });
 
-    // Auto-create a VolunteerProfile when contact type is VOLUNTEER
-    if (contactType === "VOLUNTEER") {
+    // Auto-create a VolunteerProfile when tagged as VOLUNTEER
+    if (selectedTypes.includes("VOLUNTEER")) {
       await prisma.volunteerProfile.create({
         data: {
           contactId: contact.id,
@@ -75,17 +76,36 @@ export default async function NewContactPage() {
               <Input label="Email" name="email" type="email" />
               <Input label="Phone" name="phone" type="tel" />
             </div>
-            <Select
-              label="Type"
-              name="type"
-              options={[
-                { value: "DONOR", label: "Donor" },
-                { value: "SUPPORTER", label: "Supporter" },
-                { value: "BENEFICIARY", label: "Beneficiary" },
-                { value: "VOLUNTEER", label: "Volunteer" },
-                { value: "OTHER", label: "Other" },
-              ]}
-            />
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Contact Type(s)
+              </label>
+              <p className="text-xs text-gray-500">
+                A contact can be both a volunteer and a donor
+              </p>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="types"
+                    value="VOLUNTEER"
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Volunteer
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="types"
+                    value="DONOR"
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  Donor
+                </label>
+              </div>
+            </div>
+
             <Input label="Date of Birth" name="dateOfBirth" type="date" />
             <Select
               label="Organisation"
