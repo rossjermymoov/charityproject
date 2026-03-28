@@ -488,6 +488,13 @@ model GiftAid {
   endDate       DateTime?  // null = ongoing
   status        String    @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED
   documentUrl   String?   // scanned declaration document
+  declarationImageUrl String? // uploaded photo/scan of paper declaration
+  source        String    @default("MANUAL") // MANUAL | DIGITAL | PAPER
+  // Digital declaration fields
+  digitalToken    String?   @unique // unique token for digital declaration URL
+  digitalSignedAt DateTime? // when the donor digitally signed
+  digitalSignedIp String?   // IP address for audit trail
+  digitalSignedName String? // name as typed by donor (e-signature)
   notes         String?
   createdById   String
   createdAt     DateTime  @default(now())

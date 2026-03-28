@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Edit2 } from "lucide-react";
+import { ArrowLeft, Trash2, Edit2, Link2, Copy, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { ImageUpload } from "./image-upload";
+import { CopyLinkButton } from "./copy-link-button";
+import crypto from "crypto";
 
 export default async function GiftAidDetailPage({
   params,
@@ -61,6 +64,20 @@ export default async function GiftAidDetailPage({
     revalidatePath(`/finance/gift-aid/${id}`);
   }
 
+  async function generateDigitalLink() {
+    "use server";
+    const session = await requireAuth();
+
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await prisma.giftAid.update({
+      where: { id },
+      data: { digitalToken: token },
+    });
+
+    revalidatePath(`/finance/gift-aid/${id}`);
+  }
+
   async function deleteGiftAid() {
     "use server";
     const session = await requireAuth();
@@ -79,6 +96,12 @@ export default async function GiftAidDetailPage({
     CANCELLED: "bg-red-100 text-red-800",
   };
 
+  const sourceLabels: Record<string, string> = {
+    MANUAL: "Manually entered",
+    DIGITAL: "Signed digitally",
+    PAPER: "Paper declaration",
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -86,8 +109,11 @@ export default async function GiftAidDetailPage({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Gift Aid Declaration</h1>
+        <Badge className={statusColors[giftAid.status]}>{giftAid.status}</Badge>
+        <Badge variant="outline">{sourceLabels[giftAid.source] || giftAid.source}</Badge>
       </div>
 
+      {/* Main details */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-2 gap-8">
@@ -130,17 +156,15 @@ export default async function GiftAidDetailPage({
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </p>
-                <div className="mt-1">
-                  <Badge className={statusColors[giftAid.status]}>{giftAid.status}</Badge>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Recorded by
                 </p>
                 <p className="text-sm text-gray-900 mt-1">{giftAid.createdBy.name}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created
+                </p>
+                <p className="text-sm text-gray-900 mt-1">{formatDate(giftAid.createdAt)}</p>
               </div>
             </div>
           </div>
@@ -153,6 +177,101 @@ export default async function GiftAidDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Digital Signature Audit Trail */}
+      {giftAid.digitalSignedAt && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <h3 className="text-lg font-semibold text-green-900">Digital Signature Record</h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs font-medium text-green-700 uppercase">Signed by</p>
+                <p className="text-green-900 font-medium mt-1">{giftAid.digitalSignedName}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-green-700 uppercase">Date & Time</p>
+                <p className="text-green-900 mt-1">{giftAid.digitalSignedAt.toISOString()}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-green-700 uppercase">IP Address</p>
+                <p className="text-green-900 mt-1">{giftAid.digitalSignedIp || "Not recorded"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-green-700 uppercase">Method</p>
+                <p className="text-green-900 mt-1">Electronic signature via secure web form</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Declaration Image */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Declaration Document</h3>
+          </CardHeader>
+          <CardContent>
+            <ImageUpload
+              giftAidId={id}
+              currentImageUrl={giftAid.declarationImageUrl}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Digital Declaration Link */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900">Digital Declaration</h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {giftAid.digitalToken ? (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  Send this link to the donor so they can sign the Gift Aid
+                  declaration digitally. The link is unique and can only be used once.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-2">
+                  <code className="text-xs text-gray-700 flex-1 break-all">
+                    /declare/{giftAid.digitalToken}
+                  </code>
+                  <CopyLinkButton token={giftAid.digitalToken} />
+                </div>
+                {giftAid.digitalSignedAt ? (
+                  <Badge className="bg-green-100 text-green-800">
+                    Signed on {formatDate(giftAid.digitalSignedAt)}
+                  </Badge>
+                ) : (
+                  <Badge className="bg-amber-100 text-amber-800">Awaiting signature</Badge>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  Generate a unique link that you can send to the donor. They can
+                  complete a legally compliant Gift Aid declaration digitally —
+                  their name, IP address, and timestamp are recorded as an audit
+                  trail.
+                </p>
+                <form action={generateDigitalLink}>
+                  <Button type="submit" variant="outline">
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Generate Declaration Link
+                  </Button>
+                </form>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Edit Declaration Details */}
       <Card>
@@ -229,9 +348,7 @@ export default async function GiftAidDetailPage({
         <Link href="/finance/gift-aid">
           <Button variant="outline">Back</Button>
         </Link>
-        <form
-          action={deleteGiftAid}
-        >
+        <form action={deleteGiftAid}>
           <ConfirmButton message="Are you sure you want to delete this declaration?" variant="destructive">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete

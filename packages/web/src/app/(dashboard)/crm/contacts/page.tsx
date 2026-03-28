@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Users, Plus, Search } from "lucide-react";
+import { Users, Plus, Search, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,10 @@ export default async function ContactsPage({
       organisation: true,
       tags: { include: { tag: true } },
       volunteerProfile: true,
+      giftAids: {
+        where: { status: "ACTIVE" },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -112,6 +116,9 @@ export default async function ContactsPage({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Types
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Gift Aid
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Organisation
                   </th>
@@ -152,6 +159,16 @@ export default async function ContactsPage({
                           <span className="text-sm text-gray-400">—</span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {contact.giftAids.length > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800" title="Active Gift Aid declaration">
+                          <Heart className="h-3 w-3 fill-green-600 text-green-600" />
+                          GA
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {contact.organisation?.name || "—"}
