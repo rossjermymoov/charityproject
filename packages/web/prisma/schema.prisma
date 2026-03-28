@@ -641,11 +641,27 @@ model CampaignSegment {
 // COLLECTION TINS MODULE
 // ============================================
 
+model TinLocation {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  type      String   @default("OTHER") // SHOP | PUB | RESTAURANT | OFFICE | SCHOOL | CHURCH | OTHER
+  contactName String?
+  contactPhone String?
+  isActive  Boolean  @default(true)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tins CollectionTin[]
+}
+
 model CollectionTin {
   id          String   @id @default(cuid())
   tinNumber   String   @unique
   locationName String
   locationAddress String?
+  locationId  String?
   contactId   String?  // FK → Contact (location contact person)
   status      String   @default("IN_STOCK") // IN_STOCK | DEPLOYED | RETURNED | LOST | STOLEN | RETIRED
   deployedAt  DateTime?
@@ -655,6 +671,7 @@ model CollectionTin {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  location  TinLocation?       @relation(fields: [locationId], references: [id])
   createdBy User              @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
   movements CollectionTinMovement[]
 }

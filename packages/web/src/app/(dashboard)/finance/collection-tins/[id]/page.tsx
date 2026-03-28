@@ -1,14 +1,16 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, PoundSterling } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 export default async function CollectionTinDetailPage({
   params,
@@ -16,15 +18,29 @@ export default async function CollectionTinDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tin = await prisma.collectionTin.findUnique({
-    where: { id },
-    include: {
-      createdBy: true,
-      movements: { orderBy: { date: "desc" } },
-    },
-  });
+  const [tin, allLocations] = await Promise.all([
+    prisma.collectionTin.findUnique({
+      where: { id },
+      include: {
+        createdBy: true,
+        location: true,
+        movements: { orderBy: { date: "desc" } },
+      },
+    }),
+    prisma.tinLocation.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   if (!tin) notFound();
+
+  const totalCollected = tin.movements
+    .filter((m) => m.type === "COUNTED" && m.amount)
+    .reduce((s, m) => s + (m.amount || 0), 0);
+  const collectionCount = tin.movements.filter(
+    (m) => m.type === "COUNTED" && m.amount
+  ).length;
 
   async function updateStatus(formData: FormData) {
     "use server";
@@ -34,8 +50,10 @@ export default async function CollectionTinDetailPage({
     const newStatus = formData.get("status") as string;
     const notes = formData.get("notes") as string;
 
-    const update: any = { status: newStatus };
-    const currentTin = await prisma.collectionTin.findUnique({ where: { id } });
+    const update: Record<string, unknown> = { status: newStatus };
+    const currentTin = await prisma.collectionTin.findUnique({
+      where: { id },
+    });
 
     if (newStatus === "DEPLOYED" && !currentTin?.deployedAt) {
       update.deployedAt = new Date();
@@ -62,6 +80,28 @@ export default async function CollectionTinDetailPage({
     redirect(`/finance/collection-tins/${id}`);
   }
 
+  async function recordCollection(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const amount = parseFloat(formData.get("amount") as string);
+    const date = formData.get("date") as string;
+    const notes = (formData.get("notes") as string) || null;
+
+    await prisma.collectionTinMovement.create({
+      data: {
+        tinId: id,
+        type: "COUNTED",
+        date: new Date(date),
+        amount,
+        notes,
+      },
+    });
+
+    redirect(`/finance/collection-tins/${id}`);
+  }
+
   async function addMovement(formData: FormData) {
     "use server";
     const session = await getSession();
@@ -72,12 +112,62 @@ export default async function CollectionTinDetailPage({
         tinId: id,
         type: formData.get("type") as string,
         date: new Date(formData.get("date") as string),
-        amount: formData.get("amount") ? parseFloat(formData.get("amount") as string) : null,
+        amount: formData.get("amount")
+          ? parseFloat(formData.get("amount") as string)
+          : null,
         notes: (formData.get("notes") as string) || null,
       },
     });
 
     redirect(`/finance/collection-tins/${id}`);
+  }
+
+  async function assignLocation(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const locationId = (formData.get("locationId") as string) || null;
+
+    if (locationId) {
+      const loc = await prisma.tinLocation.findUnique({
+        where: { id: locationId },
+      });
+      await prisma.collectionTin.update({
+        where: { id },
+        data: {
+          locationId,
+          locationName: loc?.name || "",
+          locationAddress: loc?.address || null,
+        },
+      });
+    } else {
+      await prisma.collectionTin.update({
+        where: { id },
+        data: { locationId: null },
+      });
+    }
+
+    revalidatePath(`/finance/collection-tins/${id}`);
+  }
+
+  async function editTin(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    await prisma.collectionTin.update({
+      where: { id },
+      data: {
+        tinNumber: formData.get("tinNumber") as string,
+        locationName: formData.get("locationName") as string,
+        locationAddress:
+          (formData.get("locationAddress") as string) || null,
+        notes: (formData.get("notes") as string) || null,
+      },
+    });
+
+    revalidatePath(`/finance/collection-tins/${id}`);
   }
 
   async function deleteTin() {
@@ -113,106 +203,291 @@ export default async function CollectionTinDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/finance/collection-tins" className="text-gray-400 hover:text-gray-600">
+        <Link
+          href="/finance/collection-tins"
+          className="text-gray-400 hover:text-gray-600"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Tin Details</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Tin {tin.tinNumber}
+        </h1>
+        <Badge className={statusColors[tin.status] || ""}>
+          {tin.status}
+        </Badge>
       </div>
 
-      {/* Tin Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Tin Number</p>
-              <p className="text-2xl font-bold text-gray-900">{tin.tinNumber}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Status</p>
-              <Badge className={statusColors[tin.status] || ""}>{tin.status}</Badge>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Location</p>
-              <p className="text-gray-900">{tin.locationName}</p>
-              {tin.locationAddress && (
-                <p className="text-sm text-gray-500">{tin.locationAddress}</p>
-              )}
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Created By</p>
-              <p className="text-gray-900">{tin.createdBy.name}</p>
-              <p className="text-sm text-gray-500">{formatDate(tin.createdAt)}</p>
-            </div>
-            {tin.deployedAt && (
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Deployed</p>
-                <p className="text-gray-900">{formatDate(tin.deployedAt)}</p>
-              </div>
-            )}
-            {tin.returnedAt && (
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Returned</p>
-                <p className="text-gray-900">{formatDate(tin.returnedAt)}</p>
-              </div>
-            )}
-          </div>
-          {tin.notes && (
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-2">Notes</p>
-              <p className="text-gray-700 whitespace-pre-wrap">{tin.notes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-3xl font-bold text-green-600">
+              £{totalCollected.toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Total Collected</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-3xl font-bold text-indigo-600">
+              {collectionCount}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Collections</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-3xl font-bold text-amber-600">
+              £{collectionCount > 0 ? (totalCollected / collectionCount).toFixed(2) : "0.00"}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Avg per Collection</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Status Update */}
-      <Card>
+      {/* Record Collection - PROMINENT */}
+      <Card className="border-green-200 bg-green-50">
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Update Status</h3>
+          <div className="flex items-center gap-2">
+            <PoundSterling className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold text-green-900">
+              Record a Collection
+            </h3>
+          </div>
         </CardHeader>
         <CardContent>
-          <form action={updateStatus} className="space-y-4">
-            <select
-              name="status"
-              defaultValue={tin.status}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              required
-            >
-              <option value="IN_STOCK">In Stock</option>
-              <option value="DEPLOYED">Deployed</option>
-              <option value="RETURNED">Returned</option>
-              <option value="LOST">Lost</option>
-              <option value="STOLEN">Stolen</option>
-              <option value="RETIRED">Retired</option>
-            </select>
-            <Textarea name="notes" placeholder="Optional notes for this status change..." />
-            <Button type="submit">Update Status</Button>
+          <form action={recordCollection} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date *
+                </label>
+                <Input
+                  name="date"
+                  type="date"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount Collected (£) *
+                </label>
+                <Input
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 25.00"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notes
+              </label>
+              <Input
+                name="notes"
+                placeholder="e.g. Tin was nearly full, good location"
+              />
+            </div>
+            <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              <PoundSterling className="h-4 w-4 mr-2" />
+              Record Collection
+            </Button>
           </form>
         </CardContent>
       </Card>
 
+      {/* Tin Details & Location */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Tin Details
+            </h3>
+          </CardHeader>
+          <CardContent>
+            <form action={editTin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tin Number
+                </label>
+                <Input
+                  name="tinNumber"
+                  defaultValue={tin.tinNumber}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location Name
+                </label>
+                <Input
+                  name="locationName"
+                  defaultValue={tin.locationName}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location Address
+                </label>
+                <Input
+                  name="locationAddress"
+                  defaultValue={tin.locationAddress || ""}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <Textarea
+                  name="notes"
+                  defaultValue={tin.notes || ""}
+                />
+              </div>
+              <div className="flex gap-4 text-sm text-gray-500">
+                <span>Created by {tin.createdBy.name}</span>
+                <span>{formatDate(tin.createdAt)}</span>
+              </div>
+              {tin.deployedAt && (
+                <p className="text-sm text-gray-500">
+                  Deployed: {formatDate(tin.deployedAt)}
+                </p>
+              )}
+              {tin.returnedAt && (
+                <p className="text-sm text-gray-500">
+                  Returned: {formatDate(tin.returnedAt)}
+                </p>
+              )}
+              <Button type="submit" size="sm">
+                Save Changes
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          {/* Assign to Location */}
+          <Card>
+            <CardHeader>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Assigned Location
+              </h3>
+            </CardHeader>
+            <CardContent>
+              {tin.location && (
+                <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
+                  <Link
+                    href={`/finance/collection-tins/locations/${tin.location.id}`}
+                    className="text-sm font-medium text-blue-600 hover:underline"
+                  >
+                    {tin.location.name}
+                  </Link>
+                  {tin.location.address && (
+                    <p className="text-xs text-gray-500">
+                      {tin.location.address}
+                    </p>
+                  )}
+                </div>
+              )}
+              <form action={assignLocation} className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {tin.location ? "Change Location" : "Assign to Location"}
+                  </label>
+                  <select
+                    name="locationId"
+                    defaultValue={tin.locationId || ""}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="">No location</option>
+                    {allLocations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                        {loc.type !== "OTHER" ? ` (${loc.type})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button type="submit" size="sm" variant="outline">
+                  Update
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Status Update */}
+          <Card>
+            <CardHeader>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Update Status
+              </h3>
+            </CardHeader>
+            <CardContent>
+              <form action={updateStatus} className="space-y-4">
+                <select
+                  name="status"
+                  defaultValue={tin.status}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  required
+                >
+                  <option value="IN_STOCK">In Stock</option>
+                  <option value="DEPLOYED">Deployed</option>
+                  <option value="RETURNED">Returned</option>
+                  <option value="LOST">Lost</option>
+                  <option value="STOLEN">Stolen</option>
+                  <option value="RETIRED">Retired</option>
+                </select>
+                <Textarea
+                  name="notes"
+                  placeholder="Optional notes for this status change..."
+                />
+                <Button type="submit">Update Status</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Movement History */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Movement History</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Movement & Collection History
+          </h3>
         </CardHeader>
         <CardContent>
           {tin.movements.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No movements recorded yet</p>
+            <p className="text-sm text-gray-500 text-center py-4">
+              No movements recorded yet
+            </p>
           ) : (
             <div className="space-y-3">
               {tin.movements.map((movement) => (
-                <div key={movement.id} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                  <Badge className={movementColors[movement.type] || ""}>{movement.type}</Badge>
+                <div
+                  key={movement.id}
+                  className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg"
+                >
+                  <Badge className={movementColors[movement.type] || ""}>
+                    {movement.type}
+                  </Badge>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{formatDate(movement.date)}</p>
-                    {movement.amount && (
-                      <p className="text-sm font-medium text-gray-900">£{movement.amount.toFixed(2)}</p>
-                    )}
+                    <p className="text-sm text-gray-900">
+                      {formatDate(movement.date)}
+                    </p>
                     {movement.notes && (
-                      <p className="text-sm text-gray-600 mt-1">{movement.notes}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {movement.notes}
+                      </p>
                     )}
                   </div>
+                  {movement.amount != null && (
+                    <p className="text-sm font-bold text-green-600">
+                      £{movement.amount.toFixed(2)}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -220,10 +495,12 @@ export default async function CollectionTinDetailPage({
         </CardContent>
       </Card>
 
-      {/* Add Movement */}
+      {/* Other Movement */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Record Movement</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Record Other Movement
+          </h3>
         </CardHeader>
         <CardContent>
           <form action={addMovement} className="space-y-4">
@@ -233,11 +510,10 @@ export default async function CollectionTinDetailPage({
               required
             >
               <option value="DEPLOYED">Deployed</option>
-              <option value="COLLECTED">Collected</option>
-              <option value="COUNTED">Counted</option>
+              <option value="COLLECTED">Collected (returned for counting)</option>
               <option value="LOST">Lost</option>
               <option value="STOLEN">Stolen</option>
-              <option value="RETURNED">Returned</option>
+              <option value="RETURNED">Returned to Stock</option>
             </select>
             <Input
               label="Date"
@@ -247,14 +523,14 @@ export default async function CollectionTinDetailPage({
               required
             />
             <Input
-              label="Amount Collected (optional)"
+              label="Amount (optional)"
               name="amount"
               type="number"
               step="0.01"
               placeholder="£0.00"
             />
             <Textarea name="notes" placeholder="Additional notes..." />
-            <Button type="submit">
+            <Button type="submit" variant="outline">
               <Plus className="h-4 w-4 mr-2" />
               Record Movement
             </Button>
@@ -262,15 +538,29 @@ export default async function CollectionTinDetailPage({
         </CardContent>
       </Card>
 
-      {/* Delete Tin */}
-      <div className="flex justify-end">
-        <form action={deleteTin}>
-          <Button type="submit" variant="destructive">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Tin
-          </Button>
-        </form>
-      </div>
+      {/* Delete */}
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-red-900">Danger Zone</p>
+              <p className="text-sm text-red-700">
+                Permanently delete this tin and all its records.
+              </p>
+            </div>
+            <form action={deleteTin}>
+              <ConfirmButton
+                message="Are you sure you want to delete this tin and all its collection records? This cannot be undone."
+                variant="destructive"
+                size="sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Tin
+              </ConfirmButton>
+            </form>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

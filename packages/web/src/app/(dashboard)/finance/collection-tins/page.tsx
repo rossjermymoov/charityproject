@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, Package } from "lucide-react";
+import { Plus, Search, Package, MapPin, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -22,8 +22,8 @@ export default async function CollectionTinsPage({
         search
           ? {
               OR: [
-                { tinNumber: { contains: search } },
-                { locationName: { contains: search } },
+                { tinNumber: { contains: search, mode: "insensitive" } },
+                { locationName: { contains: search, mode: "insensitive" } },
               ],
             }
           : {},
@@ -32,6 +32,10 @@ export default async function CollectionTinsPage({
     },
     include: {
       createdBy: true,
+      location: true,
+      movements: {
+        where: { type: "COUNTED", amount: { not: null } },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -53,12 +57,26 @@ export default async function CollectionTinsPage({
           <h1 className="text-2xl font-bold text-gray-900">Collection Tins</h1>
           <p className="text-gray-500 mt-1">Manage collection tins and track deployments</p>
         </div>
-        <Link href="/finance/collection-tins/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Tin
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/finance/collection-tins/locations">
+            <Button variant="outline">
+              <MapPin className="h-4 w-4 mr-2" />
+              Locations
+            </Button>
+          </Link>
+          <Link href="/finance/collection-tins/reports">
+            <Button variant="outline">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Reports
+            </Button>
+          </Link>
+          <Link href="/finance/collection-tins/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Tin
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search and filters */}
@@ -117,44 +135,67 @@ export default async function CollectionTinsPage({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Deployed Date
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Collected
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Returned Date
+                    Deployed
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {tins.map((tin) => (
-                  <tr key={tin.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/finance/collection-tins/${tin.id}`}
-                        className="text-sm font-medium text-blue-600 hover:underline"
-                      >
-                        {tin.tinNumber}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{tin.locationName}</p>
-                        {tin.locationAddress && (
-                          <p className="text-xs text-gray-500">{tin.locationAddress}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge className={statusColors[tin.status] || ""}>{tin.status}</Badge>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {tin.deployedAt ? formatDate(tin.deployedAt) : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {tin.returnedAt ? formatDate(tin.returnedAt) : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {tins.map((tin) => {
+                  const totalCollected = tin.movements.reduce(
+                    (s, m) => s + (m.amount || 0),
+                    0
+                  );
+                  return (
+                    <tr key={tin.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/finance/collection-tins/${tin.id}`}
+                          className="text-sm font-medium text-blue-600 hover:underline"
+                        >
+                          {tin.tinNumber}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          {tin.location ? (
+                            <Link
+                              href={`/finance/collection-tins/locations/${tin.location.id}`}
+                              className="text-sm font-medium text-blue-600 hover:underline"
+                            >
+                              {tin.location.name}
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">
+                              {tin.locationName}
+                            </p>
+                          )}
+                          {(tin.location?.address || tin.locationAddress) && (
+                            <p className="text-xs text-gray-500">
+                              {tin.location?.address || tin.locationAddress}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className={statusColors[tin.status] || ""}>
+                          {tin.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                        {totalCollected > 0
+                          ? `£${totalCollected.toFixed(2)}`
+                          : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {tin.deployedAt ? formatDate(tin.deployedAt) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

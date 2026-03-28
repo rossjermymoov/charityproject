@@ -20,6 +20,7 @@ import {
   CalendarDays,
   Megaphone,
   Package,
+  MapPin,
   Flower2,
   GraduationCap,
   BarChart3,
@@ -54,6 +55,8 @@ const navigation = [
   { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
   { name: "Ledger Codes", href: "/finance/ledger-codes", icon: BookOpen },
   { name: "Collection Tins", href: "/finance/collection-tins", icon: Package },
+  { name: "Tin Locations", href: "/finance/collection-tins/locations", icon: MapPin },
+  { name: "Tin Reports", href: "/finance/collection-tins/reports", icon: BarChart3 },
   { name: "Tribute Funds", href: "/finance/tribute-funds", icon: Flower2 },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Events & Marketing" },
