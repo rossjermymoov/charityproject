@@ -1,32 +1,16 @@
 {
   "name": "charity-os",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "dev": "npm run dev --workspace=packages/web",
-    "build": "npm run build --workspace=packages/web",
-    "db:push": "npm run db:push --workspace=packages/web",
-    "db:seed": "npm run db:seed --workspace=packages/web",
-    "db:studio": "npm run db:studio --workspace=packages/web"
-  },
-  "dependencies": {
-    "@auth/prisma-adapter": "^2.11.1",
-    "@prisma/client": "^7.6.0",
-    "bcryptjs": "^3.0.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "lucide-react": "^1.7.0",
-    "next-auth": "^5.0.0-beta.30",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
-    "tailwind-merge": "^3.5.0",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "prisma": "^7.6.0"
+    "dev": "cd packages/web && npm run dev",
+    "build": "cd packages/web && npm run build",
+    "start": "cd packages/web && npm start",
+    "install:web": "cd packages/web && npm install",
+    "db:push": "cd packages/web && npm run db:push",
+    "db:seed": "cd packages/web && npm run db:seed",
+    "db:studio": "cd packages/web && npm run db:studio"
   }
 }

@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+echo "Running database migrations..."
+npx prisma db push --accept-data-loss
+
+echo "Checking if seed data is needed..."
+USERS_EXIST=$(npx tsx -e "
+  const { PrismaClient } = require('@prisma/client');
+  const p = new PrismaClient();
+  p.user.count().then(c => { console.log(c); p.\$disconnect(); });
+" 2>/dev/null || echo "0")
+
+if [ "$USERS_EXIST" = "0" ]; then
+  echo "No users found — seeding database..."
+  npx tsx prisma/seed.ts
+  echo "Seed complete."
+else
+  echo "Database already seeded ($USERS_EXIST users found). Skipping."
+fi
+
+echo "Starting Next.js..."
+npm start
