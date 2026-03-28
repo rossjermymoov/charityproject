@@ -4,7 +4,8 @@ buildCommand = "cd packages/web && npm install && npx prisma generate && npx nex
 
 [deploy]
 startCommand = "cd packages/web && bash scripts/start.sh"
-healthcheckPath = "/"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
