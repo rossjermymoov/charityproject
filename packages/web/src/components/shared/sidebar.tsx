@@ -35,48 +35,48 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/crm/contacts", icon: LayoutDashboard },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "CRM" },
-  { name: "Contacts", href: "/dashboard/crm/contacts", icon: Users },
-  { name: "Organisations", href: "/dashboard/crm/organisations", icon: Building2 },
+  { name: "Contacts", href: "/crm/contacts", icon: Users },
+  { name: "Organisations", href: "/crm/organisations", icon: Building2 },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Volunteers" },
-  { name: "Volunteers", href: "/dashboard/volunteers", icon: UserCheck },
-  { name: "Departments", href: "/dashboard/volunteers/departments", icon: Building2 },
-  { name: "Skills", href: "/dashboard/volunteers/skills", icon: Wrench },
-  { name: "Training", href: "/dashboard/volunteers/training", icon: GraduationCap },
-  { name: "Assignments", href: "/dashboard/assignments", icon: Calendar },
-  { name: "Hours", href: "/dashboard/volunteers/hours", icon: Clock },
+  { name: "Volunteers", href: "/volunteers", icon: UserCheck },
+  { name: "Departments", href: "/volunteers/departments", icon: Building2 },
+  { name: "Skills", href: "/volunteers/skills", icon: Wrench },
+  { name: "Training", href: "/volunteers/training", icon: GraduationCap },
+  { name: "Assignments", href: "/assignments", icon: Calendar },
+  { name: "Hours", href: "/volunteers/hours", icon: Clock },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Finance" },
-  { name: "Donations", href: "/dashboard/finance/donations", icon: PoundSterling },
-  { name: "Gift Aid", href: "/dashboard/finance/gift-aid", icon: Heart },
-  { name: "Ledger Codes", href: "/dashboard/finance/ledger-codes", icon: BookOpen },
-  { name: "Collection Tins", href: "/dashboard/finance/collection-tins", icon: Package },
-  { name: "Tribute Funds", href: "/dashboard/finance/tribute-funds", icon: Flower2 },
+  { name: "Donations", href: "/finance/donations", icon: PoundSterling },
+  { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
+  { name: "Ledger Codes", href: "/finance/ledger-codes", icon: BookOpen },
+  { name: "Collection Tins", href: "/finance/collection-tins", icon: Package },
+  { name: "Tribute Funds", href: "/finance/tribute-funds", icon: Flower2 },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Events & Marketing" },
-  { name: "Events", href: "/dashboard/events", icon: CalendarDays },
-  { name: "Campaigns", href: "/dashboard/campaigns", icon: Megaphone },
+  { name: "Events", href: "/events", icon: CalendarDays },
+  { name: "Campaigns", href: "/campaigns", icon: Megaphone },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Communications" },
-  { name: "Broadcasts", href: "/dashboard/broadcasts", icon: Radio },
-  { name: "Reminders", href: "/dashboard/reminders", icon: Bell },
+  { name: "Broadcasts", href: "/broadcasts", icon: Radio },
+  { name: "Reminders", href: "/reminders", icon: Bell },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Compliance (DPO)" },
-  { name: "DPO Dashboard", href: "/dashboard/compliance", icon: ShieldCheck },
-  { name: "DPIAs", href: "/dashboard/compliance/dpias", icon: FileSearch },
-  { name: "Data Breaches", href: "/dashboard/compliance/breaches", icon: AlertTriangle },
-  { name: "SARs", href: "/dashboard/compliance/sars", icon: FileText },
-  { name: "ROPA", href: "/dashboard/compliance/ropa", icon: Database },
-  { name: "Asset Register", href: "/dashboard/compliance/assets", icon: ClipboardCheck },
-  { name: "Clinical Safety", href: "/dashboard/compliance/clinical-safety", icon: Activity },
-  { name: "Consent Trail", href: "/dashboard/compliance/consent-trail", icon: Shield },
+  { name: "DPO Dashboard", href: "/compliance", icon: ShieldCheck },
+  { name: "DPIAs", href: "/compliance/dpias", icon: FileSearch },
+  { name: "Data Breaches", href: "/compliance/breaches", icon: AlertTriangle },
+  { name: "SARs", href: "/compliance/sars", icon: FileText },
+  { name: "ROPA", href: "/compliance/ropa", icon: Database },
+  { name: "Asset Register", href: "/compliance/assets", icon: ClipboardCheck },
+  { name: "Clinical Safety", href: "/compliance/clinical-safety", icon: Activity },
+  { name: "Consent Trail", href: "/compliance/consent-trail", icon: Shield },
 
   { name: "divider", href: "", icon: LayoutDashboard, label: "Insights" },
-  { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-  { name: "Audit Log", href: "/dashboard/settings/audit-log", icon: Shield },
+  { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Audit Log", href: "/settings/audit-log", icon: Shield },
 ];
 
 export function Sidebar() {
@@ -108,7 +108,7 @@ export function Sidebar() {
           }
 
           const isActive = pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            (item.href !== "/crm/contacts" && pathname.startsWith(item.href));
 
           return (
             <Link
@@ -131,7 +131,7 @@ export function Sidebar() {
       {/* Bottom section */}
       <div className="border-t border-gray-700 p-3 space-y-1">
         <Link
-          href="/dashboard/settings"
+          href="/settings"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
         >
           <Settings className="h-5 w-5" />

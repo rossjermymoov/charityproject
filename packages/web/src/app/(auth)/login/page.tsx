@@ -5,7 +5,7 @@ import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
   const session = await getSession();
-  if (session) redirect("/dashboard");
+  if (session) redirect("/crm/contacts");
 
   async function loginAction(formData: FormData) {
     "use server";
@@ -18,7 +18,7 @@ export default async function LoginPage() {
     }
 
     await createSession(user.id);
-    redirect("/dashboard");
+    redirect("/crm/contacts");
   }
 
   return (
