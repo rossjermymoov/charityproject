@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
@@ -134,6 +135,7 @@ export default async function EventDetailPage({
       where: { id },
       data: { status: newStatus },
     });
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "Event", entityId: id, details: { status: newStatus } });
 
     revalidatePath(`/events/${id}`);
   }
@@ -146,6 +148,7 @@ export default async function EventDetailPage({
     await prisma.event.delete({
       where: { id },
     });
+    await logAudit({ userId: session.id, action: "DELETE", entityType: "Event", entityId: id });
 
     redirect("/events");
   }

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 
 export default async function ContactDetailPage({
   params,
@@ -147,6 +148,7 @@ export default async function ContactDetailPage({
         consentUpdatedAt: new Date(),
       },
     });
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "Contact", entityId: id, details: { consent: newConsent } });
     revalidatePath(`/crm/contacts/${id}`);
     redirect(`/crm/contacts/${id}`);
   }
@@ -229,6 +231,7 @@ export default async function ContactDetailPage({
         organisationId: (formData.get("organisationId") as string) || null,
       },
     });
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "Contact", entityId: id, details: { firstName: formData.get("firstName"), lastName: formData.get("lastName"), types: selectedTypes } });
 
     // Auto-create volunteer profile if newly tagged as VOLUNTEER
     if (selectedTypes.includes("VOLUNTEER")) {
@@ -254,9 +257,11 @@ export default async function ContactDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const deletedContact = await prisma.contact.findUnique({ where: { id }, select: { firstName: true, lastName: true } });
     await prisma.contact.delete({
       where: { id },
     });
+    await logAudit({ userId: session.id, action: "DELETE", entityType: "Contact", entityId: id, details: { name: `${deletedContact?.firstName} ${deletedContact?.lastName}` } });
     redirect("/crm/contacts");
   }
 
@@ -272,13 +277,15 @@ export default async function ContactDetailPage({
 
     if (!currentContact) redirect("/crm/contacts");
 
+    const newArchived = !currentContact.isArchived;
     await prisma.contact.update({
       where: { id },
       data: {
-        isArchived: !currentContact.isArchived,
-        archivedAt: !currentContact.isArchived ? new Date() : null,
+        isArchived: newArchived,
+        archivedAt: newArchived ? new Date() : null,
       },
     });
+    await logAudit({ userId: session.id, action: "ARCHIVE", entityType: "Contact", entityId: id, details: { archived: newArchived } });
     revalidatePath(`/crm/contacts/${id}`);
     redirect(`/crm/contacts/${id}`);
   }

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getStatusColor, formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
+import { logAudit } from "@/lib/audit";
 
 async function changeStatus(formData: FormData) {
   "use server";
@@ -26,6 +27,7 @@ async function changeStatus(formData: FormData) {
     where: { id: volunteerId },
     data: { status: newStatus },
   });
+  await logAudit({ userId: session.id, action: "UPDATE", entityType: "Volunteer", entityId: volunteerId, details: { status: newStatus } });
 
   revalidatePath(`/volunteers/${volunteerId}`);
 }
@@ -192,6 +194,7 @@ async function deleteVolunteer(formData: FormData) {
   await prisma.volunteerProfile.delete({
     where: { id: volunteerId },
   });
+  await logAudit({ userId: session.id, action: "DELETE", entityType: "Volunteer", entityId: volunteerId });
 
   redirect("/volunteers");
 }
@@ -240,15 +243,17 @@ export default async function VolunteerDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const hours = parseFloat(formData.get("hours") as string);
     await prisma.volunteerHoursLog.create({
       data: {
         volunteerId: id,
         date: formData.get("date") as string,
-        hours: parseFloat(formData.get("hours") as string),
+        hours,
         description: (formData.get("description") as string) || null,
         departmentId: (formData.get("departmentId") as string) || null,
       },
     });
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "VolunteerHours", entityId: id, details: { hours, date: formData.get("date") } });
     redirect(`/volunteers/${id}`);
   }
 

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 
 export default async function NewAssignmentPage() {
   const [volunteers, departments] = await Promise.all([
@@ -24,7 +25,7 @@ export default async function NewAssignmentPage() {
     const session = await getSession();
     if (!session) redirect("/login");
 
-    await prisma.assignment.create({
+    const assignment = await prisma.assignment.create({
       data: {
         volunteerId: formData.get("volunteerId") as string,
         departmentId: formData.get("departmentId") as string,
@@ -36,6 +37,7 @@ export default async function NewAssignmentPage() {
         createdById: session.id,
       },
     });
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "Assignment", entityId: assignment.id, details: { title: formData.get("title"), date: formData.get("date") } });
 
     redirect("/assignments");
   }

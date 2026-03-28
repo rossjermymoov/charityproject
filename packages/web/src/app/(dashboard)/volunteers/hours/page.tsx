@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { getStatusColor, formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 
 export default async function HoursPage({
   searchParams,
@@ -67,15 +68,17 @@ export default async function HoursPage({
     const volunteerId = formData.get("volunteerId") as string;
     if (!volunteerId) return;
 
+    const hours = parseFloat(formData.get("hours") as string);
     await prisma.volunteerHoursLog.create({
       data: {
         volunteerId,
         date: formData.get("date") as string,
-        hours: parseFloat(formData.get("hours") as string),
+        hours,
         description: (formData.get("description") as string) || null,
         departmentId: (formData.get("departmentId") as string) || null,
       },
     });
+    await logAudit({ userId: s.id, action: "CREATE", entityType: "VolunteerHours", entityId: volunteerId, details: { hours, date: formData.get("date") } });
     revalidatePath("/volunteers/hours");
     redirect("/volunteers/hours");
   }
@@ -89,6 +92,7 @@ export default async function HoursPage({
       where: { id: logId },
       data: { status: "VERIFIED", verifiedById: s.id, verifiedAt: new Date() },
     });
+    await logAudit({ userId: s.id, action: "UPDATE", entityType: "VolunteerHours", entityId: logId, details: { status: "VERIFIED" } });
     revalidatePath("/volunteers/hours");
   }
 

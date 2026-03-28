@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -42,6 +43,8 @@ export default async function NewContactPage() {
         createdById: session.id,
       },
     });
+
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "Contact", entityId: contact.id, details: { firstName: formData.get("firstName"), lastName: formData.get("lastName"), types: selectedTypes } });
 
     // Auto-create a VolunteerProfile when tagged as VOLUNTEER
     if (selectedTypes.includes("VOLUNTEER")) {

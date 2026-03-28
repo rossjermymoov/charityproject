@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 
@@ -73,6 +74,7 @@ export default async function DonationDetailPage({
         notes: (formData.get("notes") as string) || null,
       },
     });
+    await logAudit({ userId: session.id, action: "UPDATE", entityType: "Donation", entityId: id, details: { amount, type: formData.get("type") } });
 
     revalidatePath(`/finance/donations/${id}`);
   }
@@ -84,6 +86,7 @@ export default async function DonationDetailPage({
     await prisma.donation.delete({
       where: { id },
     });
+    await logAudit({ userId: session.id, action: "DELETE", entityType: "Donation", entityId: id });
 
     revalidatePath("/finance/donations");
     redirect("/finance/donations");

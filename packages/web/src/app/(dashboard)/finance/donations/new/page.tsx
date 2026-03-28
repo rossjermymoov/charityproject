@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { logAudit } from "@/lib/audit";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -53,6 +54,7 @@ export default async function NewDonationPage() {
       },
     });
 
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "Donation", entityId: donation.id, details: { amount, type: formData.get("type") } });
     revalidatePath("/finance/donations");
     redirect(`/finance/donations/${donation.id}`);
   }

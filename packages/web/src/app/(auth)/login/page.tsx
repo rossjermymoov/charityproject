@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession, createSession } from "@/lib/session";
 import { authenticate } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -18,6 +19,7 @@ export default async function LoginPage() {
     }
 
     await createSession(user.id);
+    await logAudit({ userId: user.id, action: "LOGIN", entityType: "User", entityId: user.id, details: { email } });
     redirect("/crm/contacts");
   }
 
