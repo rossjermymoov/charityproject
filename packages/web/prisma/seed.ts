@@ -143,7 +143,7 @@ async function main() {
     data: { contactId: contacts[4].id, status: "ON_LEAVE", startDate: "2024-01-05", desiredHoursPerWeek: 4 },
   });
   const vol6 = await prisma.volunteerProfile.create({
-    data: { contactId: contacts[5].id, status: "APPLICANT", desiredHoursPerWeek: 6 },
+    data: { contactId: contacts[5].id, status: "ACTIVE", desiredHoursPerWeek: 6 },
   });
 
   // Volunteer-Department assignments
