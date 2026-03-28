@@ -1,0 +1,1018 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE / SHARED
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  role          String    @default("STAFF") // ADMIN | STAFF | VOLUNTEER
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  isArchived    Boolean   @default(false)
+  archivedAt    DateTime?
+  mfaEnabled    Boolean   @default(false)
+  lastLoginAt   DateTime?
+
+  contactsCreated        Contact[]           @relation("CreatedByUser")
+  interactionsCreated    Interaction[]       @relation("InteractionCreatedBy")
+  notesCreated           Note[]              @relation("NoteCreatedBy")
+  hoursVerified          VolunteerHoursLog[] @relation("VerifiedByUser")
+  assignmentsCreated     Assignment[]        @relation("AssignmentCreatedBy")
+  broadcastsCreated      Broadcast[]         @relation("BroadcastCreatedBy")
+  broadcastConfirmations BroadcastResponse[] @relation("BroadcastConfirmedBy")
+  remindersCreated       Reminder[]          @relation("ReminderCreatedBy")
+  skillsVerified         VolunteerSkill[]    @relation("SkillVerifiedBy")
+  notifications          Notification[]      @relation("NotificationRecipient")
+  notificationPreference NotificationPreference?
+  volunteerProfile       VolunteerProfile?   @relation("UserVolunteerProfile")
+  auditLogs              AuditLog[]          @relation("AuditLogUser")
+  giftAidCreated         GiftAid[]           @relation("GiftAidCreatedBy")
+  donationsCreated       Donation[]          @relation("DonationCreatedBy")
+  eventsCreated          Event[]             @relation("EventCreatedBy")
+  campaignsCreated       Campaign[]          @relation("CampaignCreatedBy")
+  collectionTinsCreated  CollectionTin[]     @relation("CollectionTinCreatedBy")
+  tributeFundsCreated    TributeFund[]       @relation("TributeFundCreatedBy")
+  trainingVerified       VolunteerTraining[] @relation("TrainingVerifiedBy")
+  dpiasCreated           Dpia[]              @relation("DpiaCreatedBy")
+  breachesCreated        DataBreach[]        @relation("BreachCreatedBy")
+  sarsCreated            SubjectAccessRequest[] @relation("SarCreatedBy")
+  sarsAssigned           SubjectAccessRequest[] @relation("SarAssignedTo")
+  consentRecords         ConsentRecord[]     @relation("ConsentRecordedBy")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  skills               Skill[]
+  volunteerDepartments VolunteerDepartment[]
+  hoursLogs            VolunteerHoursLog[]
+  activityRecords      ActivityRecord[]
+  assignments          Assignment[]
+  broadcasts           Broadcast[]
+}
+
+model Skill {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department      Department?       @relation(fields: [departmentId], references: [id])
+  volunteerSkills VolunteerSkill[]
+  broadcastSkills BroadcastSkill[]
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  pushEnabled     Boolean  @default(true)
+  emailEnabled    Boolean  @default(true)
+  smsEnabled      Boolean  @default(false)
+  inAppEnabled    Boolean  @default(true)
+  broadcastOptIn  Boolean  @default(true)
+  quietHoursStart String?
+  quietHoursEnd   String?
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// CRM MODULE
+// ============================================
+
+model Contact {
+  id             String   @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  addressLine1   String?
+  addressLine2   String?
+  city           String?
+  postcode       String?
+  country        String?
+  type           String   @default("OTHER") // DONOR | SUPPORTER | BENEFICIARY | VOLUNTEER | OTHER
+  organisationId String?
+  customFields   String?  // JSON key-value store for configurable fields
+  status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | DECEASED | ANONYMISED
+  consentPost    Boolean  @default(false)
+  consentEmail   Boolean  @default(false)
+  consentPhone   Boolean  @default(false)
+  consentSms     Boolean  @default(false)
+  consentUpdatedAt DateTime?
+  isArchived     Boolean  @default(false)
+  archivedAt     DateTime?
+  dateOfBirth    String?
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation       Organisation?        @relation(fields: [organisationId], references: [id])
+  createdBy          User                 @relation("CreatedByUser", fields: [createdById], references: [id])
+  tags               ContactTag[]
+  notes              Note[]
+  interactions       Interaction[]
+  volunteerProfile   VolunteerProfile?
+  giftAids           GiftAid[]
+  donations          Donation[]
+  eventAttendees     EventAttendee[]
+  relationshipsFrom  ContactRelationship[] @relation("RelationshipFrom")
+  relationshipsTo    ContactRelationship[] @relation("RelationshipTo")
+  tributeGuardians   TributeFundGuardian[]
+}
+
+model Organisation {
+  id           String   @id @default(cuid())
+  name         String
+  type         String?  // Corporate | Foundation | Government | Trust | Other
+  website      String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  postcode     String?
+  country      String?
+  parentId     String?  // FK → Organisation (parent/child hierarchy)
+  isArchived   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  parent   Organisation?  @relation("OrgHierarchy", fields: [parentId], references: [id])
+  children Organisation[] @relation("OrgHierarchy")
+  contacts Contact[]
+}
+
+model Tag {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  colour String?
+
+  contacts         ContactTag[]
+  campaignSegments CampaignSegment[]
+}
+
+model ContactTag {
+  contactId String
+  tagId     String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, tagId])
+}
+
+model Interaction {
+  id          String   @id @default(cuid())
+  contactId   String
+  type        String
+  subject     String
+  description String?
+  date        DateTime
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("InteractionCreatedBy", fields: [createdById], references: [id])
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  contactId   String
+  content     String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("NoteCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// VOLUNTEER MODULE
+// ============================================
+
+model VolunteerProfile {
+  id                  String   @id @default(cuid())
+  contactId           String   @unique
+  userId              String?  @unique
+  status              String   @default("APPLICANT")
+  startDate           String?
+  endDate             String?
+  desiredHoursPerWeek Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  contact               Contact               @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user                  User?                 @relation("UserVolunteerProfile", fields: [userId], references: [id])
+  departments           VolunteerDepartment[]
+  skills                VolunteerSkill[]
+  availability          Availability[]
+  specialConsiderations SpecialConsideration[]
+  hoursLogs             VolunteerHoursLog[]
+  activityRecords       ActivityRecord[]
+  assignments           Assignment[]
+  reminders             Reminder[]
+  broadcastResponses    BroadcastResponse[]
+  assignmentReminders   AssignmentReminder[]
+  trainings             VolunteerTraining[]
+}
+
+model VolunteerDepartment {
+  volunteerId  String
+  departmentId String
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  department Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([volunteerId, departmentId])
+}
+
+model VolunteerSkill {
+  id           String    @id @default(cuid())
+  volunteerId  String
+  skillId      String
+  proficiency  String    @default("BEGINNER")
+  verifiedById String?
+  verifiedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  skill      Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  verifiedBy User?            @relation("SkillVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@unique([volunteerId, skillId])
+}
+
+model Availability {
+  id           String   @id @default(cuid())
+  volunteerId  String
+  dayOfWeek    String
+  startTime    String
+  endTime      String
+  isRecurring  Boolean  @default(true)
+  specificDate String?
+  notes        String?
+  updatedAt    DateTime @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+}
+
+model SpecialConsideration {
+  id             String   @id @default(cuid())
+  volunteerId    String
+  category       String
+  description    String
+  accommodations String?
+  isConfidential Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+}
+
+model VolunteerHoursLog {
+  id           String   @id @default(cuid())
+  volunteerId  String
+  departmentId String?
+  date         String
+  hours        Float
+  description  String?
+  verifiedById String?
+  status       String   @default("LOGGED")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  department Department?      @relation(fields: [departmentId], references: [id])
+  verifiedBy User?            @relation("VerifiedByUser", fields: [verifiedById], references: [id])
+}
+
+model ActivityRecord {
+  id           String   @id @default(cuid())
+  volunteerId  String
+  type         String
+  title        String
+  description  String?
+  date         DateTime
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  department Department?      @relation(fields: [departmentId], references: [id])
+}
+
+model Reminder {
+  id          String    @id @default(cuid())
+  volunteerId String
+  type        String
+  title       String
+  message     String?
+  triggerDate DateTime
+  isAutomatic Boolean   @default(false)
+  isSent      Boolean   @default(false)
+  sentAt      DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  createdBy User             @relation("ReminderCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// ASSIGNMENT & SCHEDULING
+// ============================================
+
+model Assignment {
+  id           String   @id @default(cuid())
+  volunteerId  String
+  departmentId String
+  title        String
+  description  String?
+  date         String
+  startTime    String
+  endTime      String
+  status       String   @default("SCHEDULED")
+  createdById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  volunteer  VolunteerProfile   @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  department Department         @relation(fields: [departmentId], references: [id])
+  createdBy  User               @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
+  reminders  AssignmentReminder[]
+}
+
+model AssignmentReminder {
+  id             String    @id @default(cuid())
+  assignmentId   String
+  volunteerId    String
+  reminderTime   DateTime
+  channel        String
+  status         String    @default("PENDING")
+  sentAt         DateTime?
+  acknowledgedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  assignment Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+model Notification {
+  id          String    @id @default(cuid())
+  recipientId String
+  type        String
+  title       String
+  body        String
+  link        String?
+  channel     String
+  status      String    @default("QUEUED")
+  sentAt      DateTime?
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// BROADCAST / URGENT COVER
+// ============================================
+
+model Broadcast {
+  id              String    @id @default(cuid())
+  title           String
+  message         String
+  urgency         String    @default("NORMAL")
+  departmentId    String?
+  targetDate      String
+  targetStartTime String
+  targetEndTime   String
+  status          String    @default("OPEN")
+  maxRespondents  Int       @default(1)
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  expiresAt       DateTime
+  filledAt        DateTime?
+
+  department Department?        @relation(fields: [departmentId], references: [id])
+  createdBy  User               @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
+  skills     BroadcastSkill[]
+  responses  BroadcastResponse[]
+}
+
+model BroadcastSkill {
+  broadcastId String
+  skillId     String
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([broadcastId, skillId])
+}
+
+model BroadcastResponse {
+  id            String    @id @default(cuid())
+  broadcastId   String
+  volunteerId   String
+  response      String
+  message       String?
+  respondedAt   DateTime  @default(now())
+  confirmedById String?
+  confirmedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  broadcast   Broadcast        @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  volunteer   VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  confirmedBy User?            @relation("BroadcastConfirmedBy", fields: [confirmedById], references: [id])
+}
+
+// ============================================
+// CONTACT RELATIONSHIPS
+// ============================================
+
+model ContactRelationship {
+  id             String   @id @default(cuid())
+  fromContactId  String
+  toContactId    String
+  type           String   // SPOUSE | PARENT | CHILD | SIBLING | EMPLOYER | EMPLOYEE | FRIEND | GUARDIAN | OTHER
+  description    String?
+  createdAt      DateTime @default(now())
+
+  fromContact Contact @relation("RelationshipFrom", fields: [fromContactId], references: [id], onDelete: Cascade)
+  toContact   Contact @relation("RelationshipTo", fields: [toContactId], references: [id], onDelete: Cascade)
+
+  @@unique([fromContactId, toContactId, type])
+}
+
+// ============================================
+// GIFT AID MODULE
+// ============================================
+
+model GiftAid {
+  id            String    @id @default(cuid())
+  contactId     String
+  declarationDate DateTime
+  startDate     DateTime
+  endDate       DateTime?  // null = ongoing
+  status        String    @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED
+  documentUrl   String?   // scanned declaration document
+  notes         String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("GiftAidCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// FUNDRAISING & DONATIONS MODULE
+// ============================================
+
+model LedgerCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  donations  Donation[]
+  events     Event[]
+  campaigns  Campaign[]
+}
+
+model Donation {
+  id             String   @id @default(cuid())
+  contactId      String
+  amount         Float
+  currency       String   @default("GBP")
+  type           String   // DONATION | PAYMENT | GIFT | EVENT_FEE | SPONSORSHIP | LEGACY | GRANT | IN_KIND
+  method         String?  // CASH | CHEQUE | CARD | DIRECT_DEBIT | STANDING_ORDER | BANK_TRANSFER | ONLINE | OTHER
+  reference      String?  // payment reference / receipt number
+  date           DateTime
+  ledgerCodeId   String?
+  campaignId     String?
+  eventId        String?
+  isGiftAidable  Boolean  @default(false)
+  giftAidClaimed Boolean  @default(false)
+  notes          String?
+  status         String   @default("RECEIVED") // RECEIVED | PENDING | REFUNDED | CANCELLED
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  contact    Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  ledgerCode LedgerCode? @relation(fields: [ledgerCodeId], references: [id])
+  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
+  event      Event?      @relation(fields: [eventId], references: [id])
+  createdBy  User        @relation("DonationCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// EVENT MANAGEMENT MODULE
+// ============================================
+
+model Event {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  type         String?   // FUNDRAISER | GALA | AUCTION | CHALLENGE | COMMUNITY | MEMORIAL | OTHER
+  startDate    DateTime
+  endDate      DateTime?
+  location     String?
+  capacity     Int?
+  campaignId   String?
+  ledgerCodeId String?
+  status       String    @default("PLANNED") // PLANNED | OPEN | IN_PROGRESS | COMPLETED | CANCELLED
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  campaign    Campaign?       @relation(fields: [campaignId], references: [id])
+  ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
+  createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])
+  attendees   EventAttendee[]
+  donations   Donation[]
+  merchandise EventMerchandise[]
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  eventId   String
+  contactId String
+  status    String   @default("REGISTERED") // REGISTERED | CONFIRMED | ATTENDED | NO_SHOW | CANCELLED
+  ticketType String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, contactId])
+}
+
+model EventMerchandise {
+  id          String   @id @default(cuid())
+  eventId     String
+  name        String
+  description String?
+  quantity    Int      @default(0)
+  unitPrice   Float?
+  quantitySold Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// MARKETING & CAMPAIGNS MODULE
+// ============================================
+
+model Campaign {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  type         String?   // APPEAL | MAIL | EMAIL | EVENT | LEGACY | CORPORATE | OTHER
+  ledgerCodeId String?
+  startDate    DateTime?
+  endDate      DateTime?
+  budgetTarget Float?
+  actualRaised Float     @default(0)
+  status       String    @default("DRAFT") // DRAFT | ACTIVE | PAUSED | COMPLETED | CANCELLED
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  ledgerCode LedgerCode?       @relation(fields: [ledgerCodeId], references: [id])
+  createdBy  User               @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  events     Event[]
+  donations  Donation[]
+  segments   CampaignSegment[]
+}
+
+model CampaignSegment {
+  id         String   @id @default(cuid())
+  campaignId String
+  tagId      String
+  createdAt  DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, tagId])
+}
+
+// ============================================
+// COLLECTION TINS MODULE
+// ============================================
+
+model CollectionTin {
+  id          String   @id @default(cuid())
+  tinNumber   String   @unique
+  locationName String
+  locationAddress String?
+  contactId   String?  // FK → Contact (location contact person)
+  status      String   @default("IN_STOCK") // IN_STOCK | DEPLOYED | RETURNED | LOST | STOLEN | RETIRED
+  deployedAt  DateTime?
+  returnedAt  DateTime?
+  notes       String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User              @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
+  movements CollectionTinMovement[]
+}
+
+model CollectionTinMovement {
+  id        String   @id @default(cuid())
+  tinId     String
+  type      String   // DEPLOYED | COLLECTED | COUNTED | LOST | STOLEN | RETURNED
+  date      DateTime
+  amount    Float?   // amount collected (if counted)
+  notes     String?
+  createdAt DateTime @default(now())
+
+  tin CollectionTin @relation(fields: [tinId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// TRIBUTE FUNDS MODULE
+// ============================================
+
+model TributeFund {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // TRADITIONAL | ROBIN (children's)
+  description String?
+  inMemoryOf  String?  // name of person being remembered
+  status      String   @default("ACTIVE") // ACTIVE | CLOSED
+  totalRaised Float    @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy  User                  @relation("TributeFundCreatedBy", fields: [createdById], references: [id])
+  guardians  TributeFundGuardian[]
+  milestones TributeFundMilestone[]
+}
+
+model TributeFundGuardian {
+  id            String   @id @default(cuid())
+  tributeFundId String
+  contactId     String
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  tributeFund TributeFund @relation(fields: [tributeFundId], references: [id], onDelete: Cascade)
+  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([tributeFundId, contactId])
+}
+
+model TributeFundMilestone {
+  id            String   @id @default(cuid())
+  tributeFundId String
+  title         String
+  description   String?
+  date          DateTime
+  createdAt     DateTime @default(now())
+
+  tributeFund TributeFund @relation(fields: [tributeFundId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// VOLUNTEER TRAINING MODULE
+// ============================================
+
+model TrainingCourse {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isMandatory Boolean  @default(false)
+  validityMonths Int?  // how long certification lasts (null = never expires)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  volunteerTrainings VolunteerTraining[]
+}
+
+model VolunteerTraining {
+  id             String    @id @default(cuid())
+  volunteerId    String
+  courseId        String
+  status         String    @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | EXPIRED
+  completedDate  DateTime?
+  expiryDate     DateTime?
+  certificateUrl String?
+  verifiedById   String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  volunteer  VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  course     TrainingCourse   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  verifiedBy User?            @relation("TrainingVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@unique([volunteerId, courseId])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String   // CREATE | UPDATE | DELETE | ARCHIVE | LOGIN | LOGOUT | EXPORT | MERGE | ANONYMISE
+  entityType String   // Contact | Organisation | Volunteer | Donation | etc.
+  entityId   String?
+  details    String?  // JSON with changed fields
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation("AuditLogUser", fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// DATA MANAGEMENT / GDPR
+// ============================================
+
+model DataRetentionPolicy {
+  id             String   @id @default(cuid())
+  entityType     String   @unique // Contact | Donation | etc.
+  retentionDays  Int      // how many days to keep records
+  action         String   // ARCHIVE | ANONYMISE | DELETE
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ============================================
+// DPIA — Data Protection Impact Assessment
+// ============================================
+
+model Dpia {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  projectOrSystem   String    // which system/project this covers (e.g. "CharityOS CRM")
+  dataController    String    // org name
+  dpoName           String?   // DPO who will sign off
+  dpoEmail          String?
+  csoName           String?   // Clinical Safety Officer name
+  csoSignedOff      Boolean   @default(false)
+  csoSignedOffAt    DateTime?
+  status            String    @default("DRAFT") // DRAFT | IN_REVIEW | DPO_REVIEW | APPROVED | REJECTED | REQUIRES_UPDATE
+  legalBasis        String?   // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
+  dataSubjects      String?   // e.g. "Patients, Donors, Volunteers, Staff"
+  dataCategories    String?   // e.g. "Contact details, Health data, Financial data"
+  specialCategories Boolean   @default(false) // true if processing special category data (health, ethnicity, etc.)
+  dataMinimisation  String?   // how data minimisation is achieved
+  retentionPeriod   String?   // how long data is retained
+  securityMeasures  String?   // encryption, access controls, etc.
+  internationalTransfers Boolean @default(false)
+  transferSafeguards String?  // if international transfers, what safeguards
+  consultationRequired Boolean @default(false) // whether ICO consultation is needed
+  dpoAdvice         String?   // DPO's written advice
+  dpoSignedOff      Boolean   @default(false)
+  dpoSignedOffAt    DateTime?
+  dpoOverruled      Boolean   @default(false)
+  overruleReason    String?   // if DPO advice overruled, document why
+  reviewDate        DateTime? // when to next review this DPIA
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  createdBy User       @relation("DpiaCreatedBy", fields: [createdById], references: [id])
+  risks     DpiaRisk[]
+}
+
+model DpiaRisk {
+  id              String   @id @default(cuid())
+  dpiaId          String
+  description     String   // what is the risk
+  likelihood      String   // LOW | MEDIUM | HIGH | VERY_HIGH
+  severity        String   // LOW | MEDIUM | HIGH | VERY_HIGH
+  riskLevel       String   // LOW | MEDIUM | HIGH | VERY_HIGH (calculated or set)
+  mitigation      String?  // how this risk is mitigated
+  residualRisk    String?  // LOW | MEDIUM | HIGH | VERY_HIGH after mitigation
+  riskOwner       String?  // who is responsible
+  status          String   @default("OPEN") // OPEN | MITIGATED | ACCEPTED | TRANSFERRED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  dpia Dpia @relation(fields: [dpiaId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// DATA BREACH LOG
+// ============================================
+
+model DataBreach {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  discoveredAt      DateTime
+  reportedAt        DateTime?  // when reported to DPO
+  icoNotified       Boolean   @default(false) // reported to ICO within 72 hours?
+  icoNotifiedAt     DateTime?
+  icoReference      String?   // ICO reference number
+  dataSubjectsNotified Boolean @default(false)
+  dataSubjectsNotifiedAt DateTime?
+  severity          String    @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
+  category          String?   // CONFIDENTIALITY | INTEGRITY | AVAILABILITY
+  dataSubjectsAffected Int?   // approximate number
+  dataTypesAffected String?   // e.g. "Contact details, Health data"
+  cause             String?   // e.g. "Phishing, Misconfiguration, Insider"
+  containmentActions String?
+  remediationActions String?
+  lessonsLearned    String?
+  status            String    @default("OPEN") // OPEN | CONTAINED | INVESTIGATING | RESOLVED | CLOSED
+  dpoReview         String?   // DPO's assessment
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  createdBy User @relation("BreachCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// SUBJECT ACCESS REQUESTS (SAR)
+// ============================================
+
+model SubjectAccessRequest {
+  id                String    @id @default(cuid())
+  requesterName     String
+  requesterEmail    String?
+  requesterPhone    String?
+  contactId         String?   // FK → Contact (if matched to a contact)
+  requestDate       DateTime
+  dueDate           DateTime  // must respond within 1 calendar month
+  description       String?   // what data they're requesting
+  idVerified        Boolean   @default(false) // identity verification completed
+  idVerifiedAt      DateTime?
+  status            String    @default("RECEIVED") // RECEIVED | VERIFIED | IN_PROGRESS | READY | SENT | CLOSED | REFUSED
+  refusalReason     String?   // if refused, why (must be a valid exemption)
+  extensionApplied  Boolean   @default(false) // extended by 2 months for complex requests
+  extensionReason   String?
+  responseNotes     String?
+  dataSentAt        DateTime?
+  dataSentMethod    String?   // EMAIL | POST | PORTAL
+  assignedToId      String?   // FK → User (staff handling the SAR)
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  assignedTo User? @relation("SarAssignedTo", fields: [assignedToId], references: [id])
+  createdBy  User  @relation("SarCreatedBy", fields: [createdById], references: [id])
+}
+
+// ============================================
+// ROPA — Record of Processing Activities (Article 30)
+// ============================================
+
+model ProcessingActivity {
+  id                  String   @id @default(cuid())
+  name                String   // e.g. "Donor Contact Management"
+  purpose             String   // why this processing happens
+  legalBasis          String   // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
+  dataController      String   // org name
+  dataProcessor       String?  // if using a processor (e.g. Mailchimp)
+  dataSubjectCategories String // e.g. "Donors, Volunteers"
+  dataCategories      String   // e.g. "Name, Email, Phone, Address"
+  specialCategories   String?  // e.g. "Health data, Disability info"
+  recipientCategories String?  // who data is shared with
+  internationalTransfers Boolean @default(false)
+  transferSafeguards  String?
+  retentionPeriod     String   // e.g. "7 years after last interaction"
+  securityMeasures    String?  // e.g. "Encrypted at rest, role-based access"
+  dpaInPlace          Boolean  @default(false) // Data Processing Agreement
+  dpaReference        String?  // reference number for the DPA
+  lastReviewDate      DateTime?
+  nextReviewDate      DateTime?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================
+// INFORMATION ASSET REGISTER
+// ============================================
+
+model InformationAsset {
+  id                String   @id @default(cuid())
+  name              String   // e.g. "CRM Database", "Volunteer Records"
+  description       String?
+  assetOwner        String   // person responsible
+  assetType         String   // DATABASE | FILE_SYSTEM | CLOUD_SERVICE | PAPER | APPLICATION | EMAIL
+  location          String?  // where is it stored
+  dataClassification String  @default("OFFICIAL") // OFFICIAL | OFFICIAL_SENSITIVE | SECRET
+  personalData      Boolean  @default(false)
+  specialCategoryData Boolean @default(false)
+  riskLevel         String   @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
+  encryptionAtRest  Boolean  @default(false)
+  encryptionInTransit Boolean @default(false)
+  accessControls    String?  // who has access
+  backupFrequency   String?  // e.g. "Daily", "Weekly"
+  retentionPeriod   String?
+  disposalMethod    String?  // how it's securely destroyed
+  lastReviewDate    DateTime?
+  nextReviewDate    DateTime?
+  notes             String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ============================================
+// CLINICAL SAFETY — DCB0129/DCB0160 Hazard Log
+// ============================================
+
+model ClinicalHazard {
+  id                String   @id @default(cuid())
+  hazardNumber      String   @unique // e.g. "HAZ-001"
+  name              String
+  description       String
+  cause             String?  // what causes this hazard
+  effect            String?  // what happens if hazard occurs
+  category          String?  // PATIENT_SAFETY | DATA_LOSS | SYSTEM_FAILURE | ACCESS_CONTROL | CLINICAL_DECISION | OTHER
+  initialSeverity   String   // CATASTROPHIC | MAJOR | CONSIDERABLE | SIGNIFICANT | MINOR
+  initialLikelihood String   // VERY_HIGH | HIGH | MEDIUM | LOW | VERY_LOW
+  initialRiskLevel  String   // calculated from severity x likelihood
+  controls          String?  // what controls are in place
+  residualSeverity  String?
+  residualLikelihood String?
+  residualRiskLevel String?
+  riskAcceptability String   @default("UNACCEPTABLE") // ACCEPTABLE | TOLERABLE | UNACCEPTABLE
+  status            String   @default("OPEN") // OPEN | MITIGATED | CLOSED | TRANSFERRED
+  assignedTo        String?  // who is responsible
+  csoReview         String?  // Clinical Safety Officer review notes
+  csoSignedOff      Boolean  @default(false)
+  csoSignedOffAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ============================================
+// CONSENT AUDIT TRAIL
+// ============================================
+
+model ConsentRecord {
+  id              String   @id @default(cuid())
+  contactId       String
+  consentType     String   // POST | EMAIL | PHONE | SMS | DATA_PROCESSING | MARKETING | RESEARCH
+  action          String   // GRANTED | WITHDRAWN | UPDATED
+  previousValue   Boolean?
+  newValue        Boolean
+  source          String?  // WEB_FORM | PHONE | LETTER | IN_PERSON | SYSTEM
+  evidenceUrl     String?  // link to scanned form etc.
+  notes           String?
+  recordedById    String   // FK → User who recorded this
+  recordedAt      DateTime @default(now())
+
+  recordedBy User @relation("ConsentRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([contactId])
+  @@index([consentType])
+  @@index([recordedAt])
+}

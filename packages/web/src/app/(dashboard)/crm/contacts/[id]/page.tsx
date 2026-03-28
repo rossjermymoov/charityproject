@@ -1,0 +1,567 @@
+import { notFound, redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { revalidatePath } from "next/cache";
+import Link from "next/link";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { formatDate } from "@/lib/utils";
+
+export default async function ContactDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const contact = await prisma.contact.findUnique({
+    where: { id },
+    include: {
+      organisation: true,
+      tags: { include: { tag: true } },
+      notes: { include: { createdBy: true }, orderBy: { createdAt: "desc" } },
+      interactions: { include: { createdBy: true }, orderBy: { date: "desc" } },
+      volunteerProfile: true,
+      giftAids: { orderBy: { createdAt: "desc" }, take: 5 },
+      donations: { orderBy: { date: "desc" }, take: 5 },
+      relationshipsFrom: { include: { toContact: true } },
+      relationshipsTo: { include: { fromContact: true } },
+    },
+  });
+
+  if (!contact) notFound();
+
+  const allContacts = await prisma.contact.findMany({
+    where: { id: { not: id } },
+    orderBy: { firstName: "asc" },
+    select: { id: true, firstName: true, lastName: true },
+  });
+
+  async function addNote(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    await prisma.note.create({
+      data: {
+        contactId: id,
+        content: formData.get("content") as string,
+        createdById: session.id,
+      },
+    });
+    revalidatePath(`/dashboard/crm/contacts/${id}`);
+    redirect(`/dashboard/crm/contacts/${id}`);
+  }
+
+  async function addInteraction(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    await prisma.interaction.create({
+      data: {
+        contactId: id,
+        type: formData.get("type") as string,
+        subject: formData.get("subject") as string,
+        description: (formData.get("description") as string) || null,
+        date: new Date(),
+        createdById: session.id,
+      },
+    });
+    revalidatePath(`/dashboard/crm/contacts/${id}`);
+    redirect(`/dashboard/crm/contacts/${id}`);
+  }
+
+  async function updateConsent(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    // Read current consent values before updating
+    const currentContact = await prisma.contact.findUnique({
+      where: { id },
+      select: {
+        consentPost: true,
+        consentEmail: true,
+        consentPhone: true,
+        consentSms: true,
+      },
+    });
+
+    if (!currentContact) {
+      redirect(`/dashboard/crm/contacts/${id}`);
+    }
+
+    // Parse new consent values from form
+    const newConsent = {
+      consentPost: formData.get("consentPost") === "on",
+      consentEmail: formData.get("consentEmail") === "on",
+      consentPhone: formData.get("consentPhone") === "on",
+      consentSms: formData.get("consentSms") === "on",
+    };
+
+    // Create ConsentRecords for each changed consent type
+    const consentChanges = [
+      { type: "POST", old: currentContact.consentPost, new: newConsent.consentPost },
+      { type: "EMAIL", old: currentContact.consentEmail, new: newConsent.consentEmail },
+      { type: "PHONE", old: currentContact.consentPhone, new: newConsent.consentPhone },
+      { type: "SMS", old: currentContact.consentSms, new: newConsent.consentSms },
+    ];
+
+    // Create audit records for each change
+    for (const change of consentChanges) {
+      if (change.old !== change.new) {
+        await prisma.consentRecord.create({
+          data: {
+            contactId: id,
+            consentType: change.type,
+            action: change.new ? "GRANTED" : "WITHDRAWN",
+            previousValue: change.old,
+            newValue: change.new,
+            source: "WEB_PORTAL",
+            recordedById: session.id,
+          },
+        });
+      }
+    }
+
+    // Update the contact
+    await prisma.contact.update({
+      where: { id },
+      data: {
+        consentPost: newConsent.consentPost,
+        consentEmail: newConsent.consentEmail,
+        consentPhone: newConsent.consentPhone,
+        consentSms: newConsent.consentSms,
+        consentUpdatedAt: new Date(),
+      },
+    });
+    revalidatePath(`/dashboard/crm/contacts/${id}`);
+    redirect(`/dashboard/crm/contacts/${id}`);
+  }
+
+  async function addRelationship(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const toContactId = formData.get("toContactId") as string;
+    const type = formData.get("relType") as string;
+    if (!toContactId || !type) return;
+
+    await prisma.contactRelationship.create({
+      data: {
+        fromContactId: id,
+        toContactId,
+        type,
+      },
+    });
+    revalidatePath(`/dashboard/crm/contacts/${id}`);
+    redirect(`/dashboard/crm/contacts/${id}`);
+  }
+
+  async function removeRelationship(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const relId = formData.get("relationshipId") as string;
+    await prisma.contactRelationship.delete({ where: { id: relId } });
+    revalidatePath(`/dashboard/crm/contacts/${id}`);
+    redirect(`/dashboard/crm/contacts/${id}`);
+  }
+
+  const typeColors: Record<string, string> = {
+    DONOR: "bg-green-100 text-green-800",
+    SUPPORTER: "bg-blue-100 text-blue-800",
+    BENEFICIARY: "bg-purple-100 text-purple-800",
+    VOLUNTEER: "bg-indigo-100 text-indigo-800",
+    OTHER: "bg-gray-100 text-gray-800",
+  };
+
+  const interactionIcons: Record<string, string> = {
+    EMAIL: "📧",
+    CALL: "📞",
+    MEETING: "🤝",
+    NOTE: "📝",
+    DONATION: "💰",
+    LETTER: "✉️",
+    EVENT: "🎪",
+    TASK: "✅",
+    OTHER: "📋",
+  };
+
+  const relationships = [
+    ...contact.relationshipsFrom.map((r) => ({
+      id: r.id,
+      type: r.type,
+      contact: r.toContact,
+      direction: "to" as const,
+    })),
+    ...contact.relationshipsTo.map((r) => ({
+      id: r.id,
+      type: r.type,
+      contact: r.fromContact,
+      direction: "from" as const,
+    })),
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard/crm/contacts" className="text-gray-400 hover:text-gray-600">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Contact Details</h1>
+      </div>
+
+      {/* Profile Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {contact.firstName} {contact.lastName}
+                </h2>
+                <Badge className={typeColors[contact.type]}>{contact.type}</Badge>
+                {contact.isArchived && (
+                  <Badge className="bg-red-100 text-red-800">Archived</Badge>
+                )}
+                {contact.volunteerProfile && (
+                  <Link href={`/dashboard/volunteers/${contact.volunteerProfile.id}`}>
+                    <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
+                      View Volunteer Profile →
+                    </Badge>
+                  </Link>
+                )}
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {contact.email && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Mail className="h-4 w-4" /> {contact.email}
+                  </div>
+                )}
+                {contact.phone && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Phone className="h-4 w-4" /> {contact.phone}
+                  </div>
+                )}
+                {contact.addressLine1 && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4" />
+                    {[contact.addressLine1, contact.city, contact.postcode].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                {contact.organisation && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Building2 className="h-4 w-4" /> {contact.organisation.name}
+                  </div>
+                )}
+                {contact.dateOfBirth && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    🎂 Born: {contact.dateOfBirth}
+                  </div>
+                )}
+              </div>
+              {contact.tags.length > 0 && (
+                <div className="flex gap-1 mt-3 flex-wrap">
+                  {contact.tags.map((ct) => (
+                    <Badge key={ct.tagId} variant="outline">{ct.tag.name}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Consent & Relationships row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Communication Consent */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Communication Consent</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={updateConsent} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="consentPost"
+                    defaultChecked={contact.consentPost}
+                    className="rounded border-gray-300"
+                  />
+                  Post
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="consentEmail"
+                    defaultChecked={contact.consentEmail}
+                    className="rounded border-gray-300"
+                  />
+                  Email
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="consentPhone"
+                    defaultChecked={contact.consentPhone}
+                    className="rounded border-gray-300"
+                  />
+                  Phone
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="consentSms"
+                    defaultChecked={contact.consentSms}
+                    className="rounded border-gray-300"
+                  />
+                  SMS
+                </label>
+              </div>
+              {contact.consentUpdatedAt && (
+                <p className="text-xs text-gray-400">
+                  Last updated: {formatDate(contact.consentUpdatedAt)}
+                </p>
+              )}
+              <Button type="submit" size="sm">Update Consent</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Relationships */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Relationships</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={addRelationship} className="space-y-3 mb-4 pb-4 border-b border-gray-100">
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  name="toContactId"
+                  required
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Select contact...</option>
+                  {allContacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="relType"
+                  required
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Relationship type...</option>
+                  <option value="SPOUSE">Spouse</option>
+                  <option value="PARENT">Parent</option>
+                  <option value="CHILD">Child</option>
+                  <option value="SIBLING">Sibling</option>
+                  <option value="EMPLOYER">Employer</option>
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="FRIEND">Friend</option>
+                  <option value="GUARDIAN">Guardian</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <Button type="submit" size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Add Relationship
+              </Button>
+            </form>
+            {relationships.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No relationships recorded</p>
+            ) : (
+              <div className="space-y-2">
+                {relationships.map((rel) => (
+                  <div key={rel.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <Link
+                        href={`/dashboard/crm/contacts/${rel.contact.id}`}
+                        className="text-sm font-medium text-indigo-600 hover:underline"
+                      >
+                        {rel.contact.firstName} {rel.contact.lastName}
+                      </Link>
+                      <Badge variant="outline">{rel.type}</Badge>
+                    </div>
+                    <form action={removeRelationship}>
+                      <input type="hidden" name="relationshipId" value={rel.id} />
+                      <Button type="submit" variant="ghost" size="sm" className="text-red-500 text-xs">
+                        Remove
+                      </Button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Financial summary row */}
+      {(contact.donations.length > 0 || contact.giftAids.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {contact.donations.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Donations</h3>
+                  <Link href="/dashboard/finance/donations" className="text-sm text-indigo-600 hover:underline">
+                    View All
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {contact.donations.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`/dashboard/finance/donations/${d.id}`}
+                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{d.type}</p>
+                        <p className="text-xs text-gray-500">{formatDate(d.date)}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">
+                        £{d.amount.toFixed(2)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {contact.giftAids.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Gift Aid Declarations</h3>
+                  <Link href="/dashboard/finance/gift-aid" className="text-sm text-indigo-600 hover:underline">
+                    View All
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {contact.giftAids.map((ga) => (
+                    <Link
+                      key={ga.id}
+                      href={`/dashboard/finance/gift-aid/${ga.id}`}
+                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatDate(ga.startDate)} — {ga.endDate ? formatDate(ga.endDate) : "Ongoing"}
+                        </p>
+                      </div>
+                      <Badge className={
+                        ga.status === "ACTIVE" ? "bg-green-100 text-green-800" :
+                        ga.status === "EXPIRED" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-red-100 text-red-800"
+                      }>{ga.status}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Interactions */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Interactions</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={addInteraction} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  name="type"
+                  required
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="EMAIL">Email</option>
+                  <option value="CALL">Call</option>
+                  <option value="MEETING">Meeting</option>
+                  <option value="LETTER">Letter</option>
+                  <option value="EVENT">Event</option>
+                  <option value="TASK">Task</option>
+                  <option value="DONATION">Donation</option>
+                  <option value="OTHER">Other</option>
+                </select>
+                <Input name="subject" placeholder="Subject" required />
+              </div>
+              <Input name="description" placeholder="Description (optional)" />
+              <Button type="submit" size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Log Interaction
+              </Button>
+            </form>
+            <div className="space-y-3">
+              {contact.interactions.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No interactions yet</p>
+              ) : (
+                contact.interactions.map((interaction) => (
+                  <div key={interaction.id} className="flex items-start gap-3 py-2">
+                    <span className="text-lg">{interactionIcons[interaction.type] || "📋"}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{interaction.subject}</p>
+                      {interaction.description && (
+                        <p className="text-sm text-gray-500 truncate">{interaction.description}</p>
+                      )}
+                      <p className="text-xs text-gray-400">
+                        {formatDate(interaction.date)} • {interaction.createdBy.name}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notes */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={addNote} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
+              <Textarea name="content" placeholder="Add a note..." required />
+              <Button type="submit" size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Add Note
+              </Button>
+            </form>
+            <div className="space-y-3">
+              {contact.notes.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No notes yet</p>
+              ) : (
+                contact.notes.map((note) => (
+                  <div key={note.id} className="py-2 border-b border-gray-50 last:border-0">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {formatDate(note.createdAt)} • {note.createdBy.name}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,213 @@
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { CheckCircle, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+
+export default async function ConsentTrailPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; consentType?: string; action?: string }>;
+}) {
+  const params = await searchParams;
+  const search = params.search || "";
+  const consentTypeFilter = params.consentType || "";
+  const actionFilter = params.action || "";
+
+  // Get consent records
+  const consentRecords = await prisma.consentRecord.findMany({
+    where: {
+      AND: [
+        consentTypeFilter ? { consentType: consentTypeFilter } : {},
+        actionFilter ? { action: actionFilter } : {},
+      ],
+    },
+    include: {
+      recordedBy: true,
+    },
+    orderBy: { recordedAt: "desc" },
+    take: 100,
+  });
+
+  // Get all contacts for name lookup
+  const contacts = await prisma.contact.findMany({
+    select: { id: true, firstName: true, lastName: true },
+  });
+
+  const contactMap = new Map(
+    contacts.map((c) => [c.id, `${c.firstName} ${c.lastName}`])
+  );
+
+  // Filter by search (contact name)
+  const filtered = search
+    ? consentRecords.filter((r) => {
+        const contactName = contactMap.get(r.contactId) || r.contactId;
+        return contactName.toLowerCase().includes(search.toLowerCase());
+      })
+    : consentRecords;
+
+  const consentTypeColors: Record<string, string> = {
+    POST: "bg-blue-100 text-blue-800",
+    EMAIL: "bg-purple-100 text-purple-800",
+    PHONE: "bg-green-100 text-green-800",
+    SMS: "bg-yellow-100 text-yellow-800",
+    DATA_PROCESSING: "bg-red-100 text-red-800",
+    MARKETING: "bg-indigo-100 text-indigo-800",
+    RESEARCH: "bg-pink-100 text-pink-800",
+  };
+
+  const actionColors: Record<string, string> = {
+    GRANTED: "bg-green-100 text-green-800",
+    WITHDRAWN: "bg-red-100 text-red-800",
+    UPDATED: "bg-blue-100 text-blue-800",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Consent Audit Trail</h1>
+        <p className="text-gray-500 mt-1">Track all consent grants, withdrawals, and updates</p>
+      </div>
+
+      {/* Search and filters */}
+      <Card className="p-4">
+        <form className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Search className="h-5 w-5 text-gray-400" />
+            <input
+              name="search"
+              type="text"
+              defaultValue={search}
+              placeholder="Search by contact name..."
+              className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
+            />
+          </div>
+          <select
+            name="consentType"
+            defaultValue={consentTypeFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Types</option>
+            <option value="POST">Post</option>
+            <option value="EMAIL">Email</option>
+            <option value="PHONE">Phone</option>
+            <option value="SMS">SMS</option>
+            <option value="DATA_PROCESSING">Data Processing</option>
+            <option value="MARKETING">Marketing</option>
+            <option value="RESEARCH">Research</option>
+          </select>
+          <select
+            name="action"
+            defaultValue={actionFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Actions</option>
+            <option value="GRANTED">Granted</option>
+            <option value="WITHDRAWN">Withdrawn</option>
+            <option value="UPDATED">Updated</option>
+          </select>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+          >
+            Filter
+          </button>
+        </form>
+      </Card>
+
+      {/* Consent records table */}
+      {filtered.length === 0 ? (
+        <Card className="p-12 text-center">
+          <CheckCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">No consent records found</h3>
+          <p className="text-gray-500 mt-1">Consent records will appear here as they are recorded</p>
+        </Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date/Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Action
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Previous
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    New
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Source
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Recorded By
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map((record) => {
+                  const contactName = contactMap.get(record.contactId) || record.contactId;
+                  return (
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                        {new Date(record.recordedAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <Link
+                          href={`/dashboard/crm/contacts/${record.contactId}`}
+                          className="text-indigo-600 hover:text-indigo-700"
+                        >
+                          {contactName}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className={consentTypeColors[record.consentType] || ""}>
+                          {record.consentType.replace(/_/g, " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className={actionColors[record.action] || ""}>
+                          {record.action}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {record.previousValue === null
+                          ? "—"
+                          : record.previousValue
+                            ? "Yes"
+                            : "No"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {record.newValue ? "Yes" : "No"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {record.source ? record.source.replace(/_/g, " ") : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {record.recordedBy.name}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      <p className="text-xs text-gray-500">
+        Showing last 100 consent records. Total records: {consentRecords.length}
+      </p>
+    </div>
+  );
+}
