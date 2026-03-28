@@ -168,7 +168,7 @@ export default async function ContactDetailPage({
     const profile = await prisma.volunteerProfile.create({
       data: {
         contactId: id,
-        status: "APPLICANT",
+        status: "ACTIVE",
       },
     });
     redirect(`/volunteers/${profile.id}`);
@@ -239,7 +239,7 @@ export default async function ContactDetailPage({
         await prisma.volunteerProfile.create({
           data: {
             contactId: id,
-            status: "APPLICANT",
+            status: "ACTIVE",
           },
         });
       }

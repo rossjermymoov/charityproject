@@ -38,7 +38,7 @@ export default async function NewVolunteerPage() {
     const volunteer = await prisma.volunteerProfile.create({
       data: {
         contactId: contact.id,
-        status: "APPLICANT",
+        status: "ACTIVE",
         startDate: new Date().toISOString().split("T")[0],
         desiredHoursPerWeek: desiredHours ? parseFloat(desiredHours) : null,
         departments: {

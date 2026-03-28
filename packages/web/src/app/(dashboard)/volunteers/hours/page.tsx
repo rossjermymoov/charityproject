@@ -46,7 +46,7 @@ export default async function HoursPage({
       take: 100,
     }),
     prisma.volunteerProfile.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: { not: "DEPARTED" } },
       include: { contact: true },
       orderBy: { contact: { firstName: "asc" } },
     }),

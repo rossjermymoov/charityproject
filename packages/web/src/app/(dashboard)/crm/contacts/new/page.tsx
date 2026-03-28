@@ -48,7 +48,7 @@ export default async function NewContactPage() {
       await prisma.volunteerProfile.create({
         data: {
           contactId: contact.id,
-          status: "APPLICANT",
+          status: "ACTIVE",
         },
       });
     }

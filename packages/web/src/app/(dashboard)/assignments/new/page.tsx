@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 export default async function NewAssignmentPage() {
   const [volunteers, departments] = await Promise.all([
     prisma.volunteerProfile.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: { not: "DEPARTED" } },
       include: { contact: true },
       orderBy: { contact: { firstName: "asc" } },
     }),

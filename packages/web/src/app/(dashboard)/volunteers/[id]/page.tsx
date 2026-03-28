@@ -145,6 +145,43 @@ async function removeDepartment(formData: FormData) {
   revalidatePath(`/volunteers/${volunteerId}`);
 }
 
+async function addSpecialConsideration(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerId = formData.get("volunteerId") as string;
+
+  await prisma.specialConsideration.create({
+    data: {
+      volunteerId,
+      category: formData.get("category") as string,
+      description: formData.get("description") as string,
+      accommodations: (formData.get("accommodations") as string) || null,
+      isConfidential: formData.get("isConfidential") === "on",
+    },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+  redirect(`/volunteers/${volunteerId}`);
+}
+
+async function removeSpecialConsideration(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const scId = formData.get("scId") as string;
+  const volunteerId = formData.get("volunteerId") as string;
+
+  await prisma.specialConsideration.delete({
+    where: { id: scId },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+  redirect(`/volunteers/${volunteerId}`);
+}
+
 async function deleteVolunteer(formData: FormData) {
   "use server";
   const session = await getSession();
@@ -572,16 +609,25 @@ export default async function VolunteerDetailPage({
               <h3 className="text-lg font-semibold text-gray-900">Special Considerations</h3>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {volunteer.specialConsiderations.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">None recorded</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 pb-4 border-b border-gray-100">
                 {volunteer.specialConsiderations.map((sc) => (
                   <div key={sc.id} className="p-3 bg-yellow-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-xs">{sc.category}</Badge>
-                      {sc.isConfidential && <Badge className="bg-red-100 text-red-800 text-xs">Confidential</Badge>}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">{sc.category}</Badge>
+                        {sc.isConfidential && <Badge className="bg-red-100 text-red-800 text-xs">Confidential</Badge>}
+                      </div>
+                      <form action={removeSpecialConsideration} className="inline">
+                        <input type="hidden" name="scId" value={sc.id} />
+                        <input type="hidden" name="volunteerId" value={id} />
+                        <button type="submit" className="text-gray-400 hover:text-red-500 transition" title="Remove">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </form>
                     </div>
                     <p className="text-sm text-gray-700">{sc.description}</p>
                     {sc.accommodations && (
@@ -591,6 +637,42 @@ export default async function VolunteerDetailPage({
                 ))}
               </div>
             )}
+            <form action={addSpecialConsideration} className="space-y-3">
+              <input type="hidden" name="volunteerId" value={id} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="">Select category...</option>
+                  <option value="MEDICAL">Medical</option>
+                  <option value="DISABILITY">Disability</option>
+                  <option value="DIETARY">Dietary</option>
+                  <option value="ALLERGY">Allergy</option>
+                  <option value="MOBILITY">Mobility</option>
+                  <option value="MENTAL_HEALTH">Mental Health</option>
+                  <option value="RELIGIOUS">Religious</option>
+                  <option value="LANGUAGE">Language</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <Textarea name="description" required placeholder="Describe the consideration..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Accommodations (optional)</label>
+                <Input name="accommodations" placeholder="What accommodations are needed?" />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  name="isConfidential"
+                  defaultChecked={true}
+                  className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                Mark as confidential
+              </label>
+              <Button type="submit" size="sm"><Plus className="h-4 w-4 mr-1" /> Add Consideration</Button>
+            </form>
           </CardContent>
         </Card>
 
