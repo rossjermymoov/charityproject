@@ -18,13 +18,15 @@ export default async function NewContactPage() {
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const contactType = formData.get("type") as string;
+
     const contact = await prisma.contact.create({
       data: {
         firstName: formData.get("firstName") as string,
         lastName: formData.get("lastName") as string,
         email: (formData.get("email") as string) || null,
         phone: (formData.get("phone") as string) || null,
-        type: formData.get("type") as string,
+        type: contactType,
         dateOfBirth: (formData.get("dateOfBirth") as string) || null,
         addressLine1: (formData.get("addressLine1") as string) || null,
         city: (formData.get("city") as string) || null,
@@ -39,6 +41,16 @@ export default async function NewContactPage() {
         createdById: session.id,
       },
     });
+
+    // Auto-create a VolunteerProfile when contact type is VOLUNTEER
+    if (contactType === "VOLUNTEER") {
+      await prisma.volunteerProfile.create({
+        data: {
+          contactId: contact.id,
+          status: "APPLICANT",
+        },
+      });
+    }
 
     redirect(`/crm/contacts/${contact.id}`);
   }

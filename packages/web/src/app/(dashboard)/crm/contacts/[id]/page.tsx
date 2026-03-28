@@ -144,6 +144,29 @@ export default async function ContactDetailPage({
     redirect(`/crm/contacts/${id}`);
   }
 
+  async function createVolunteerProfile() {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    // Check if profile already exists
+    const existing = await prisma.volunteerProfile.findUnique({
+      where: { contactId: id },
+    });
+    if (existing) {
+      redirect(`/volunteers/${existing.id}`);
+      return;
+    }
+
+    const profile = await prisma.volunteerProfile.create({
+      data: {
+        contactId: id,
+        status: "APPLICANT",
+      },
+    });
+    redirect(`/volunteers/${profile.id}`);
+  }
+
   async function addRelationship(formData: FormData) {
     "use server";
     const session = await getSession();
@@ -233,13 +256,19 @@ export default async function ContactDetailPage({
                 {contact.isArchived && (
                   <Badge className="bg-red-100 text-red-800">Archived</Badge>
                 )}
-                {contact.volunteerProfile && (
+                {contact.volunteerProfile ? (
                   <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
                     <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
                       View Volunteer Profile →
                     </Badge>
                   </Link>
-                )}
+                ) : contact.type === "VOLUNTEER" ? (
+                  <form action={createVolunteerProfile}>
+                    <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+                      <Plus className="h-3 w-3" /> Create Volunteer Profile
+                    </button>
+                  </form>
+                ) : null}
               </div>
               <div className="mt-3 space-y-1.5">
                 {contact.email && (
