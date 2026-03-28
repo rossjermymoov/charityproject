@@ -59,13 +59,31 @@ async function addSkill(formData: FormData) {
 
   const volunteerId = formData.get("volunteerId") as string;
   const skillId = formData.get("skillId") as string;
+  const proficiency = (formData.get("proficiency") as string) || "BEGINNER";
 
   await prisma.volunteerSkill.create({
     data: {
       volunteerId,
       skillId,
-      proficiency: "BEGINNER",
+      proficiency,
     },
+  });
+
+  revalidatePath(`/volunteers/${volunteerId}`);
+}
+
+async function updateSkillProficiency(formData: FormData) {
+  "use server";
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const volunteerSkillId = formData.get("volunteerSkillId") as string;
+  const volunteerId = formData.get("volunteerId") as string;
+  const proficiency = formData.get("proficiency") as string;
+
+  await prisma.volunteerSkill.update({
+    where: { id: volunteerSkillId },
+    data: { proficiency },
   });
 
   revalidatePath(`/volunteers/${volunteerId}`);
@@ -322,7 +340,21 @@ export default async function VolunteerDetailPage({
                       <span className="text-sm font-medium text-gray-900">{vs.skill.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{vs.proficiency}</Badge>
+                      <form action={updateSkillProficiency} className="inline-flex items-center">
+                        <input type="hidden" name="volunteerSkillId" value={vs.id} />
+                        <input type="hidden" name="volunteerId" value={id} />
+                        <AutoSubmitSelect
+                          name="proficiency"
+                          defaultValue={vs.proficiency}
+                          options={[
+                            { value: "BEGINNER", label: "Beginner" },
+                            { value: "INTERMEDIATE", label: "Intermediate" },
+                            { value: "SKILLED", label: "Skilled" },
+                            { value: "EXPERT", label: "Expert" },
+                          ]}
+                          className="text-xs rounded-full px-2 py-0.5 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </form>
                       {vs.verifiedAt && <Badge className="bg-green-100 text-green-800 text-xs">Verified</Badge>}
                       <form action={removeSkill} className="inline">
                         <input type="hidden" name="volunteerId" value={id} />
@@ -350,6 +382,15 @@ export default async function VolunteerDetailPage({
                     {availableSkills.map((skill) => (
                       <option key={skill.id} value={skill.id}>{skill.name}</option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Proficiency</label>
+                  <select name="proficiency" className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="BEGINNER">Beginner</option>
+                    <option value="INTERMEDIATE">Intermediate</option>
+                    <option value="SKILLED">Skilled</option>
+                    <option value="EXPERT">Expert</option>
                   </select>
                 </div>
                 <Button type="submit" size="sm"><Plus className="h-4 w-4" /></Button>
