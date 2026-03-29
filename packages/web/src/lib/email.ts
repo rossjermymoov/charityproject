@@ -52,7 +52,7 @@ interface BroadcastEmailData {
 export function buildBroadcastEmailHtml(data: BroadcastEmailData): string {
   const color = urgencyColors[data.urgency] || urgencyColors.NORMAL;
   const urgencyLabel = urgencyLabels[data.urgency] || data.urgency;
-  const respondUrl = `${APP_URL}/login`;
+  const respondUrl = `${APP_URL}/broadcasts/${data.broadcastId}/respond`;
 
   return `
 <!DOCTYPE html>
