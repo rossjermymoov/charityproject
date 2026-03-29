@@ -55,18 +55,49 @@ export async function swapTin(formData: FormData) {
   if (!session) redirect("/login");
 
   const currentTinId = formData.get("currentTinId") as string;
-  const replacementTinId = formData.get("replacementTinId") as string;
+  const existingTinId = (formData.get("replacementTinId") as string) || null;
+  const newTinNumber = (formData.get("newTinNumber") as string)?.trim() || null;
   const amount = parseFloat(formData.get("amount") as string) || 0;
   const notes = (formData.get("notes") as string) || null;
 
   const currentTin = await prisma.collectionTin.findUnique({
     where: { id: currentTinId },
   });
-  const replacementTin = await prisma.collectionTin.findUnique({
-    where: { id: replacementTinId },
-  });
+  if (!currentTin) return;
 
-  if (!currentTin || !replacementTin) return;
+  // Resolve the replacement tin: pick existing or create new
+  let replacement: { id: string; tinNumber: string } | null = null;
+
+  if (existingTinId) {
+    const found = await prisma.collectionTin.findUnique({
+      where: { id: existingTinId },
+    });
+    if (found) replacement = found;
+  } else if (newTinNumber) {
+    const existing = await prisma.collectionTin.findUnique({
+      where: { tinNumber: newTinNumber },
+    });
+    if (existing) {
+      if (existing.status === "IN_STOCK") {
+        replacement = existing;
+      } else {
+        return; // Can't use a tin that's not in stock
+      }
+    } else {
+      replacement = await prisma.collectionTin.create({
+        data: {
+          tinNumber: newTinNumber,
+          locationName: currentTin.locationName,
+          locationAddress: currentTin.locationAddress,
+          locationId: currentTin.locationId,
+          status: "IN_STOCK",
+          createdById: session.id,
+        },
+      });
+    }
+  }
+
+  if (!replacement) return;
 
   const now = new Date();
 
@@ -96,13 +127,13 @@ export async function swapTin(formData: FormData) {
       tinId: currentTinId,
       type: "RETURNED",
       date: now,
-      notes: `Swapped out — replaced by ${replacementTin.tinNumber}`,
+      notes: `Swapped out — replaced by ${replacement.tinNumber}`,
     },
   });
 
   // 3. Deploy replacement tin to the same location
   await prisma.collectionTin.update({
-    where: { id: replacementTinId },
+    where: { id: replacement.id },
     data: {
       status: "DEPLOYED",
       deployedAt: now,
@@ -113,7 +144,7 @@ export async function swapTin(formData: FormData) {
   });
   await prisma.collectionTinMovement.create({
     data: {
-      tinId: replacementTinId,
+      tinId: replacement.id,
       type: "DEPLOYED",
       date: now,
       notes: `Swapped in — replacing ${currentTin.tinNumber}`,
@@ -125,9 +156,9 @@ export async function swapTin(formData: FormData) {
     action: "UPDATE",
     entityType: "CollectionTin",
     entityId: currentTinId,
-    details: { action: "SWAP", replacementTinId, amount },
+    details: { action: "SWAP", replacementId: replacement.id, amount },
   });
 
   revalidatePath("/finance/collection-tins");
-  redirect(`/finance/collection-tins/${replacementTinId}`);
+  redirect(`/finance/collection-tins/${replacement.id}`);
 }

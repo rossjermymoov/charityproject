@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, Package, MapPin, BarChart3 } from "lucide-react";
+import { Plus, Search, Package, MapPin, BarChart3, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -243,18 +243,30 @@ export default async function CollectionTinsPage({
                           </form>
                         )}
                         {canReturn && (
-                          <form action={quickSetStatus} className="inline">
-                            <input type="hidden" name="tinId" value={tin.id} />
-                            <input type="hidden" name="status" value="RETURNED" />
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              Return
-                            </Button>
-                          </form>
+                          <div className="flex gap-1 justify-end">
+                            <Link href={`/finance/collection-tins/${tin.id}#swap-section`}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="bg-amber-600 hover:bg-amber-700 text-xs"
+                              >
+                                <ArrowLeftRight className="h-3 w-3 mr-1" />
+                                Swap
+                              </Button>
+                            </Link>
+                            <form action={quickSetStatus} className="inline">
+                              <input type="hidden" name="tinId" value={tin.id} />
+                              <input type="hidden" name="status" value="RETURNED" />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                Return
+                              </Button>
+                            </form>
+                          </div>
                         )}
                       </td>
                     </tr>

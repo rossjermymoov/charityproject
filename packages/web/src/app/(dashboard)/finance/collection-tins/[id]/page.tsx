@@ -293,14 +293,22 @@ export default async function CollectionTinDetailPage({
                 </form>
               )}
               {canReturn && (
-                <form action={quickSetStatus}>
-                  <input type="hidden" name="tinId" value={tin.id} />
-                  <input type="hidden" name="status" value="RETURNED" />
-                  <Button type="submit" variant="outline">
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Return to Stock
-                  </Button>
-                </form>
+                <>
+                  <a href="#swap-section">
+                    <Button type="button" className="bg-amber-600 hover:bg-amber-700">
+                      <ArrowLeftRight className="h-4 w-4 mr-2" />
+                      Swap Out
+                    </Button>
+                  </a>
+                  <form action={quickSetStatus}>
+                    <input type="hidden" name="tinId" value={tin.id} />
+                    <input type="hidden" name="status" value="RETURNED" />
+                    <Button type="submit" variant="outline">
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Return to Stock
+                    </Button>
+                  </form>
+                </>
               )}
               {/* Advanced status dropdown for other statuses */}
               <details className="relative">
@@ -421,14 +429,15 @@ export default async function CollectionTinDetailPage({
         </CardContent>
       </Card>
 
-      {/* Swap Tin — shown when deployed and replacement tins available */}
-      {canReturn && inStockTins.length > 0 && (
+      {/* Swap Tin — shown when deployed */}
+      {canReturn && (
+        <div id="swap-section">
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <ArrowLeftRight className="h-5 w-5 text-amber-600" />
               <h3 className="text-lg font-semibold text-amber-900">
-                Swap Tin
+                Swap Out
               </h3>
             </div>
             <p className="text-sm text-amber-700">
@@ -438,24 +447,42 @@ export default async function CollectionTinDetailPage({
           <CardContent>
             <form action={swapTin} className="space-y-4">
               <input type="hidden" name="currentTinId" value={tin.id} />
+
+              {/* Replacement: existing or new */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Replacement Tin *
+                    Replacement Tin
                   </label>
-                  <select
-                    name="replacementTinId"
-                    required
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    <option value="">Select an in-stock tin...</option>
-                    {inStockTins.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.tinNumber}
-                      </option>
-                    ))}
-                  </select>
+                  {inStockTins.length > 0 ? (
+                    <select
+                      name="replacementTinId"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      <option value="">Select an in-stock tin...</option>
+                      {inStockTins.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.tinNumber}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-amber-700 py-2">No tins in stock — enter a new tin number below</p>
+                  )}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Or New Tin Number
+                  </label>
+                  <Input
+                    name="newTinNumber"
+                    placeholder="e.g. TIN-042"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Creates a new tin and deploys it here</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Amount Collected (£)
@@ -468,23 +495,24 @@ export default async function CollectionTinDetailPage({
                     placeholder="e.g. 25.00"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <Input
-                  name="notes"
-                  placeholder="e.g. Tin was nearly full"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <Input
+                    name="notes"
+                    placeholder="e.g. Tin was nearly full"
+                  />
+                </div>
               </div>
               <Button type="submit" className="bg-amber-600 hover:bg-amber-700">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
-                Swap Tin
+                Swap Out
               </Button>
             </form>
           </CardContent>
         </Card>
+        </div>
       )}
 
       {/* Tin Details & Location */}
