@@ -183,69 +183,110 @@ export default async function BroadcastDetailPage({
         <h1 className="text-2xl font-bold text-gray-900">Broadcast Details</h1>
       </div>
 
-      {/* ====== PROMINENT SPOTS PROGRESS BANNER ====== */}
-      <Card className={`overflow-hidden ${
-        spotsFilled >= spotsTotal ? "ring-2 ring-green-500" : "ring-2 ring-indigo-200"
-      }`}>
-        <CardContent className="pt-6 pb-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-full ${
-                spotsFilled >= spotsTotal ? "bg-green-100" : "bg-indigo-100"
-              }`}>
-                <Users className={`h-6 w-6 ${
-                  spotsFilled >= spotsTotal ? "text-green-600" : "text-indigo-600"
-                }`} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  {spotsFilled >= spotsTotal ? (
-                    "All spots filled!"
-                  ) : (
-                    <>{spotsRemaining} of {spotsTotal} {spotsRemaining === 1 ? "spot" : "spots"} still needed</>
-                  )}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {accepted.length} accepted{confirmed.length > 0 && `, ${confirmed.length} confirmed`}{tentative.length > 0 && `, ${tentative.length} maybe`}
-                </p>
+      {/* ====== HERO SPOTS BANNER ====== */}
+      <div className={`rounded-2xl overflow-hidden ${
+        spotsFilled >= spotsTotal
+          ? "bg-gradient-to-br from-green-500 to-emerald-600"
+          : spotsRemaining === 1
+          ? "bg-gradient-to-br from-amber-500 to-orange-600"
+          : "bg-gradient-to-br from-indigo-500 to-purple-600"
+      } text-white shadow-lg`}>
+        <div className="px-8 pt-8 pb-6">
+          {/* Big number display */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/70 text-sm font-medium uppercase tracking-widest mb-1">
+                {spotsFilled >= spotsTotal ? "Broadcast" : "Volunteers needed"}
+              </p>
+              <h2 className="text-4xl font-extrabold leading-tight">
+                {spotsFilled >= spotsTotal ? (
+                  "All Spots Filled!"
+                ) : spotsRemaining === 1 ? (
+                  "1 More Person Needed!"
+                ) : (
+                  <>{spotsRemaining} More People Needed</>
+                )}
+              </h2>
+              <p className="text-white/80 text-lg mt-1">
+                {spotsFilled >= spotsTotal
+                  ? `${spotsTotal} of ${spotsTotal} volunteers secured`
+                  : `${spotsFilled} of ${spotsTotal} ${spotsFilled === 1 ? "has" : "have"} stepped up`}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-7xl font-black tabular-nums leading-none">
+                {spotsFilled}<span className="text-4xl text-white/50">/{spotsTotal}</span>
               </div>
             </div>
-            <span className={`text-3xl font-bold ${
-              spotsFilled >= spotsTotal ? "text-green-600" : "text-indigo-600"
-            }`}>
-              {spotsFilled}/{spotsTotal}
-            </span>
           </div>
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3">
+
+          {/* Progress bar — thick and bold */}
+          <div className="mt-6 w-full bg-white/20 rounded-full h-5 overflow-hidden">
             <div
-              className={`${progressColor} h-3 rounded-full transition-all duration-500`}
+              className="bg-white h-5 rounded-full transition-all duration-700 ease-out"
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          {/* Individual slot indicators */}
-          <div className="flex gap-2 mt-3">
+
+          {/* Slot circles */}
+          <div className="flex gap-3 mt-5 justify-center">
             {Array.from({ length: spotsTotal }).map((_, i) => {
               const isConfirmed = i < confirmed.length;
               const isAccepted = !isConfirmed && i < confirmed.length + (accepted.length - confirmed.length);
+              const isTentative = !isConfirmed && !isAccepted && i < confirmed.length + accepted.length - confirmed.length + tentative.length;
+              const filled = isConfirmed || isAccepted;
               return (
-                <div
-                  key={i}
-                  className={`flex-1 h-2 rounded-full ${
-                    isConfirmed ? "bg-green-500" : isAccepted ? "bg-indigo-400" : "bg-gray-200"
-                  }`}
-                  title={isConfirmed ? "Confirmed" : isAccepted ? "Accepted" : "Open"}
-                />
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center transition-all ${
+                    isConfirmed
+                      ? "bg-white border-white"
+                      : isAccepted
+                      ? "bg-white/80 border-white/80"
+                      : isTentative
+                      ? "bg-white/30 border-white/40"
+                      : "bg-transparent border-white/30 border-dashed"
+                  }`}>
+                    {isConfirmed ? (
+                      <CheckCircle className="h-7 w-7 text-green-600" />
+                    ) : isAccepted ? (
+                      <CheckCircle className="h-7 w-7 text-indigo-600" />
+                    ) : isTentative ? (
+                      <HelpCircle className="h-6 w-6 text-white/70" />
+                    ) : (
+                      <Users className="h-6 w-6 text-white/30" />
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-white/70">
+                    {isConfirmed ? "Confirmed" : isAccepted ? "Accepted" : isTentative ? "Maybe" : "Open"}
+                  </span>
+                </div>
               );
             })}
           </div>
-          <div className="flex gap-4 mt-2 text-xs text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Confirmed</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" /> Accepted</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /> Open</span>
+        </div>
+
+        {/* Bottom stats strip */}
+        <div className="bg-black/10 px-8 py-3 flex items-center justify-between text-sm">
+          <div className="flex gap-6">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle className="h-4 w-4" /> {accepted.length} accepted
+            </span>
+            {tentative.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4" /> {tentative.length} maybe
+              </span>
+            )}
+            {declined.length > 0 && (
+              <span className="flex items-center gap-1.5 text-white/60">
+                <XCircle className="h-4 w-4" /> {declined.length} declined
+              </span>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          {confirmed.length > 0 && (
+            <span className="font-semibold">{confirmed.length} confirmed</span>
+          )}
+        </div>
+      </div>
 
       {/* Broadcast Info */}
       <Card>
