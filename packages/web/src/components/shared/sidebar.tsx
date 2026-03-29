@@ -110,8 +110,9 @@ export function Sidebar() {
             );
           }
 
-          const isActive = pathname === item.href ||
-            (item.href !== "/crm/contacts" && pathname.startsWith(item.href));
+          const isActive = item.href === "/"
+            ? pathname === "/"
+            : pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
             <Link
