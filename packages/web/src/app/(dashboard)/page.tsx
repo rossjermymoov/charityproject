@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getHomeForRole } from "@/lib/route-guard";
 import {
   Users,
   UserCheck,
@@ -41,6 +43,10 @@ function getLast12Months(): { start: Date; months: string[] } {
 
 export default async function DashboardPage() {
   const session = await getSession();
+  if (!session) redirect("/login");
+  if (!["ADMIN", "STAFF"].includes(session.role)) {
+    redirect(getHomeForRole(session.role));
+  }
   const { start: twelveMonthsAgo, months } = getLast12Months();
 
   let contactCount = 0;

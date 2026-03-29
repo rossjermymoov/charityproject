@@ -36,9 +36,8 @@ export default async function SettingsPage() {
     {
       icon: Users,
       title: "User Management",
-      description: "Manage team members and permissions (coming soon)",
-      href: "#",
-      disabled: true,
+      description: "Manage user accounts, roles, and permissions",
+      href: "/settings/users",
     },
   ];
 

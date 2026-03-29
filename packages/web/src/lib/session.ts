@@ -13,7 +13,7 @@ export async function getSession(): Promise<SessionUser | null> {
 
   const user = await prisma.user.findUnique({
     where: { id: sessionId },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, contactId: true },
   });
 
   return user;

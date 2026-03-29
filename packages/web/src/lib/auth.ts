@@ -21,6 +21,7 @@ export async function authenticate(email: string, password: string) {
     email: user.email,
     name: user.name,
     role: user.role,
+    contactId: user.contactId,
   };
 }
 
@@ -29,4 +30,39 @@ export type SessionUser = {
   email: string;
   name: string;
   role: string;
+  contactId: string | null;
 };
+
+// Role constants
+export const ROLES = {
+  ADMIN: "ADMIN",
+  STAFF: "STAFF",
+  VOLUNTEER: "VOLUNTEER",
+  DONOR: "DONOR",
+} as const;
+
+// Which roles can access which sections
+export const ROLE_ACCESS = {
+  // Admin and Staff see everything
+  dashboard: ["ADMIN", "STAFF"],
+  crm: ["ADMIN", "STAFF"],
+  volunteers: ["ADMIN", "STAFF"],
+  finance: ["ADMIN", "STAFF"],
+  events: ["ADMIN", "STAFF"],
+  communications: ["ADMIN", "STAFF"],
+  compliance: ["ADMIN", "STAFF"],
+  insights: ["ADMIN", "STAFF"],
+  settings: ["ADMIN"],
+  userManagement: ["ADMIN"],
+  // Volunteer-specific
+  myAssignments: ["VOLUNTEER"],
+  myHours: ["VOLUNTEER"],
+  myTraining: ["VOLUNTEER"],
+  // Donor-specific
+  myDonations: ["DONOR"],
+  myGiftAid: ["DONOR"],
+} as const;
+
+export function canAccess(role: string, section: keyof typeof ROLE_ACCESS): boolean {
+  return (ROLE_ACCESS[section] as readonly string[]).includes(role);
+}

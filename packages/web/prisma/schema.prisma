@@ -16,7 +16,8 @@ model User {
   email         String    @unique
   name          String
   passwordHash  String
-  role          String    @default("STAFF") // ADMIN | STAFF | VOLUNTEER
+  role          String    @default("STAFF") // ADMIN | STAFF | VOLUNTEER | DONOR
+  contactId     String?   @unique  // link to CRM Contact for donors/volunteers
   avatarUrl     String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -51,6 +52,7 @@ model User {
   sarsCreated            SubjectAccessRequest[] @relation("SarCreatedBy")
   sarsAssigned           SubjectAccessRequest[] @relation("SarAssignedTo")
   consentRecords         ConsentRecord[]     @relation("ConsentRecordedBy")
+  linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
 
 model Department {
@@ -142,6 +144,7 @@ model Contact {
   relationshipsTo    ContactRelationship[] @relation("RelationshipTo")
   tributeGuardians       TributeFundGuardian[]
   eventOrders            EventOrder[]
+  userAccount            User?               @relation("UserLinkedContact")
   justGivingDonations    JustGivingDonation[]
 }
 

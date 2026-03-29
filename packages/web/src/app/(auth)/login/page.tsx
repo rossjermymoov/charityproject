@@ -4,9 +4,20 @@ import { authenticate } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { LoginForm } from "./login-form";
 
+function getHomeForRole(role: string): string {
+  switch (role) {
+    case "DONOR":
+      return "/my/donations";
+    case "VOLUNTEER":
+      return "/my/assignments";
+    default:
+      return "/";
+  }
+}
+
 export default async function LoginPage() {
   const session = await getSession();
-  if (session) redirect("/");
+  if (session) redirect(getHomeForRole(session.role));
 
   async function loginAction(formData: FormData) {
     "use server";
@@ -20,7 +31,7 @@ export default async function LoginPage() {
 
     await createSession(user.id);
     await logAudit({ userId: user.id, action: "LOGIN", entityType: "User", entityId: user.id, details: { email } });
-    redirect("/");
+    redirect(getHomeForRole(user.role));
   }
 
   return (
