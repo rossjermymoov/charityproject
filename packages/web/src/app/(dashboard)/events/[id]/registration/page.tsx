@@ -117,7 +117,7 @@ export default async function EventRegistrationFormPage({
 
     if (!regForm) {
       regForm = await prisma.eventRegistrationForm.create({
-        data: { eventId: id, title: `${event.name} Registration` },
+        data: { eventId: id, title: `${event!.name} Registration` },
       });
     }
 
