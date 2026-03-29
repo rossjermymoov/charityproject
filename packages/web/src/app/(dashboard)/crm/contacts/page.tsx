@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Users, Plus, Search, Heart, Ticket } from "lucide-react";
+import { Users, Plus, Search, Ticket } from "lucide-react";
+import { GiftAidShield } from "@/components/ui/gift-aid-shield";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -39,7 +40,7 @@ export default async function ContactsPage({
       volunteerProfile: true,
       giftAids: {
         where: { status: "ACTIVE" },
-        take: 1,
+        select: { id: true, type: true },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -175,16 +176,12 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-6 py-4 text-center">
                       {contact.giftAids.length > 0 ? (
-                        <div className="flex items-center justify-center gap-1">
-                          {contact.giftAids.some((ga) => ga.type === "STANDARD" || ga.type !== "RETAIL") && (
-                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 w-6 h-6 text-xs font-bold text-pink-800" title="Standard Gift Aid">
-                              S
-                            </span>
+                        <div className="flex items-center justify-center gap-1.5">
+                          {contact.giftAids.some((ga) => ga.type === "STANDARD") && (
+                            <GiftAidShield type="S" />
                           )}
                           {contact.giftAids.some((ga) => ga.type === "RETAIL") && (
-                            <span className="inline-flex items-center justify-center rounded-full bg-purple-100 w-6 h-6 text-xs font-bold text-purple-800" title="Retail Gift Aid">
-                              R
-                            </span>
+                            <GiftAidShield type="R" />
                           )}
                         </div>
                       ) : (

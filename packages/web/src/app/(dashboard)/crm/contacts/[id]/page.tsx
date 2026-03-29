@@ -16,6 +16,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
 import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
+import { GiftAidShield } from "@/components/ui/gift-aid-shield";
 
 export default async function ContactDetailPage({
   params,
@@ -421,10 +422,10 @@ export default async function ContactDetailPage({
                       </Badge>
                     )}
                     {contact.giftAids.some((ga) => ga.type === "STANDARD" && ga.status === "ACTIVE") && (
-                      <Badge className="bg-pink-100 text-pink-800 text-xs font-bold">S</Badge>
+                      <GiftAidShield type="S" size="md" />
                     )}
                     {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
-                      <Badge className="bg-purple-100 text-purple-800 text-xs font-bold">R</Badge>
+                      <GiftAidShield type="R" size="md" />
                     )}
                     {contact.isArchived && (
                       <Badge className="bg-red-100 text-red-800">Archived</Badge>
@@ -800,9 +801,7 @@ export default async function ContactDetailPage({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={ga.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-pink-100 text-pink-800"}>
-                          {ga.type === "RETAIL" ? "R" : "S"}
-                        </Badge>
+                        <GiftAidShield type={ga.type === "RETAIL" ? "R" : "S"} />
                         <Badge className={
                           ga.status === "ACTIVE" ? "bg-green-100 text-green-800" :
                           ga.status === "EXPIRED" ? "bg-yellow-100 text-yellow-800" :
