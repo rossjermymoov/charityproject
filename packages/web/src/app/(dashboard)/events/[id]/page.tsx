@@ -11,7 +11,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
-import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
+import { Heart } from "lucide-react";
 
 export default async function EventDetailPage({
   params,
@@ -37,6 +37,10 @@ export default async function EventDetailPage({
         include: { _count: { select: { orders: true } } },
       },
       createdBy: true,
+      fundraisingPages: {
+        include: { contact: { select: { id: true, firstName: true, lastName: true } } },
+        orderBy: { totalRaised: "desc" },
+      },
     },
   });
 
@@ -157,56 +161,11 @@ export default async function EventDetailPage({
     redirect("/events");
   }
 
-  async function saveJustGiving(formData: FormData) {
+  // JustGiving/fundraising pages are now managed from Contact records
+  // Event just shows linked pages via the fundraisingPages relation
+  async function _placeholder() {
     "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    const input = (formData.get("justGivingInput") as string)?.trim() || "";
-    const { extractJGSlug } = await import("@/lib/justgiving");
-
-    // Try to detect if it's an event ID (numeric) or a page URL/slug
-    const isNumeric = /^\d+$/.test(input);
-
-    if (isNumeric) {
-      await prisma.event.update({
-        where: { id },
-        data: { justGivingEventId: input },
-      });
-    } else {
-      const slug = extractJGSlug(input);
-      await prisma.event.update({
-        where: { id },
-        data: { justGivingPageSlug: slug || null },
-      });
-    }
-
-    await logAudit({
-      userId: session.id,
-      action: "UPDATE",
-      entityType: "Event",
-      entityId: id,
-      details: { justGivingInput: input },
-    });
-
-    revalidatePath(`/events/${id}`);
-  }
-
-  async function removeJustGiving() {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    await prisma.event.update({
-      where: { id },
-      data: {
-        justGivingPageSlug: null,
-        justGivingEventId: null,
-        justGivingLastSyncAt: null,
-        justGivingTotalRaised: null,
-      },
-    });
-
+    // placeholder to maintain function count
     revalidatePath(`/events/${id}`);
   }
 
@@ -458,86 +417,53 @@ export default async function EventDetailPage({
         </Card>
       </div>
 
-      {/* JustGiving Integration */}
-      <Card className="border-purple-200">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <img src="https://images.justgiving.com/image/favicon.ico" alt="JG" className="h-5 w-5" />
-            <h3 className="text-lg font-semibold text-gray-900">JustGiving</h3>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {event.justGivingPageSlug || event.justGivingEventId ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  {event.justGivingPageSlug && (
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-purple-100 text-purple-800">Page</Badge>
-                      <a
-                        href={`https://www.justgiving.com/fundraising/${event.justGivingPageSlug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-purple-600 hover:underline"
-                      >
-                        justgiving.com/fundraising/{event.justGivingPageSlug}
-                      </a>
-                    </div>
-                  )}
-                  {event.justGivingEventId && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Event ID: {event.justGivingEventId}
-                    </p>
-                  )}
-                  {event.justGivingTotalRaised != null && (
-                    <p className="text-lg font-bold text-purple-600 mt-2">
-                      £{event.justGivingTotalRaised.toFixed(2)} raised on JustGiving
-                    </p>
-                  )}
-                  {event.justGivingLastSyncAt && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Last synced: {formatDate(event.justGivingLastSyncAt)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <JustGivingSyncButton eventId={id} />
-                  <form action={removeJustGiving}>
-                    <button
-                      type="submit"
-                      className="text-xs text-red-600 hover:underline"
-                    >
-                      Disconnect JustGiving
-                    </button>
-                  </form>
-                </div>
-              </div>
+      {/* Fundraising Pages linked to this event */}
+      {event.fundraisingPages.length > 0 && (
+        <Card className="border-purple-200">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Fundraising Pages</h3>
             </div>
-          ) : (
-            <form action={saveJustGiving} className="space-y-3">
-              <p className="text-sm text-gray-600">
-                Link a JustGiving fundraising page to automatically import
-                donations into this event&apos;s financial history.
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  name="justGivingInput"
-                  placeholder="Paste JustGiving URL or enter Event ID..."
-                  className="flex-1"
-                  required
-                />
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
-                  Connect
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500">
-                Accepts a full JustGiving URL (e.g. justgiving.com/fundraising/my-page)
-                or a numeric JustGiving event ID.
-              </p>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {event.fundraisingPages.map((fp: { id: string; pageUrl: string; pageSlug: string; title: string | null; totalRaised: number; giftAidTotal: number; platform: string; contact: { id: string; firstName: string; lastName: string } }) => (
+                <div key={fp.id} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/crm/contacts/${fp.contact.id}`}
+                        className="text-sm font-semibold text-blue-600 hover:underline"
+                      >
+                        {fp.contact.firstName} {fp.contact.lastName}
+                      </Link>
+                      <Badge className="bg-purple-100 text-purple-800 text-xs">{fp.platform}</Badge>
+                    </div>
+                    <a
+                      href={fp.pageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-purple-600 hover:underline"
+                    >
+                      {fp.title || fp.pageSlug}
+                    </a>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-purple-700">£{fp.totalRaised.toFixed(2)}</p>
+                    {fp.giftAidTotal > 0 && (
+                      <p className="text-xs text-amber-700">+£{fp.giftAidTotal.toFixed(2)} gift aid</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Fundraising pages are managed from each fundraiser&apos;s contact record.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Donations */}
       <Card>

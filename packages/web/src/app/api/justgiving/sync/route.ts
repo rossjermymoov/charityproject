@@ -8,6 +8,13 @@ import {
 } from "@/lib/justgiving";
 import { logAudit } from "@/lib/audit";
 
+/**
+ * POST /api/justgiving/sync
+ * Body: { fundraisingPageId: string }
+ *
+ * Syncs donations from a JustGiving fundraising page into the system.
+ * The page belongs to a Contact (the fundraiser), not an Event.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -15,37 +22,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventId } = await request.json();
-    if (!eventId) {
+    const { fundraisingPageId } = await request.json();
+    if (!fundraisingPageId) {
       return NextResponse.json(
-        { error: "Missing eventId" },
+        { error: "Missing fundraisingPageId" },
         { status: 400 }
       );
     }
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event || !event.justGivingPageSlug) {
+    const page = await prisma.fundraisingPage.findUnique({
+      where: { id: fundraisingPageId },
+      include: { contact: true },
+    });
+    if (!page) {
       return NextResponse.json(
-        { error: "Event not found or no JustGiving page linked" },
+        { error: "Fundraising page not found" },
         { status: 404 }
       );
     }
 
-    const slug = event.justGivingPageSlug;
+    const slug = page.pageSlug;
 
-    // 1. Get page details for total raised
+    // 1. Get page details for totals
     const pageDetails = await getPageDetails(slug);
 
     // 2. Get all donations
     const jgDonations = await getPageDonations(slug);
 
+    // Update page totals regardless
+    const totalRaised = pageDetails?.grandTotalRaisedExcludingGiftAid || page.totalRaised;
+    const giftAidTotal = pageDetails?.totalEstimatedGiftAid || page.giftAidTotal;
+
     if (!jgDonations || jgDonations.length === 0) {
-      // Still update the sync timestamp and totals
-      await prisma.event.update({
-        where: { id: eventId },
+      await prisma.fundraisingPage.update({
+        where: { id: fundraisingPageId },
         data: {
-          justGivingLastSyncAt: new Date(),
-          justGivingTotalRaised: pageDetails?.grandTotalRaisedExcludingGiftAid || event.justGivingTotalRaised,
+          lastSyncAt: new Date(),
+          totalRaised,
+          giftAidTotal,
+          title: pageDetails?.title || page.title,
+          targetAmount: pageDetails?.targetAmount || page.targetAmount,
         },
       });
 
@@ -54,21 +70,22 @@ export async function POST(request: NextRequest) {
         synced: 0,
         skipped: 0,
         total: 0,
-        totalRaised: pageDetails?.grandTotalRaisedExcludingGiftAid || 0,
+        totalRaised,
+        giftAidTotal,
       });
     }
 
-    // 3. Get existing JG donation IDs for this event to avoid duplicates
+    // 3. Check for existing donations to avoid duplicates
     const existingIds = new Set(
       (
-        await prisma.justGivingDonation.findMany({
-          where: { eventId },
-          select: { justGivingId: true },
+        await prisma.fundraisingDonation.findMany({
+          where: { fundraisingPageId },
+          select: { externalId: true },
         })
-      ).map((d) => d.justGivingId)
+      ).map((d) => d.externalId)
     );
 
-    // Get a system user for creating records
+    // Get a system user for creating finance records
     const systemUser = await prisma.user.findFirst({
       where: { role: "ADMIN" },
     });
@@ -84,85 +101,68 @@ export async function POST(request: NextRequest) {
     let skipped = 0;
 
     for (const jgDonation of jgDonations) {
-      const jgId = String(jgDonation.id);
+      const externalId = String(jgDonation.id);
 
-      if (existingIds.has(jgId)) {
+      if (existingIds.has(externalId)) {
         skipped++;
         continue;
       }
 
-      const donationData = transformDonation(jgDonation, eventId);
+      const donationData = transformDonation(jgDonation);
 
-      // Try to match donor to an existing contact by name
-      let contactId: string | null = null;
-      if (jgDonation.donorDisplayName && jgDonation.donorDisplayName !== "Anonymous") {
-        const nameParts = jgDonation.donorDisplayName.trim().split(/\s+/);
-        const firstName = nameParts[0] || "";
-        const lastName = nameParts.slice(1).join(" ") || "";
-
-        if (firstName && lastName) {
-          const matchedContact = await prisma.contact.findFirst({
-            where: {
-              firstName: { equals: firstName, mode: "insensitive" },
-              lastName: { equals: lastName, mode: "insensitive" },
-            },
-          });
-          contactId = matchedContact?.id || null;
-        }
-      }
-
-      // Create the JustGivingDonation record
-      const jgRecord = await prisma.justGivingDonation.create({
+      // Create FundraisingDonation record
+      const frRecord = await prisma.fundraisingDonation.create({
         data: {
+          fundraisingPageId,
           ...donationData,
-          contactId,
         },
       });
 
-      // Also create a Donation record in the main finance ledger
+      // Also create a Donation in the main finance ledger linked to the fundraiser contact
       const donation = await prisma.donation.create({
         data: {
-          contactId: contactId || undefined!,
+          contactId: page.contactId,
           amount: donationData.amount,
           type: "DONATION",
           method: "ONLINE",
           date: donationData.donationDate,
-          eventId,
+          eventId: page.eventId || undefined,
           isGiftAidable: donationData.isGiftAidEligible,
           giftAidClaimed: false,
           status: "RECEIVED",
-          reference: `JG-${jgId}`,
-          notes: `JustGiving donation${jgDonation.donorDisplayName ? ` from ${jgDonation.donorDisplayName}` : ""}${jgDonation.message ? `: "${jgDonation.message}"` : ""}`,
+          reference: `JG-${externalId}`,
+          notes: `JustGiving donation via ${page.contact.firstName}'s page${jgDonation.donorDisplayName ? ` from ${jgDonation.donorDisplayName}` : ""}${jgDonation.message ? `: "${jgDonation.message}"` : ""}`,
           createdById: systemUser.id,
         },
       });
 
-      // Link the donation record back
-      await prisma.justGivingDonation.update({
-        where: { id: jgRecord.id },
+      // Link the finance donation back to the fundraising donation
+      await prisma.fundraisingDonation.update({
+        where: { id: frRecord.id },
         data: { donationId: donation.id },
       });
 
       synced++;
     }
 
-    // 4. Update event with sync info
-    await prisma.event.update({
-      where: { id: eventId },
+    // 4. Update the fundraising page with sync info
+    await prisma.fundraisingPage.update({
+      where: { id: fundraisingPageId },
       data: {
-        justGivingLastSyncAt: new Date(),
-        justGivingTotalRaised:
-          pageDetails?.grandTotalRaisedExcludingGiftAid ||
-          event.justGivingTotalRaised,
+        lastSyncAt: new Date(),
+        totalRaised,
+        giftAidTotal,
+        title: pageDetails?.title || page.title,
+        targetAmount: pageDetails?.targetAmount || page.targetAmount,
       },
     });
 
     await logAudit({
       userId: session.id,
       action: "UPDATE",
-      entityType: "Event",
-      entityId: eventId,
-      details: { action: "justgiving_sync", synced, skipped },
+      entityType: "FundraisingPage",
+      entityId: fundraisingPageId,
+      details: { action: "justgiving_sync", synced, skipped, contactId: page.contactId },
     });
 
     return NextResponse.json({
@@ -170,8 +170,8 @@ export async function POST(request: NextRequest) {
       synced,
       skipped,
       total: jgDonations.length,
-      totalRaised: pageDetails?.grandTotalRaisedExcludingGiftAid || 0,
-      giftAidTotal: pageDetails?.totalEstimatedGiftAid || 0,
+      totalRaised,
+      giftAidTotal,
     });
   } catch (error) {
     console.error("[justgiving/sync] Error:", error);

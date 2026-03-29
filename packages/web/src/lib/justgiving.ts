@@ -4,7 +4,6 @@
  * Endpoints used:
  * - GET /v1/fundraising/pages/{pageShortName}          → page details + totals
  * - GET /v1/fundraising/pages/{pageShortName}/donations → paginated donations
- * - GET /v1/event/{eventId}                            → event info + linked pages
  *
  * Auth: x-api-key header with your JG App ID
  * Docs: https://developer.justgiving.com/apidocs/documentation
@@ -17,7 +16,7 @@ const JG_BASE_URL =
 
 const JG_API_KEY = process.env.JUSTGIVING_API_KEY || "";
 
-interface JGDonation {
+export interface JGDonation {
   id: number;
   donorDisplayName: string;
   donorLocalAmount: number;
@@ -43,7 +42,7 @@ interface JGDonationsResponse {
   };
 }
 
-interface JGPageDetails {
+export interface JGPageDetails {
   pageId: number;
   pageShortName: string;
   title: string;
@@ -65,19 +64,7 @@ interface JGPageDetails {
   charityId: number;
 }
 
-interface JGEventDetails {
-  id: number;
-  name: string;
-  description: string | null;
-  completionDate: string | null;
-  expiryDate: string | null;
-  startDate: string | null;
-  eventType: string | null;
-  location: string | null;
-  numberOfFundraisingPagesForEvent: number;
-}
-
-function parseJGDate(dateStr: string): Date {
+export function parseJGDate(dateStr: string): Date {
   // JG dates come as "/Date(1234567890000+0000)/" or ISO strings
   const msMatch = dateStr.match(/\/Date\((\d+)/);
   if (msMatch) {
@@ -97,15 +84,12 @@ export function extractJGSlug(input: string): string {
   if (!input) return "";
   const trimmed = input.trim();
 
-  // Full URL
   try {
     const url = new URL(trimmed);
     const parts = url.pathname.split("/").filter(Boolean);
-    // /page/slug or /fundraising/slug
     if (parts.length >= 2 && (parts[0] === "page" || parts[0] === "fundraising")) {
       return parts[1];
     }
-    // just /slug
     if (parts.length === 1) {
       return parts[0];
     }
@@ -114,6 +98,13 @@ export function extractJGSlug(input: string): string {
   }
 
   return trimmed;
+}
+
+/**
+ * Build the full JustGiving page URL from a slug.
+ */
+export function buildJGUrl(slug: string): string {
+  return `https://www.justgiving.com/fundraising/${slug}`;
 }
 
 async function jgFetch<T>(path: string): Promise<T | null> {
@@ -128,7 +119,7 @@ async function jgFetch<T>(path: string): Promise<T | null> {
         "x-api-key": JG_API_KEY,
         Accept: "application/json",
       },
-      next: { revalidate: 0 }, // no cache
+      next: { revalidate: 0 },
     });
 
     if (!res.ok) {
@@ -174,36 +165,20 @@ export async function getPageDonations(
   return allDonations;
 }
 
-/** Get JustGiving event details */
-export async function getEventDetails(
-  eventId: string
-): Promise<JGEventDetails | null> {
-  return jgFetch<JGEventDetails>(`/v1/event/${eventId}`);
-}
-
 /**
- * Transform a JG donation into our internal format.
- * Returns fields ready for JustGivingDonation model creation.
+ * Transform a JG donation into our FundraisingDonation format.
  */
-export function transformDonation(
-  jgDonation: JGDonation,
-  eventId: string
-) {
+export function transformDonation(jgDonation: JGDonation) {
   return {
-    eventId,
-    justGivingId: String(jgDonation.id),
-    donorName: jgDonation.donorDisplayName || null,
+    externalId: String(jgDonation.id),
+    donorDisplayName: jgDonation.donorDisplayName || null,
     amount: jgDonation.amount || jgDonation.donorLocalAmount || 0,
     currencyCode: jgDonation.currencyCode || jgDonation.donorLocalCurrencyCode || "GBP",
     donationDate: parseJGDate(jgDonation.donationDate),
     message: jgDonation.message || null,
     estimatedTaxReclaim: jgDonation.estimatedTaxReclaim || null,
     isGiftAidEligible: (jgDonation.estimatedTaxReclaim || 0) > 0,
-    status: "RECEIVED",
-    source: "JUSTGIVING",
+    imageUrl: jgDonation.image || null,
     rawData: JSON.stringify(jgDonation),
   };
 }
-
-export { parseJGDate };
-export type { JGDonation, JGPageDetails, JGEventDetails };

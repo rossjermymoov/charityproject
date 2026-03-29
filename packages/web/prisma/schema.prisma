@@ -145,7 +145,7 @@ model Contact {
   tributeGuardians       TributeFundGuardian[]
   eventOrders            EventOrder[]
   userAccount            User?               @relation("UserLinkedContact")
-  justGivingDonations    JustGivingDonation[]
+  fundraisingPages       FundraisingPage[]
 }
 
 model Organisation {
@@ -574,12 +574,6 @@ model Event {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  // JustGiving integration
-  justGivingPageSlug   String?  // e.g. "john-smith-midnight-walk" from the JG URL
-  justGivingEventId    String?  // JG event/campaign ID
-  justGivingLastSyncAt DateTime?
-  justGivingTotalRaised Float?
-
   campaign    Campaign?       @relation(fields: [campaignId], references: [id])
   ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
   createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])
@@ -588,32 +582,59 @@ model Event {
   merchandise      EventMerchandise[]
   registrationForm EventRegistrationForm?
   orders           EventOrder[]
-  justGivingDonations JustGivingDonation[]
+  fundraisingPages FundraisingPage[]
 }
 
-model JustGivingDonation {
+// ============================================
+// FUNDRAISING PAGES (JustGiving, GoFundMe, etc.)
+// ============================================
+// A fundraising page belongs to a person (Contact), not an event.
+// A supporter creates their own page — they may do multiple over the years.
+
+model FundraisingPage {
+  id              String    @id @default(cuid())
+  contactId       String    // the fundraiser — the person who created the page
+  eventId         String?   // optionally linked to a charity event
+  platform        String    @default("JUSTGIVING") // JUSTGIVING | GOFUNDME | VIRGINMONEY | OTHER
+  pageUrl         String    // full URL to the page
+  pageSlug        String    // extracted slug for API calls
+  title           String?   // e.g. "Ross's 3000 Mile Bike Ride"
+  targetAmount    Float?    // fundraising target
+  totalRaised     Float     @default(0)
+  giftAidTotal    Float     @default(0)
+  currency        String    @default("GBP")
+  isActive        Boolean   @default(true)
+  lastSyncAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  event     Event?   @relation(fields: [eventId], references: [id])
+  donations FundraisingDonation[]
+
+  @@index([contactId])
+  @@index([pageSlug])
+}
+
+model FundraisingDonation {
   id                  String   @id @default(cuid())
-  eventId             String
-  justGivingId        String   @unique // JG donation ID to prevent duplicates
-  donorName           String?
-  donorEmail          String?
+  fundraisingPageId   String
+  externalId          String   @unique // JG donation ID etc. to prevent duplicates
+  donorDisplayName    String?  // public display name from the platform
   amount              Float
   currencyCode        String   @default("GBP")
   donationDate        DateTime
   message             String?
-  estimatedTaxReclaim Float?   // gift aid amount JG reports
+  estimatedTaxReclaim Float?
   isGiftAidEligible   Boolean  @default(false)
-  status              String   @default("RECEIVED") // RECEIVED | REFUNDED
-  source              String   @default("JUSTGIVING") // always JUSTGIVING
-  contactId           String?  // linked CRM contact (matched or created)
-  donationId          String?  // linked to Donation record
-  rawData             String?  // JSON of full JG response
+  imageUrl            String?  // donor avatar from platform
+  donationId          String?  // linked to main Donation record in finance
+  rawData             String?  // full JSON from API
   syncedAt            DateTime @default(now())
 
-  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  contact Contact? @relation(fields: [contactId], references: [id])
+  fundraisingPage FundraisingPage @relation(fields: [fundraisingPageId], references: [id], onDelete: Cascade)
 
-  @@index([eventId])
+  @@index([fundraisingPageId])
   @@index([donationDate])
 }
 

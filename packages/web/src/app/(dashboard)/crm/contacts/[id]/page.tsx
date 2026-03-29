@@ -14,6 +14,8 @@ import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
+import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
+import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
 
 export default async function ContactDetailPage({
   params,
@@ -33,7 +35,13 @@ export default async function ContactDetailPage({
       donations: { orderBy: { date: "desc" }, take: 5 },
       eventAttendees: { include: { event: true }, orderBy: { createdAt: "desc" }, take: 5 },
       eventOrders: { include: { event: true, lineItems: { include: { item: true } } }, orderBy: { createdAt: "desc" }, take: 5 },
-      justGivingDonations: { include: { event: true }, orderBy: { donationDate: "desc" }, take: 5 },
+      fundraisingPages: {
+        include: {
+          event: true,
+          donations: { orderBy: { donationDate: "desc" }, take: 10 },
+        },
+        orderBy: { createdAt: "desc" },
+      },
       relationshipsFrom: { include: { toContact: true } },
       relationshipsTo: { include: { fromContact: true } },
     },
@@ -51,6 +59,55 @@ export default async function ContactDetailPage({
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
+
+  const allEvents = await prisma.event.findMany({
+    orderBy: { startDate: "desc" },
+    select: { id: true, name: true },
+    take: 50,
+  });
+
+  async function addFundraisingPage(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const pageUrlInput = (formData.get("pageUrl") as string)?.trim();
+    const eventId = (formData.get("eventId") as string) || null;
+    const title = (formData.get("title") as string)?.trim() || null;
+
+    if (!pageUrlInput) return;
+
+    const pageSlug = extractJGSlug(pageUrlInput);
+    const pageUrl = pageUrlInput.startsWith("http")
+      ? pageUrlInput
+      : buildJGUrl(pageSlug);
+
+    await prisma.fundraisingPage.create({
+      data: {
+        contactId: id,
+        eventId: eventId || null,
+        platform: "JUSTGIVING",
+        pageUrl,
+        pageSlug,
+        title,
+      },
+    });
+
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "FundraisingPage", entityId: id, details: { pageSlug, contactId: id } });
+    revalidatePath(`/crm/contacts/${id}`);
+  }
+
+  async function removeFundraisingPage(formData: FormData) {
+    "use server";
+    const session = await getSession();
+    if (!session) redirect("/login");
+
+    const pageId = formData.get("pageId") as string;
+    await prisma.fundraisingPage.delete({ where: { id: pageId } });
+
+    await logAudit({ userId: session.id, action: "DELETE", entityType: "FundraisingPage", entityId: pageId });
+    revalidatePath(`/crm/contacts/${id}`);
+  }
 
   async function addNote(formData: FormData) {
     "use server";
@@ -811,38 +868,169 @@ export default async function ContactDetailPage({
         </div>
       )}
 
-      {/* JustGiving Donations */}
-      {contact.justGivingDonations.length > 0 && (
-        <Card>
-          <CardHeader>
+      {/* Fundraising Pages (JustGiving etc.) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src="https://images.justgiving.com/image/favicon.ico" alt="JG" className="h-4 w-4" />
-              <h3 className="text-lg font-semibold text-gray-900">JustGiving Donations</h3>
+              <Heart className="h-5 w-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Fundraising Pages</h3>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {contact.justGivingDonations.map((jgd) => (
-                <div key={jgd.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{jgd.event.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(jgd.donationDate)}
-                      {jgd.message ? ` — "${jgd.message}"` : ""}
-                    </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Existing fundraising pages */}
+          {contact.fundraisingPages.length > 0 ? (
+            <div className="space-y-4 mb-6">
+              {contact.fundraisingPages.map((fp) => (
+                <div
+                  key={fp.id}
+                  className="border border-purple-200 bg-purple-50 rounded-lg p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={fp.pageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-purple-700 hover:underline"
+                        >
+                          {fp.title || fp.pageSlug}
+                        </a>
+                        <Badge className="bg-purple-100 text-purple-800 text-xs">
+                          {fp.platform}
+                        </Badge>
+                        {fp.isActive && (
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      {fp.event && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Linked to event: <Link href={`/events/${fp.event.id}`} className="text-blue-600 hover:underline">{fp.event.name}</Link>
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 mt-2">
+                        <div>
+                          <p className="text-xl font-bold text-purple-700">
+                            £{fp.totalRaised.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-500">raised</p>
+                        </div>
+                        {fp.targetAmount && fp.targetAmount > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              of £{fp.targetAmount.toFixed(2)}
+                            </p>
+                            <div className="w-32 h-2 bg-gray-200 rounded-full mt-1">
+                              <div
+                                className="h-2 bg-purple-600 rounded-full"
+                                style={{
+                                  width: `${Math.min(100, (fp.totalRaised / fp.targetAmount) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {fp.giftAidTotal > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-amber-700">
+                              +£{fp.giftAidTotal.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500">gift aid</p>
+                          </div>
+                        )}
+                      </div>
+                      {fp.lastSyncAt && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          Last synced: {formatDate(fp.lastSyncAt)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 items-end">
+                      <JustGivingSyncButton fundraisingPageId={fp.id} />
+                      <form action={removeFundraisingPage}>
+                        <input type="hidden" name="pageId" value={fp.id} />
+                        <button
+                          type="submit"
+                          className="text-xs text-red-500 hover:text-red-700 underline"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-purple-600">£{jgd.amount.toFixed(2)}</p>
-                    {jgd.isGiftAidEligible && jgd.estimatedTaxReclaim && (
-                      <p className="text-xs text-amber-700">+£{jgd.estimatedTaxReclaim.toFixed(2)} Gift Aid</p>
-                    )}
-                  </div>
+
+                  {/* Recent donations from this page */}
+                  {fp.donations.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-purple-200">
+                      <p className="text-xs font-medium text-gray-600 mb-2">Recent donations:</p>
+                      <div className="space-y-1">
+                        {fp.donations.slice(0, 5).map((d) => (
+                          <div key={d.id} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-700">
+                                {d.donorDisplayName || "Anonymous"}
+                              </span>
+                              <span className="text-gray-400">
+                                {formatDate(d.donationDate)}
+                              </span>
+                            </div>
+                            <span className="font-bold text-purple-700">
+                              £{d.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-sm text-gray-500 mb-4">
+              No fundraising pages linked yet. Add a JustGiving page URL below.
+            </p>
+          )}
+
+          {/* Add new fundraising page form */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-sm font-medium text-gray-700 mb-3">
+              Add a fundraising page
+            </p>
+            <form action={addFundraisingPage} className="space-y-3">
+              <Input
+                name="pageUrl"
+                placeholder="Paste JustGiving URL e.g. justgiving.com/fundraising/ross-bike-ride"
+                required
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  name="title"
+                  placeholder="Page title (optional, fetched on sync)"
+                />
+                <select
+                  name="eventId"
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Link to event (optional)</option>
+                  {allEvents.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="submit" size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Page
+              </Button>
+            </form>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Interactions */}
