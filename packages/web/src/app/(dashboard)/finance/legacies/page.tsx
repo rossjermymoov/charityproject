@@ -70,6 +70,7 @@ export default async function LegaciesPage({
       receivedAmount: true,
       dateNotified: true,
       dateReceived: true,
+      expectedPaymentDate: true,
       probateGranted: true,
       createdAt: true,
     },
@@ -180,7 +181,10 @@ export default async function LegaciesPage({
   pipelineLegacies.forEach((l) => {
     let expectedDate: Date;
 
-    if (l.status === "AWAITING_PAYMENT") {
+    if (l.expectedPaymentDate) {
+      // Use the explicitly set expected payment date
+      expectedDate = l.expectedPaymentDate;
+    } else if (l.status === "AWAITING_PAYMENT") {
       // Expected within 1–2 months
       expectedDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
     } else if (l.status === "PROBATE" && l.probateGranted) {
@@ -193,8 +197,8 @@ export default async function LegaciesPage({
       expectedDate = new Date(l.dateNotified.getTime() + msToAdd);
     }
 
-    // If the expected date has passed, push to next month
-    if (expectedDate < now) {
+    // If the expected date has passed and no explicit date was set, push to next month
+    if (expectedDate < now && !l.expectedPaymentDate) {
       expectedDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
     }
 
@@ -386,6 +390,9 @@ export default async function LegaciesPage({
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Expected Payment
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Notified
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -437,6 +444,13 @@ export default async function LegaciesPage({
                     <td className="px-6 py-4">
                       <Badge className={statusColors[legacy.status] || ""}>{legacy.status}</Badge>
                     </td>
+                    <td className="px-6 py-4 text-xs">
+                      {legacy.expectedPaymentDate ? (
+                        <span className="font-medium text-indigo-600">{formatDate(legacy.expectedPaymentDate)}</span>
+                      ) : (
+                        <span className="text-gray-400">Not set</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-gray-600 text-xs">
                       {formatDate(legacy.dateNotified)}
                     </td>
@@ -458,7 +472,7 @@ export default async function LegaciesPage({
             <Calendar className="h-5 w-5 text-gray-400" />
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Monthly Payment Forecast</h3>
-              <p className="text-xs text-gray-500">Expected legacy receipts over the next 12 months based on pipeline status and historic averages</p>
+              <p className="text-xs text-gray-500">Expected legacy receipts over the next 12 months — uses the expected payment date when set, otherwise estimates from pipeline status and historic averages</p>
             </div>
           </div>
         </CardHeader>

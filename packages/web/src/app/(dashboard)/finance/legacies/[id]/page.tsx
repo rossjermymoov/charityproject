@@ -64,6 +64,7 @@ export default async function LegacyDetailPage({
     const dateOfDeath = formData.get("dateOfDeath") as string;
     const probateGranted = formData.get("probateGranted") as string;
     const dateReceived = formData.get("dateReceived") as string;
+    const expectedPaymentDate = formData.get("expectedPaymentDate") as string;
 
     await prisma.legacy.update({
       where: { id },
@@ -82,6 +83,7 @@ export default async function LegacyDetailPage({
         dateOfDeath: dateOfDeath ? new Date(dateOfDeath) : null,
         probateGranted: probateGranted ? new Date(probateGranted) : null,
         dateReceived: dateReceived ? new Date(dateReceived) : null,
+        expectedPaymentDate: expectedPaymentDate ? new Date(expectedPaymentDate) : null,
         willReference: (formData.get("willReference") as string) || null,
         description: (formData.get("description") as string) || null,
         conditions: (formData.get("conditions") as string) || null,
@@ -218,6 +220,14 @@ export default async function LegacyDetailPage({
                     : "—"}
                 </p>
               </div>
+              {legacy.expectedPaymentDate && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Payment Date</p>
+                  <p className="text-sm font-medium text-indigo-600 mt-1">
+                    {formatDate(legacy.expectedPaymentDate)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -402,6 +412,7 @@ export default async function LegacyDetailPage({
             </div>
 
             <div className="border-t border-gray-100 pt-6">
+              <p className="text-sm font-semibold text-gray-900 mb-4">Key Dates</p>
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Probate Granted Date"
@@ -414,6 +425,14 @@ export default async function LegacyDetailPage({
                   name="dateReceived"
                   type="date"
                   defaultValue={legacy.dateReceived ? legacy.dateReceived.toISOString().split("T")[0] : ""}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <Input
+                  label="Expected Payment Date"
+                  name="expectedPaymentDate"
+                  type="date"
+                  defaultValue={legacy.expectedPaymentDate ? legacy.expectedPaymentDate.toISOString().split("T")[0] : ""}
                 />
               </div>
             </div>

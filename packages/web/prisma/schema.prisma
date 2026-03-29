@@ -1651,6 +1651,7 @@ model Legacy {
   dateNotified    DateTime
   probateGranted  DateTime?
   dateReceived    DateTime?
+  expectedPaymentDate DateTime?
   willReference   String?
   description     String?
   conditions      String?
