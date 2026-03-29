@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendBroadcastNotifications } from "@/lib/broadcast-sender";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, HelpCircle, Send, RotateCcw, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -87,10 +88,71 @@ export default async function BroadcastDetailPage({
     redirect(`/broadcasts/${id}`);
   }
 
+  async function reactivateBroadcast() {
+    "use server";
+    // Re-open the broadcast and extend expiry by 24 hours from now
+    await prisma.broadcast.update({
+      where: { id },
+      data: {
+        status: "OPEN",
+        filledAt: null,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
+    });
+    redirect(`/broadcasts/${id}`);
+  }
+
+  async function resendBroadcast() {
+    "use server";
+    const bc = await prisma.broadcast.findUnique({
+      where: { id },
+      include: {
+        department: true,
+        skills: { include: { skill: true } },
+        createdBy: true,
+      },
+    });
+    if (!bc) return;
+
+    // Ensure the broadcast is open before resending
+    if (bc.status !== "OPEN") {
+      await prisma.broadcast.update({
+        where: { id },
+        data: {
+          status: "OPEN",
+          filledAt: null,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+
+    // Fire-and-forget: resend notifications to eligible volunteers
+    sendBroadcastNotifications(bc).catch((err: unknown) =>
+      console.error("[broadcast] Resend failed:", err)
+    );
+
+    redirect(`/broadcasts/${id}`);
+  }
+
+  async function deleteBroadcast() {
+    "use server";
+    // Delete responses first (cascade should handle this, but be explicit)
+    await prisma.broadcastResponse.deleteMany({ where: { broadcastId: id } });
+    await prisma.broadcastSkill.deleteMany({ where: { broadcastId: id } });
+    await prisma.broadcast.delete({ where: { id } });
+    redirect("/broadcasts");
+  }
+
   const accepted = broadcast.responses.filter((r) => r.response === "ACCEPTED");
   const declined = broadcast.responses.filter((r) => r.response === "DECLINED");
   const tentative = broadcast.responses.filter((r) => r.response === "TENTATIVE");
   const confirmed = broadcast.responses.filter((r) => r.confirmedAt);
+
+  const isOpen = broadcast.status === "OPEN";
+  const isCancelled = broadcast.status === "CANCELLED";
+  const isFilled = broadcast.status === "FILLED";
+  const isExpired = new Date(broadcast.expiresAt) < new Date();
+  const canReactivate = isCancelled || isFilled || (isExpired && isOpen);
 
   const responseIcon: Record<string, typeof CheckCircle> = {
     ACCEPTED: CheckCircle,
@@ -121,6 +183,9 @@ export default async function BroadcastDetailPage({
                 <h2 className="text-xl font-bold text-gray-900">{broadcast.title}</h2>
                 <Badge className={getStatusColor(broadcast.urgency)}>{broadcast.urgency}</Badge>
                 <Badge className={getStatusColor(broadcast.status)}>{broadcast.status}</Badge>
+                {isExpired && isOpen && (
+                  <Badge className="bg-orange-100 text-orange-800">EXPIRED</Badge>
+                )}
               </div>
               <p className="text-gray-600 mt-2">{broadcast.message}</p>
               <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
@@ -138,11 +203,34 @@ export default async function BroadcastDetailPage({
                 Created by {broadcast.createdBy.name} • {formatDate(broadcast.createdAt)} • Expires {formatDate(broadcast.expiresAt)}
               </p>
             </div>
-            {broadcast.status === "OPEN" && (
-              <form action={cancelBroadcast}>
-                <Button variant="destructive" size="sm">Cancel Broadcast</Button>
+
+            {/* Action buttons */}
+            <div className="flex flex-col gap-2 ml-4 flex-shrink-0">
+              {isOpen && !isExpired && (
+                <>
+                  <form action={resendBroadcast}>
+                    <Button variant="outline" size="sm" className="w-full gap-1">
+                      <Send className="h-3.5 w-3.5" /> Resend
+                    </Button>
+                  </form>
+                  <form action={cancelBroadcast}>
+                    <Button variant="destructive" size="sm" className="w-full">Cancel</Button>
+                  </form>
+                </>
+              )}
+              {canReactivate && (
+                <form action={reactivateBroadcast}>
+                  <Button size="sm" className="w-full gap-1 bg-indigo-600 hover:bg-indigo-700">
+                    <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+                  </Button>
+                </form>
+              )}
+              <form action={deleteBroadcast} className="mt-1">
+                <Button variant="outline" size="sm" className="w-full gap-1 text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </Button>
               </form>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>
