@@ -794,7 +794,7 @@ export default async function ContactDetailPage({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={ga.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+                        <Badge className={ga.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-indigo-100 text-indigo-800"}>
                           {ga.type === "RETAIL" ? "Retail" : "Standard"}
                         </Badge>
                         <Badge className={

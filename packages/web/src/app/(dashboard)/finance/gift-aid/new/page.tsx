@@ -88,7 +88,7 @@ export default async function NewGiftAidPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 mb-2">Retail Gift Aid Declaration</p>
-                <div className="bg-amber-50 border-l-4 border-amber-500 p-3">
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-3">
                   <p className="text-xs text-gray-700 leading-relaxed">
                     I want to Gift Aid the proceeds from the sale of any goods I donate to this charity. I authorise the charity to act as my agent in selling my donated goods, and I agree to a commission for this service. I confirm that I own the goods I am donating and I am not acting as a business in selling them. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.
                   </p>

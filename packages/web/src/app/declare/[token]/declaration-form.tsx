@@ -86,7 +86,7 @@ export function DeclarationForm({ token, contactName, isRetail = false }: Declar
             type="checkbox"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            className={`mt-1 rounded border-gray-300 ${isRetail ? "text-amber-600 focus:ring-amber-500" : "text-indigo-600 focus:ring-indigo-500"}`}
+            className={`mt-1 rounded border-gray-300 ${isRetail ? "text-purple-600 focus:ring-purple-500" : "text-indigo-600 focus:ring-indigo-500"}`}
           />
           <span className="text-sm text-gray-700">
             {isRetail
@@ -106,7 +106,7 @@ export function DeclarationForm({ token, contactName, isRetail = false }: Declar
           onChange={(e) => setFullName(e.target.value)}
           placeholder={contactName}
           required
-          className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 ${isRetail ? "focus:ring-amber-500" : "focus:ring-indigo-500"} focus:border-transparent`}
+          className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 ${isRetail ? "focus:ring-purple-500" : "focus:ring-indigo-500"} focus:border-transparent`}
         />
         <p className="text-xs text-gray-500 mt-1">
           By typing your name above, you are providing a legally binding
@@ -123,7 +123,7 @@ export function DeclarationForm({ token, contactName, isRetail = false }: Declar
       <button
         type="submit"
         disabled={!confirmed || !fullName.trim() || submitting}
-        className={`w-full ${isRetail ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"} text-white rounded-lg px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors`}
+        className={`w-full ${isRetail ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"} text-white rounded-lg px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors`}
       >
         {submitting ? "Submitting..." : `Sign ${isRetail ? "Retail " : ""}Gift Aid Declaration`}
       </button>

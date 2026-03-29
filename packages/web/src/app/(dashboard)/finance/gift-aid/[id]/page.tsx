@@ -110,7 +110,7 @@ export default async function GiftAidDetailPage({
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Gift Aid Declaration</h1>
         <Badge className={statusColors[giftAid.status]}>{giftAid.status}</Badge>
-        <Badge className={giftAid.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+        <Badge className={giftAid.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-indigo-100 text-indigo-800"}>
           {giftAid.type === "RETAIL" ? "Retail Gift Aid" : "Standard Gift Aid"}
         </Badge>
         <Badge variant="outline">{sourceLabels[giftAid.source] || giftAid.source}</Badge>
@@ -182,7 +182,7 @@ export default async function GiftAidDetailPage({
       </Card>
 
       {/* Declaration Text */}
-      <Card className={giftAid.type === "RETAIL" ? "border-amber-200 bg-amber-50/30" : "border-indigo-200 bg-indigo-50/30"}>
+      <Card className={giftAid.type === "RETAIL" ? "border-purple-200 bg-purple-50/30" : "border-indigo-200 bg-indigo-50/30"}>
         <CardContent className="pt-6">
           <p className="text-sm font-semibold text-gray-900 mb-2">
             {giftAid.type === "RETAIL" ? "Retail Gift Aid Declaration" : "Standard Gift Aid Declaration"}

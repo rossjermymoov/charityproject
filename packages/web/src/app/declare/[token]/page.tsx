@@ -78,11 +78,11 @@ export default async function DigitalDeclarationPage({
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Header */}
-          <div className={`${isRetail ? "bg-amber-600" : "bg-indigo-600"} px-8 py-6 text-white`}>
+          <div className={`${isRetail ? "bg-purple-600" : "bg-indigo-600"} px-8 py-6 text-white`}>
             <h1 className="text-2xl font-bold">
               {isRetail ? "Retail Gift Aid Declaration" : "Gift Aid Declaration"}
             </h1>
-            <p className={`${isRetail ? "text-amber-200" : "text-indigo-200"} mt-1`}>
+            <p className={`${isRetail ? "text-purple-200" : "text-indigo-200"} mt-1`}>
               {isRetail
                 ? "Gift Aid the proceeds from your donated goods"
                 : "Boost your donation by 25p for every £1 you give"}
@@ -110,7 +110,7 @@ export default async function DigitalDeclarationPage({
             </div>
 
             {/* HMRC-compliant declaration text */}
-            <div className={`border-l-4 ${isRetail ? "border-amber-500" : "border-indigo-500"} pl-4 py-2`}>
+            <div className={`border-l-4 ${isRetail ? "border-purple-500" : "border-indigo-500"} pl-4 py-2`}>
               <p className="text-sm font-semibold text-gray-900 mb-2">
                 {isRetail ? "Retail Gift Aid Declaration" : "Gift Aid Declaration"}
               </p>

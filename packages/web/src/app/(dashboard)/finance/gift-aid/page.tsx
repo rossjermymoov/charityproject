@@ -146,7 +146,7 @@ export default async function GiftAidPage({
                       </Link>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={giftAid.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+                      <Badge className={giftAid.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-indigo-100 text-indigo-800"}>
                         {giftAid.type === "RETAIL" ? "Retail" : "Standard"}
                       </Badge>
                     </td>
