@@ -902,7 +902,9 @@ model TinLocation {
   id           String   @id @default(cuid())
   name         String
   address      String?
-  postcodeArea String?  // e.g. "SY11 1", "SY11 2" — for area-based reporting
+  city         String?
+  postcode     String?
+  postcodeArea String?  // e.g. "SY11 1", "SY11 2" — auto-derived from postcode
   type         String   @default("OTHER") // SHOP | PUB | RESTAURANT | OFFICE | SCHOOL | CHURCH | OTHER
   contactName  String?
   contactPhone String?

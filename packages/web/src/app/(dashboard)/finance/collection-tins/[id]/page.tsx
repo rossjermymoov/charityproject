@@ -15,6 +15,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { SingleLocationMap } from "@/components/ui/single-location-map";
 import { geocodeAddress } from "@/lib/geocode";
+import { derivePostcodeArea } from "@/lib/postcode";
 import { quickSetStatus, swapTin } from "../actions";
 
 export default async function CollectionTinDetailPage({
@@ -124,6 +125,8 @@ export default async function CollectionTinDetailPage({
     const existingLocationId = (formData.get("locationId") as string) || null;
     const newLocationName = (formData.get("newLocationName") as string)?.trim() || null;
     const newLocationAddress = (formData.get("newLocationAddress") as string)?.trim() || null;
+    const newLocationCity = (formData.get("newLocationCity") as string)?.trim() || null;
+    const newLocationPostcode = (formData.get("newLocationPostcode") as string)?.trim().toUpperCase() || null;
     const newLocationType = (formData.get("newLocationType") as string) || "OTHER";
 
     let locationId: string | null = existingLocationId;
@@ -139,19 +142,24 @@ export default async function CollectionTinDetailPage({
         locationAddress = loc.address;
       }
     } else if (newLocationName) {
+      const fullAddress = [newLocationAddress, newLocationCity, newLocationPostcode].filter(Boolean).join(", ");
       let latitude: number | null = null;
       let longitude: number | null = null;
-      if (newLocationAddress) {
-        const coords = await geocodeAddress(newLocationAddress);
+      if (fullAddress) {
+        const coords = await geocodeAddress(fullAddress);
         if (coords) {
           latitude = coords.lat;
           longitude = coords.lng;
         }
       }
+      const postcodeArea = derivePostcodeArea(newLocationPostcode);
       const newLoc = await prisma.tinLocation.create({
         data: {
           name: newLocationName,
           address: newLocationAddress,
+          city: newLocationCity,
+          postcode: newLocationPostcode,
+          postcodeArea,
           type: newLocationType,
           latitude,
           longitude,
@@ -596,8 +604,23 @@ export default async function CollectionTinDetailPage({
                 <Input
                   label="Address"
                   name="newLocationAddress"
-                  placeholder="Full address (optional)"
+                  placeholder="Street address"
                 />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="City"
+                    name="newLocationCity"
+                    placeholder="e.g. Oswestry"
+                  />
+                  <div>
+                    <Input
+                      label="Postcode"
+                      name="newLocationPostcode"
+                      placeholder="e.g. SY11 1NZ"
+                    />
+                    <p className="text-xs text-gray-400 mt-0.5">Area auto-assigned</p>
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Type

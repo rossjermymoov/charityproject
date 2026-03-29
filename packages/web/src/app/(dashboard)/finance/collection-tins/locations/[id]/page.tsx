@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SingleLocationMap } from "@/components/ui/single-location-map";
 import { geocodeAddress } from "@/lib/geocode";
+import { derivePostcodeArea } from "@/lib/postcode";
 
 export default async function TinLocationDetailPage({
   params,
@@ -55,12 +56,16 @@ export default async function TinLocationDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
-    const address = (formData.get("address") as string) || null;
+    const address = (formData.get("address") as string)?.trim() || null;
+    const city = (formData.get("city") as string)?.trim() || null;
+    const postcode = (formData.get("postcode") as string)?.trim().toUpperCase() || null;
+    const postcodeArea = derivePostcodeArea(postcode);
 
-    // Geocode the address if it changed
+    // Build full address for geocoding
+    const fullAddress = [address, city, postcode].filter(Boolean).join(", ");
     let geoData: { latitude?: number | null; longitude?: number | null } = {};
-    if (address) {
-      const coords = await geocodeAddress(address);
+    if (fullAddress) {
+      const coords = await geocodeAddress(fullAddress);
       if (coords) {
         geoData = { latitude: coords.lat, longitude: coords.lng };
       }
@@ -73,7 +78,9 @@ export default async function TinLocationDetailPage({
       data: {
         name: formData.get("name") as string,
         address,
-        postcodeArea: (formData.get("postcodeArea") as string)?.trim().toUpperCase() || null,
+        city,
+        postcode,
+        postcodeArea,
         type: (formData.get("type") as string) || "OTHER",
         contactName: (formData.get("contactName") as string) || null,
         contactPhone: (formData.get("contactPhone") as string) || null,
@@ -227,25 +234,38 @@ export default async function TinLocationDetailPage({
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address
+              </label>
+              <Input
+                name="address"
+                defaultValue={location.address || ""}
+                placeholder="Street address"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
+                  City
                 </label>
                 <Input
-                  name="address"
-                  defaultValue={location.address || ""}
+                  name="city"
+                  defaultValue={location.city || ""}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Postcode Area
+                  Postcode
                 </label>
                 <Input
-                  name="postcodeArea"
-                  defaultValue={location.postcodeArea || ""}
-                  placeholder="e.g. SY11 1"
+                  name="postcode"
+                  defaultValue={location.postcode || ""}
+                  placeholder="e.g. SY11 1NZ"
                 />
+                <p className="text-xs text-gray-400 mt-1">
+                  Area group ({location.postcodeArea || "none"}) is set automatically
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

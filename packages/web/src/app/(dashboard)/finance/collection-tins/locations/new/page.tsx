@@ -8,18 +8,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { geocodeAddress } from "@/lib/geocode";
+import { derivePostcodeArea } from "@/lib/postcode";
 
 async function createLocation(formData: FormData) {
   "use server";
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const address = (formData.get("address") as string) || null;
+  const address = (formData.get("address") as string)?.trim() || null;
+  const city = (formData.get("city") as string)?.trim() || null;
+  const postcode = (formData.get("postcode") as string)?.trim().toUpperCase() || null;
+
+  // Auto-derive postcode area from the postcode
+  const postcodeArea = derivePostcodeArea(postcode);
+
+  // Build full address string for geocoding
+  const fullAddress = [address, city, postcode].filter(Boolean).join(", ");
   let latitude: number | null = null;
   let longitude: number | null = null;
 
-  if (address) {
-    const coords = await geocodeAddress(address);
+  if (fullAddress) {
+    const coords = await geocodeAddress(fullAddress);
     if (coords) {
       latitude = coords.lat;
       longitude = coords.lng;
@@ -30,7 +39,9 @@ async function createLocation(formData: FormData) {
     data: {
       name: formData.get("name") as string,
       address,
-      postcodeArea: (formData.get("postcodeArea") as string)?.trim().toUpperCase() || null,
+      city,
+      postcode,
+      postcodeArea,
       type: (formData.get("type") as string) || "OTHER",
       contactName: (formData.get("contactName") as string) || null,
       contactPhone: (formData.get("contactPhone") as string) || null,
@@ -74,18 +85,25 @@ export default function NewTinLocationPage() {
                 placeholder="e.g. The Red Lion, Tesco Express High St"
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address
+              </label>
+              <Input name="address" placeholder="Street address" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
+                  City
                 </label>
-                <Input name="address" placeholder="Full address" />
+                <Input name="city" placeholder="e.g. Oswestry" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Postcode Area
+                  Postcode
                 </label>
-                <Input name="postcodeArea" placeholder="e.g. SY11 1" />
+                <Input name="postcode" placeholder="e.g. SY11 1NZ" />
+                <p className="text-xs text-gray-400 mt-1">Area group is set automatically from the postcode</p>
               </div>
             </div>
             <div>
