@@ -76,6 +76,8 @@ export default async function HoursPage({
         hours,
         description: (formData.get("description") as string) || null,
         departmentId: (formData.get("departmentId") as string) || null,
+        status: "APPROVED",
+        verifiedById: s.id,
       },
     });
     await logAudit({ userId: s.id, action: "CREATE", entityType: "VolunteerHours", entityId: volunteerId, details: { hours, date: formData.get("date") } });
