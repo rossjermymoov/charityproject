@@ -6,7 +6,7 @@ import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
   const session = await getSession();
-  if (session) redirect("/crm/contacts");
+  if (session) redirect("/");
 
   async function loginAction(formData: FormData) {
     "use server";
@@ -20,7 +20,7 @@ export default async function LoginPage() {
 
     await createSession(user.id);
     await logAudit({ userId: user.id, action: "LOGIN", entityType: "User", entityId: user.id, details: { email } });
-    redirect("/crm/contacts");
+    redirect("/");
   }
 
   return (
