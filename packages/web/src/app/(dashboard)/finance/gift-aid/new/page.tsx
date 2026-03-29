@@ -76,26 +76,6 @@ export default async function NewGiftAidPage() {
               ]}
             />
 
-            {/* Declaration text preview */}
-            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
-              <div>
-                <p className="text-sm font-semibold text-gray-900 mb-2">Standard Gift Aid Declaration</p>
-                <div className="bg-indigo-50 border-l-4 border-indigo-500 p-3">
-                  <p className="text-xs text-gray-700 leading-relaxed">
-                    I want to Gift Aid my donation and any donations I make in the future or have made in the past 4 years to this charity. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 mb-2">Retail Gift Aid Declaration</p>
-                <div className="bg-purple-50 border-l-4 border-purple-500 p-3">
-                  <p className="text-xs text-gray-700 leading-relaxed">
-                    I want to Gift Aid the proceeds from the sale of any goods I donate to this charity. I authorise the charity to act as my agent in selling my donated goods, and I agree to a commission for this service. I confirm that I own the goods I am donating and I am not acting as a business in selling them. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <Input label="Declaration Date" name="declarationDate" type="date" required />
               <Input label="Start Date" name="startDate" type="date" required />

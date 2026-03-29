@@ -8,6 +8,7 @@ import {
   Zap,
   Users,
   Calendar,
+  Store,
   ChevronRight,
 } from "lucide-react";
 
@@ -20,6 +21,12 @@ export default async function SettingsPage() {
       title: "Financial Year End",
       description: "Set your organisation's financial year end date for reporting and forecasting",
       href: "/settings/financial-year",
+    },
+    {
+      icon: Store,
+      title: "Shops & Locations",
+      description: "Manage shop locations and generate QR codes for Retail Gift Aid",
+      href: "/settings/shops",
     },
     {
       icon: Shield,

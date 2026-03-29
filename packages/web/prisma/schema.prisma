@@ -18,6 +18,23 @@ model SystemSettings {
   updatedAt             DateTime @updatedAt
 }
 
+model Shop {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  city        String?
+  postcode    String?
+  qrToken     String   @unique // used in the public QR code URL
+  isActive    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User     @relation("ShopCreatedBy", fields: [createdById], references: [id])
+
+  @@index([qrToken])
+}
+
 // ============================================
 // CORE / SHARED
 // ============================================
@@ -72,6 +89,7 @@ model User {
   casesCreated            CaseRecord[]     @relation("CaseCreatedBy")
   casesAssigned           CaseRecord[]     @relation("CaseAssignedTo")
   giftAidClaimsCreated    GiftAidClaim[]   @relation("GiftAidClaimCreatedBy")
+  shopsCreated            Shop[]           @relation("ShopCreatedBy")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
 
