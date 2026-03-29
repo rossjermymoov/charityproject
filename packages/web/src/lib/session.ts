@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import type { SessionUser } from "./auth";
 
@@ -15,6 +16,12 @@ export async function getSession(): Promise<SessionUser | null> {
     where: { id: sessionId },
     select: { id: true, email: true, name: true, role: true, contactId: true },
   });
+
+  // If cookie references a user that no longer exists, clear the stale cookie
+  if (!user) {
+    cookieStore.delete(SESSION_COOKIE);
+    return null;
+  }
 
   return user;
 }
@@ -38,7 +45,7 @@ export async function destroySession() {
 export async function requireAuth(): Promise<SessionUser> {
   const session = await getSession();
   if (!session) {
-    throw new Error("Unauthorized");
+    redirect("/login");
   }
   return session;
 }
@@ -46,7 +53,7 @@ export async function requireAuth(): Promise<SessionUser> {
 export async function requireRole(roles: string[]): Promise<SessionUser> {
   const session = await requireAuth();
   if (!roles.includes(session.role)) {
-    throw new Error("Forbidden");
+    redirect("/");
   }
   return session;
 }
