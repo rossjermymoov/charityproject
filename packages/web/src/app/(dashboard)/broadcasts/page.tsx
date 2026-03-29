@@ -47,7 +47,8 @@ export default async function BroadcastsPage() {
             const declined = b.responses.filter((r) => r.response === "DECLINED").length;
             const tentative = b.responses.filter((r) => r.response === "TENTATIVE").length;
             const confirmed = b.responses.filter((r) => r.confirmedAt).length;
-            const filled = accepted + confirmed;
+            // accepted already includes confirmed (confirmed is a subset of accepted)
+            const filled = accepted;
             const needed = b.maxRespondents;
             const remaining = Math.max(0, needed - filled);
             const pct = Math.min(100, Math.round((filled / needed) * 100));
@@ -55,14 +56,14 @@ export default async function BroadcastsPage() {
             const isCancelled = b.status === "CANCELLED";
             const isExpired = new Date(b.expiresAt) < new Date() && b.status === "OPEN";
 
-            // Gradient colours per state
+            // Colour logic: red = 0 replies, amber = partial, green = full
             const gradient = isCancelled
               ? "from-gray-400 to-gray-500"
               : isAllFilled
               ? "from-green-500 to-emerald-600"
-              : remaining === 1
+              : filled > 0
               ? "from-amber-500 to-orange-600"
-              : "from-indigo-500 to-purple-600";
+              : "from-red-500 to-rose-600";
 
             const urgencyRing = b.urgency === "CRITICAL"
               ? "ring-2 ring-red-500 ring-offset-2"

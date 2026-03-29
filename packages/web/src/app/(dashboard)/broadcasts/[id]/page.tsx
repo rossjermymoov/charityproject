@@ -151,16 +151,10 @@ export default async function BroadcastDetailPage({
   const canReactivate = isCancelled || isFilled || (isExpired && isOpen);
 
   const spotsTotal = broadcast.maxRespondents;
-  const spotsFilled = accepted.length + confirmed.length;
+  // accepted already includes confirmed (confirmed is a subset of accepted)
+  const spotsFilled = accepted.length;
   const spotsRemaining = Math.max(0, spotsTotal - spotsFilled);
   const progressPct = Math.min(100, Math.round((spotsFilled / spotsTotal) * 100));
-
-  // Determine progress bar colour
-  const progressColor = spotsFilled >= spotsTotal
-    ? "bg-green-500"
-    : spotsFilled > 0
-    ? "bg-indigo-500"
-    : "bg-gray-300";
 
   const responseIcon: Record<string, typeof CheckCircle> = {
     ACCEPTED: CheckCircle,
@@ -184,19 +178,20 @@ export default async function BroadcastDetailPage({
       </div>
 
       {/* ====== HERO SPOTS BANNER ====== */}
+      {/* Red = 0 replies, Amber = partial, Green = full */}
       <div className={`rounded-2xl overflow-hidden ${
         spotsFilled >= spotsTotal
           ? "bg-gradient-to-br from-green-500 to-emerald-600"
-          : spotsRemaining === 1
+          : spotsFilled > 0
           ? "bg-gradient-to-br from-amber-500 to-orange-600"
-          : "bg-gradient-to-br from-indigo-500 to-purple-600"
+          : "bg-gradient-to-br from-red-500 to-rose-600"
       } text-white shadow-lg`}>
         <div className="px-8 pt-8 pb-6">
           {/* Big number display */}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm font-medium uppercase tracking-widest mb-1">
-                {spotsFilled >= spotsTotal ? "Broadcast" : "Volunteers needed"}
+                {spotsFilled >= spotsTotal ? "Broadcast" : spotsFilled > 0 ? "Almost there" : "Volunteers needed"}
               </p>
               <h2 className="text-4xl font-extrabold leading-tight">
                 {spotsFilled >= spotsTotal ? (
