@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { PipelineTimeline, getGrantSteps } from "@/components/ui/pipeline-timeline";
+import { PipelineTimeline } from "@/components/ui/pipeline-timeline";
+import { getGrantSteps } from "@/components/ui/pipeline-steps";
 
 export default async function GrantDetailPage({
   params,

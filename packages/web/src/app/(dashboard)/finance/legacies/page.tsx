@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
-import { PipelineTimeline, getLegacySteps } from "@/components/ui/pipeline-timeline";
+import { PipelineTimeline } from "@/components/ui/pipeline-timeline";
+import { getLegacySteps } from "@/components/ui/pipeline-steps";
 
 export default async function LegaciesPage({
   searchParams,

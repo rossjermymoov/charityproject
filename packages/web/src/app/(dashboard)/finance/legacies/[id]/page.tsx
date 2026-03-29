@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { PipelineTimeline, getLegacySteps } from "@/components/ui/pipeline-timeline";
+import { PipelineTimeline } from "@/components/ui/pipeline-timeline";
+import { getLegacySteps } from "@/components/ui/pipeline-steps";
 
 export default async function LegacyDetailPage({
   params,

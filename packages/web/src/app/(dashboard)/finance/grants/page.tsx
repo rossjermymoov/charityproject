@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
-import { PipelineTimeline, getGrantSteps } from "@/components/ui/pipeline-timeline";
+import { PipelineTimeline } from "@/components/ui/pipeline-timeline";
+import { getGrantSteps } from "@/components/ui/pipeline-steps";
 
 export default async function GrantsPage({
   searchParams,
