@@ -110,6 +110,9 @@ export default async function GiftAidDetailPage({
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Gift Aid Declaration</h1>
         <Badge className={statusColors[giftAid.status]}>{giftAid.status}</Badge>
+        <Badge className={giftAid.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+          {giftAid.type === "RETAIL" ? "Retail Gift Aid" : "Standard Gift Aid"}
+        </Badge>
         <Badge variant="outline">{sourceLabels[giftAid.source] || giftAid.source}</Badge>
       </div>
 
@@ -173,6 +176,34 @@ export default async function GiftAidDetailPage({
             <div className="mt-8 pt-8 border-t border-gray-100">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</p>
               <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{giftAid.notes}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Declaration Text */}
+      <Card className={giftAid.type === "RETAIL" ? "border-amber-200 bg-amber-50/30" : "border-indigo-200 bg-indigo-50/30"}>
+        <CardContent className="pt-6">
+          <p className="text-sm font-semibold text-gray-900 mb-2">
+            {giftAid.type === "RETAIL" ? "Retail Gift Aid Declaration" : "Standard Gift Aid Declaration"}
+          </p>
+          {giftAid.type === "RETAIL" ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I want to Gift Aid the proceeds from the sale of any goods I donate to this charity. I authorise the charity to act as my agent in selling my donated goods, and I agree to a commission for this service. I confirm that I own the goods I am donating and I am not acting as a business in selling them.
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I want to Gift Aid my donation and any donations I make in the future or have made in the past 4 years to this charity.
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.
+              </p>
             </div>
           )}
         </CardContent>

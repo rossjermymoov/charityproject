@@ -17,6 +17,8 @@ export default async function DigitalDeclarationPage({
 
   if (!giftAid) notFound();
 
+  const isRetail = giftAid.type === "RETAIL";
+
   // Already signed
   if (giftAid.digitalSignedAt) {
     return (
@@ -41,7 +43,7 @@ export default async function DigitalDeclarationPage({
             Declaration Already Completed
           </h1>
           <p className="text-gray-600">
-            This Gift Aid declaration was signed by{" "}
+            This {isRetail ? "Retail " : ""}Gift Aid declaration was signed by{" "}
             <strong>{giftAid.digitalSignedName}</strong> on{" "}
             {formatDate(giftAid.digitalSignedAt)}.
           </p>
@@ -76,10 +78,14 @@ export default async function DigitalDeclarationPage({
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="bg-indigo-600 px-8 py-6 text-white">
-            <h1 className="text-2xl font-bold">Gift Aid Declaration</h1>
-            <p className="text-indigo-200 mt-1">
-              Boost your donation by 25p for every £1 you give
+          <div className={`${isRetail ? "bg-amber-600" : "bg-indigo-600"} px-8 py-6 text-white`}>
+            <h1 className="text-2xl font-bold">
+              {isRetail ? "Retail Gift Aid Declaration" : "Gift Aid Declaration"}
+            </h1>
+            <p className={`${isRetail ? "text-amber-200" : "text-indigo-200"} mt-1`}>
+              {isRetail
+                ? "Gift Aid the proceeds from your donated goods"
+                : "Boost your donation by 25p for every £1 you give"}
             </p>
           </div>
 
@@ -104,20 +110,40 @@ export default async function DigitalDeclarationPage({
             </div>
 
             {/* HMRC-compliant declaration text */}
-            <div className="border-l-4 border-indigo-500 pl-4 py-2">
+            <div className={`border-l-4 ${isRetail ? "border-amber-500" : "border-indigo-500"} pl-4 py-2`}>
               <p className="text-sm font-semibold text-gray-900 mb-2">
-                Gift Aid Declaration
+                {isRetail ? "Retail Gift Aid Declaration" : "Gift Aid Declaration"}
               </p>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                I want to Gift Aid my donation and any donations I make in the
-                future or have made in the past 4 years to this charity.
-              </p>
-              <p className="text-sm text-gray-700 leading-relaxed mt-2">
-                I am a UK taxpayer and understand that if I pay less Income Tax
-                and/or Capital Gains Tax than the amount of Gift Aid claimed on
-                all my donations in that tax year it is my responsibility to pay
-                any difference.
-              </p>
+              {isRetail ? (
+                <>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    I want to Gift Aid the proceeds from the sale of any goods I
+                    donate to this charity. I authorise the charity to act as my
+                    agent in selling my donated goods, and I agree to a commission
+                    for this service. I confirm that I own the goods I am donating
+                    and I am not acting as a business in selling them.
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed mt-2">
+                    I am a UK taxpayer and understand that if I pay less Income Tax
+                    and/or Capital Gains Tax than the amount of Gift Aid claimed on
+                    all my donations in that tax year it is my responsibility to pay
+                    any difference.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    I want to Gift Aid my donation and any donations I make in the
+                    future or have made in the past 4 years to this charity.
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed mt-2">
+                    I am a UK taxpayer and understand that if I pay less Income Tax
+                    and/or Capital Gains Tax than the amount of Gift Aid claimed on
+                    all my donations in that tax year it is my responsibility to pay
+                    any difference.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Important notes */}
@@ -138,12 +164,19 @@ export default async function DigitalDeclarationPage({
                   - Gift Aid is reclaimed by the charity from the tax you pay for
                   the current tax year.
                 </li>
-                <li>
-                  - If you pay Income Tax at the higher or additional rate and want
-                  to receive the additional tax relief due to you, you must include
-                  all your Gift Aid donations on your Self-Assessment tax return or
-                  ask HM Revenue and Customs to adjust your tax code.
-                </li>
+                {isRetail ? (
+                  <li>
+                    - The charity will send you an annual statement of the amounts
+                    raised from the sale of your donated goods.
+                  </li>
+                ) : (
+                  <li>
+                    - If you pay Income Tax at the higher or additional rate and want
+                    to receive the additional tax relief due to you, you must include
+                    all your Gift Aid donations on your Self-Assessment tax return or
+                    ask HM Revenue and Customs to adjust your tax code.
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -151,12 +184,13 @@ export default async function DigitalDeclarationPage({
             <DeclarationForm
               token={token}
               contactName={`${giftAid.contact.firstName} ${giftAid.contact.lastName}`}
+              isRetail={isRetail}
             />
           </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          This is a secure digital Gift Aid declaration form. Your information
+          This is a secure digital {isRetail ? "Retail " : ""}Gift Aid declaration form. Your information
           is recorded for HMRC compliance purposes including your name, the date,
           and your IP address.
         </p>

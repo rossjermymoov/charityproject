@@ -5,9 +5,10 @@ import { useState } from "react";
 interface DeclarationFormProps {
   token: string;
   contactName: string;
+  isRetail?: boolean;
 }
 
-export function DeclarationForm({ token, contactName }: DeclarationFormProps) {
+export function DeclarationForm({ token, contactName, isRetail = false }: DeclarationFormProps) {
   const [fullName, setFullName] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -69,8 +70,9 @@ export function DeclarationForm({ token, contactName }: DeclarationFormProps) {
           Thank You!
         </h2>
         <p className="text-gray-600">
-          Your Gift Aid declaration has been recorded. This means the charity
-          can claim an extra 25p for every £1 you donate.
+          {isRetail
+            ? "Your Retail Gift Aid declaration has been recorded. The charity can now claim Gift Aid on the proceeds from the sale of your donated goods."
+            : "Your Gift Aid declaration has been recorded. This means the charity can claim an extra 25p for every £1 you donate."}
         </p>
       </div>
     );
@@ -84,13 +86,12 @@ export function DeclarationForm({ token, contactName }: DeclarationFormProps) {
             type="checkbox"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className={`mt-1 rounded border-gray-300 ${isRetail ? "text-amber-600 focus:ring-amber-500" : "text-indigo-600 focus:ring-indigo-500"}`}
           />
           <span className="text-sm text-gray-700">
-            I confirm that I am a UK taxpayer and I would like the charity to
-            treat all donations I have made in the past 4 years and all
-            donations I make from the date of this declaration as Gift Aid
-            donations, until I notify them otherwise.
+            {isRetail
+              ? "I confirm that I am a UK taxpayer, I own the goods I am donating, I am not acting as a business, and I authorise the charity to act as my agent in selling my donated goods. I would like the charity to treat the proceeds from the sale of all goods I donate as Gift Aid donations, until I notify them otherwise."
+              : "I confirm that I am a UK taxpayer and I would like the charity to treat all donations I have made in the past 4 years and all donations I make from the date of this declaration as Gift Aid donations, until I notify them otherwise."}
           </span>
         </label>
       </div>
@@ -105,7 +106,7 @@ export function DeclarationForm({ token, contactName }: DeclarationFormProps) {
           onChange={(e) => setFullName(e.target.value)}
           placeholder={contactName}
           required
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 ${isRetail ? "focus:ring-amber-500" : "focus:ring-indigo-500"} focus:border-transparent`}
         />
         <p className="text-xs text-gray-500 mt-1">
           By typing your name above, you are providing a legally binding
@@ -122,9 +123,9 @@ export function DeclarationForm({ token, contactName }: DeclarationFormProps) {
       <button
         type="submit"
         disabled={!confirmed || !fullName.trim() || submitting}
-        className="w-full bg-indigo-600 text-white rounded-lg px-4 py-3 text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        className={`w-full ${isRetail ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"} text-white rounded-lg px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors`}
       >
-        {submitting ? "Submitting..." : "Sign Gift Aid Declaration"}
+        {submitting ? "Submitting..." : `Sign ${isRetail ? "Retail " : ""}Gift Aid Declaration`}
       </button>
 
       <p className="text-xs text-gray-400 text-center">

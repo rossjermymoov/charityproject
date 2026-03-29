@@ -789,12 +789,20 @@ export default async function ContactDetailPage({
                         <p className="text-sm font-medium text-gray-900">
                           {formatDate(ga.startDate)} — {ga.endDate ? formatDate(ga.endDate) : "Ongoing"}
                         </p>
+                        <p className="text-xs text-gray-500">
+                          {ga.type === "RETAIL" ? "Retail Gift Aid" : "Standard Gift Aid"}
+                        </p>
                       </div>
-                      <Badge className={
-                        ga.status === "ACTIVE" ? "bg-green-100 text-green-800" :
-                        ga.status === "EXPIRED" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-red-100 text-red-800"
-                      }>{ga.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={ga.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+                          {ga.type === "RETAIL" ? "Retail" : "Standard"}
+                        </Badge>
+                        <Badge className={
+                          ga.status === "ACTIVE" ? "bg-green-100 text-green-800" :
+                          ga.status === "EXPIRED" ? "bg-yellow-100 text-yellow-800" :
+                          "bg-red-100 text-red-800"
+                        }>{ga.status}</Badge>
+                      </div>
                     </Link>
                   ))}
                 </div>

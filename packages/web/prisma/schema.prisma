@@ -536,6 +536,7 @@ model GiftAid {
   startDate     DateTime
   endDate       DateTime?  // null = ongoing
   status        String    @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED
+  type          String    @default("STANDARD") // STANDARD | RETAIL
   documentUrl   String?   // scanned declaration document
   declarationImageUrl String? // uploaded photo/scan of paper declaration
   source        String    @default("MANUAL") // MANUAL | DIGITAL | PAPER

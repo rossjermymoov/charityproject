@@ -10,11 +10,12 @@ import { formatDate } from "@/lib/utils";
 export default async function GiftAidPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string }>;
+  searchParams: Promise<{ search?: string; status?: string; type?: string }>;
 }) {
   const params = await searchParams;
   const search = params.search || "";
   const statusFilter = params.status || "";
+  const typeFilter = params.type || "";
 
   const giftAids = await prisma.giftAid.findMany({
     where: {
@@ -28,6 +29,7 @@ export default async function GiftAidPage({
             }
           : {},
         statusFilter ? { status: statusFilter } : {},
+        typeFilter ? { type: typeFilter } : {},
       ],
     },
     include: {
@@ -73,6 +75,15 @@ export default async function GiftAidPage({
             />
           </div>
           <select
+            name="type"
+            defaultValue={typeFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Types</option>
+            <option value="STANDARD">Standard</option>
+            <option value="RETAIL">Retail</option>
+          </select>
+          <select
             name="status"
             defaultValue={statusFilter}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -107,6 +118,9 @@ export default async function GiftAidPage({
                     Contact
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Declaration Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -130,6 +144,11 @@ export default async function GiftAidPage({
                       >
                         {giftAid.contact.firstName} {giftAid.contact.lastName}
                       </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge className={giftAid.type === "RETAIL" ? "bg-amber-100 text-amber-800" : "bg-indigo-100 text-indigo-800"}>
+                        {giftAid.type === "RETAIL" ? "Retail" : "Standard"}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {formatDate(giftAid.declarationDate)}
