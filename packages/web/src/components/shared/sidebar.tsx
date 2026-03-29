@@ -57,6 +57,7 @@ const navigation: NavItem[] = [
 
   // Volunteer portal
   { name: "divider", href: "", icon: LayoutDashboard, label: "My Portal", roles: ["VOLUNTEER"] },
+  { name: "My Broadcasts", href: "/my/broadcasts", icon: Radio, roles: ["VOLUNTEER"] },
   { name: "My Assignments", href: "/my/assignments", icon: Calendar, roles: ["VOLUNTEER"] },
   { name: "My Hours", href: "/my/hours", icon: Clock, roles: ["VOLUNTEER"] },
   { name: "My Training", href: "/my/training", icon: GraduationCap, roles: ["VOLUNTEER"] },

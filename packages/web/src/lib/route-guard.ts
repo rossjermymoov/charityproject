@@ -14,9 +14,12 @@ const ROUTE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/compliance", roles: ["ADMIN", "STAFF"] },
   { prefix: "/insights", roles: ["ADMIN", "STAFF"] },
   // Volunteer-only
+  { prefix: "/my/broadcasts", roles: ["VOLUNTEER"] },
   { prefix: "/my/assignments", roles: ["VOLUNTEER"] },
   { prefix: "/my/hours", roles: ["VOLUNTEER"] },
   { prefix: "/my/training", roles: ["VOLUNTEER"] },
+  // Broadcasts — volunteers can respond, staff/admin can manage
+  { prefix: "/broadcasts", roles: ["ADMIN", "STAFF", "VOLUNTEER"] },
   // Donor-only
   { prefix: "/my/donations", roles: ["DONOR"] },
   { prefix: "/my/gift-aid", roles: ["DONOR"] },
