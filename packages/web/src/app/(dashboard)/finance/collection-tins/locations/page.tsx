@@ -10,11 +10,12 @@ import { LocationsMap } from "@/components/ui/locations-map";
 export default async function TinLocationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; area?: string }>;
 }) {
   const params = await searchParams;
   const search = params.search || "";
   const typeFilter = params.type || "";
+  const areaFilter = params.area || "";
 
   const locations = await prisma.tinLocation.findMany({
     where: {
@@ -24,10 +25,12 @@ export default async function TinLocationsPage({
               OR: [
                 { name: { contains: search, mode: "insensitive" } },
                 { address: { contains: search, mode: "insensitive" } },
+                { postcodeArea: { contains: search, mode: "insensitive" } },
               ],
             }
           : {},
         typeFilter ? { type: typeFilter } : {},
+        areaFilter ? { postcodeArea: areaFilter } : {},
       ],
     },
     include: {
@@ -41,6 +44,15 @@ export default async function TinLocationsPage({
     },
     orderBy: { name: "asc" },
   });
+
+  // Get distinct postcode areas for the filter
+  const allAreas = await prisma.tinLocation.findMany({
+    where: { postcodeArea: { not: null } },
+    select: { postcodeArea: true },
+    distinct: ["postcodeArea"],
+    orderBy: { postcodeArea: "asc" },
+  });
+  const distinctAreas = allAreas.map((a) => a.postcodeArea).filter(Boolean) as string[];
 
   const locationsWithStats = locations.map((loc) => {
     const totalCollected = loc.tins.reduce(
@@ -128,6 +140,18 @@ export default async function TinLocationsPage({
             <option value="CHURCH">Church</option>
             <option value="OTHER">Other</option>
           </select>
+          {distinctAreas.length > 0 && (
+            <select
+              name="area"
+              defaultValue={areaFilter}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="">All Areas</option>
+              {distinctAreas.map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+            </select>
+          )}
           <Button type="submit" variant="outline" size="sm">
             Filter
           </Button>
@@ -169,6 +193,9 @@ export default async function TinLocationsPage({
                     Location
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Area
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -197,6 +224,13 @@ export default async function TinLocationsPage({
                       </Link>
                       {loc.address && (
                         <p className="text-xs text-gray-500">{loc.address}</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {loc.postcodeArea ? (
+                        <span className="text-sm font-medium text-indigo-600">{loc.postcodeArea}</span>
+                      ) : (
+                        <span className="text-sm text-gray-300">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

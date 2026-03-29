@@ -51,6 +51,7 @@ export default async function CollectionTinsReportsPage() {
         id: loc.id,
         name: loc.name,
         type: loc.type,
+        postcodeArea: loc.postcodeArea,
         isActive: loc.isActive,
         totalCollected,
         collectionCount,
@@ -95,6 +96,28 @@ export default async function CollectionTinsReportsPage() {
   const sortedMonths = Object.entries(monthlyData)
     .sort(([a], [b]) => b.localeCompare(a))
     .slice(0, 12);
+
+  // Area-based stats (postcode area grouping)
+  const areaStats: Record<string, { total: number; locationCount: number; collectionCount: number; activeTins: number }> = {};
+  locationStats.forEach((loc) => {
+    const area = loc.postcodeArea || null;
+    if (!area) return;
+    if (!areaStats[area]) {
+      areaStats[area] = { total: 0, locationCount: 0, collectionCount: 0, activeTins: 0 };
+    }
+    areaStats[area].total += loc.totalCollected;
+    areaStats[area].locationCount += 1;
+    areaStats[area].collectionCount += loc.collectionCount;
+    areaStats[area].activeTins += loc.activeTins;
+  });
+
+  const areaRanking = Object.entries(areaStats)
+    .map(([area, data]) => ({
+      area,
+      ...data,
+      avgPerLocation: data.locationCount > 0 ? data.total / data.locationCount : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
 
   // Top performing by type
   const typeStats: Record<string, { total: number; count: number }> = {};
@@ -302,6 +325,92 @@ export default async function CollectionTinsReportsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Revenue by Postcode Area */}
+        {areaRanking.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-green-500" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Revenue by Postcode Area
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500">
+                How generous is each area? Locations grouped by postcode sector.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        Area
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Total Collected
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Locations
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Active Tins
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Collections
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Avg / Location
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {areaRanking.map((a) => {
+                      const maxArea = areaRanking[0]?.total || 1;
+                      const barWidth = (a.total / maxArea) * 100;
+                      return (
+                        <tr key={a.area} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/finance/collection-tins/locations?area=${encodeURIComponent(a.area)}`}
+                                className="text-sm font-bold text-indigo-600 hover:underline"
+                              >
+                                {a.area}
+                              </Link>
+                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-[100px]">
+                                <div
+                                  className="h-full bg-green-400 rounded-full"
+                                  style={{ width: `${barWidth}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-bold text-green-600 text-right">
+                            £{a.total.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                            {a.locationCount}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                            {a.activeTins}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                            {a.collectionCount}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-amber-600 font-medium text-right">
+                            £{a.avgPerLocation.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Monthly Breakdown */}
         <Card className="lg:col-span-2">

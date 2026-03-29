@@ -899,20 +899,23 @@ model CampaignSegment {
 // ============================================
 
 model TinLocation {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  type      String   @default("OTHER") // SHOP | PUB | RESTAURANT | OFFICE | SCHOOL | CHURCH | OTHER
-  contactName String?
+  id           String   @id @default(cuid())
+  name         String
+  address      String?
+  postcodeArea String?  // e.g. "SY11 1", "SY11 2" — for area-based reporting
+  type         String   @default("OTHER") // SHOP | PUB | RESTAURANT | OFFICE | SCHOOL | CHURCH | OTHER
+  contactName  String?
   contactPhone String?
-  latitude  Float?
-  longitude Float?
-  isActive  Boolean  @default(true)
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  latitude     Float?
+  longitude    Float?
+  isActive     Boolean  @default(true)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   tins CollectionTin[]
+
+  @@index([postcodeArea])
 }
 
 model CollectionTin {

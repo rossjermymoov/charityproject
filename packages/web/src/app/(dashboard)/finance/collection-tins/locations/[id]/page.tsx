@@ -73,6 +73,7 @@ export default async function TinLocationDetailPage({
       data: {
         name: formData.get("name") as string,
         address,
+        postcodeArea: (formData.get("postcodeArea") as string)?.trim().toUpperCase() || null,
         type: (formData.get("type") as string) || "OTHER",
         contactName: (formData.get("contactName") as string) || null,
         contactPhone: (formData.get("contactPhone") as string) || null,
@@ -226,14 +227,26 @@ export default async function TinLocationDetailPage({
                 </select>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <Input
-                name="address"
-                defaultValue={location.address || ""}
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <Input
+                  name="address"
+                  defaultValue={location.address || ""}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Postcode Area
+                </label>
+                <Input
+                  name="postcodeArea"
+                  defaultValue={location.postcodeArea || ""}
+                  placeholder="e.g. SY11 1"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

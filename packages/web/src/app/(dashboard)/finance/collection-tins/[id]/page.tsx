@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Trash2, PoundSterling, MapPin, Rocket, RotateCcw } from "lucide-react";
+import { ArrowLeft, Trash2, PoundSterling, MapPin, Rocket, RotateCcw, ArrowLeftRight } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { SingleLocationMap } from "@/components/ui/single-location-map";
 import { geocodeAddress } from "@/lib/geocode";
-import { quickSetStatus } from "../actions";
+import { quickSetStatus, swapTin } from "../actions";
 
 export default async function CollectionTinDetailPage({
   params,
@@ -23,7 +23,7 @@ export default async function CollectionTinDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [tin, allLocations] = await Promise.all([
+  const [tin, allLocations, inStockTins] = await Promise.all([
     prisma.collectionTin.findUnique({
       where: { id },
       include: {
@@ -35,6 +35,11 @@ export default async function CollectionTinDetailPage({
     prisma.tinLocation.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
+    }),
+    prisma.collectionTin.findMany({
+      where: { status: "IN_STOCK", id: { not: id } },
+      orderBy: { tinNumber: "asc" },
+      select: { id: true, tinNumber: true },
     }),
   ]);
 
@@ -407,6 +412,72 @@ export default async function CollectionTinDetailPage({
           </form>
         </CardContent>
       </Card>
+
+      {/* Swap Tin — shown when deployed and replacement tins available */}
+      {canReturn && inStockTins.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <ArrowLeftRight className="h-5 w-5 text-amber-600" />
+              <h3 className="text-lg font-semibold text-amber-900">
+                Swap Tin
+              </h3>
+            </div>
+            <p className="text-sm text-amber-700">
+              Collect this tin, record the amount, and deploy a replacement to the same location in one step. The collected tin returns to In Stock.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form action={swapTin} className="space-y-4">
+              <input type="hidden" name="currentTinId" value={tin.id} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Replacement Tin *
+                  </label>
+                  <select
+                    name="replacementTinId"
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="">Select an in-stock tin...</option>
+                    {inStockTins.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.tinNumber}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Amount Collected (£)
+                  </label>
+                  <Input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="e.g. 25.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <Input
+                  name="notes"
+                  placeholder="e.g. Tin was nearly full"
+                />
+              </div>
+              <Button type="submit" className="bg-amber-600 hover:bg-amber-700">
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                Swap Tin
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tin Details & Location */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
