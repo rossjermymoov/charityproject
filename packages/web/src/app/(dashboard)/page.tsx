@@ -14,6 +14,7 @@ import {
   Package,
   AlertTriangle,
   ArrowUpRight,
+  Ticket,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -53,6 +54,7 @@ export default async function DashboardPage() {
   let volunteerCount = 0;
   let activeVolunteers = 0;
   let openBroadcasts = 0;
+  let lotteryMembers = 0;
   let totalDonationsThisYear: any = { _sum: { amount: 0 }, _count: 0 };
   let donationsLast12Months: any[] = [];
   let donationsByType: any[] = [];
@@ -75,6 +77,7 @@ export default async function DashboardPage() {
     volunteerCount,
     activeVolunteers,
     openBroadcasts,
+    lotteryMembers,
     totalDonationsThisYear,
     donationsLast12Months,
     donationsByType,
@@ -96,6 +99,8 @@ export default async function DashboardPage() {
     prisma.volunteerProfile.count(),
     prisma.volunteerProfile.count({ where: { status: "ACTIVE" } }),
     prisma.broadcast.count({ where: { status: "OPEN" } }),
+    // Lottery members
+    prisma.contact.count({ where: { isLotteryMember: true } }),
     // Donations this year
     prisma.donation.aggregate({
       _sum: { amount: true },
@@ -268,6 +273,7 @@ export default async function DashboardPage() {
           icon={PoundSterling}
           trend={`${totalDonationsCount} donations`}
           trendUp={true}
+          href="/finance/donations"
         />
         <StatCard
           title="Gift Aid Claimable"
@@ -275,6 +281,7 @@ export default async function DashboardPage() {
           icon={Heart}
           trend={`${activeGiftAidDeclarations} active declarations`}
           trendUp={true}
+          href="/finance/gift-aid"
         />
         <StatCard
           title="Volunteer Hours"
@@ -282,6 +289,7 @@ export default async function DashboardPage() {
           icon={Clock}
           trend={`${activeVolunteers} active volunteers`}
           trendUp={true}
+          href="/volunteers/hours"
         />
         <StatCard
           title="Tin Collections"
@@ -289,18 +297,21 @@ export default async function DashboardPage() {
           icon={Package}
           trend={`${deployedTins} of ${totalTins} deployed`}
           trendUp={true}
+          href="/finance/collection-tins"
         />
       </div>
 
       {/* Second Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Contacts" value={contactCount} icon={Users} />
-        <StatCard title="Volunteers" value={volunteerCount} icon={UserCheck} />
-        <StatCard title="Open Broadcasts" value={openBroadcasts} icon={Radio} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard title="Total Contacts" value={contactCount} icon={Users} href="/crm/contacts" />
+        <StatCard title="Volunteers" value={volunteerCount} icon={UserCheck} href="/volunteers" />
+        <StatCard title="Lottery Members" value={lotteryMembers} icon={Ticket} href="/crm/contacts?lottery=yes" />
+        <StatCard title="Open Broadcasts" value={openBroadcasts} icon={Radio} href="/broadcasts" />
         <StatCard
           title="Upcoming Events"
           value={upcomingEvents.length}
           icon={Calendar}
+          href="/events"
         />
       </div>
 
@@ -505,18 +516,16 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {recentDonations.map((donation) => (
-                  <div
+                  <Link
                     key={donation.id}
-                    className="flex items-center justify-between py-2"
+                    href={`/crm/contacts/${donation.contactId}`}
+                    className="flex items-center justify-between py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors"
                   >
                     <div>
-                      <Link
-                        href={`/crm/contacts/${donation.contactId}`}
-                        className="text-sm font-medium text-blue-600 hover:underline"
-                      >
+                      <p className="text-sm font-medium text-gray-900">
                         {donation.contact.firstName}{" "}
                         {donation.contact.lastName}
-                      </Link>
+                      </p>
                       <p className="text-xs text-gray-500">
                         {formatDate(donation.date)} ·{" "}
                         {donation.type.replace("_", " ")}
@@ -532,7 +541,7 @@ export default async function DashboardPage() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -614,9 +623,10 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {upcomingAssignments.map((assignment) => (
-                  <div
+                  <Link
                     key={assignment.id}
-                    className="flex items-center justify-between py-2"
+                    href={`/volunteers/${assignment.volunteer.id}`}
+                    className="flex items-center justify-between py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors"
                   >
                     <div>
                       <p className="text-sm font-medium text-gray-900">
@@ -636,7 +646,7 @@ export default async function DashboardPage() {
                         {assignment.startTime} - {assignment.endTime}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

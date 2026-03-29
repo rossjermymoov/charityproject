@@ -144,6 +144,8 @@ model Contact {
   consentPhone   Boolean  @default(false)
   consentSms     Boolean  @default(false)
   consentUpdatedAt DateTime?
+  isLotteryMember  Boolean  @default(false)
+  lotteryMemberSince DateTime?
   isArchived     Boolean  @default(false)
   archivedAt     DateTime?
   dateOfBirth    String?

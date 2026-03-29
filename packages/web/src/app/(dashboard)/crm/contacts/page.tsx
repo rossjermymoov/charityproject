@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Users, Plus, Search, Heart } from "lucide-react";
+import { Users, Plus, Search, Heart, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -10,11 +10,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 export default async function ContactsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; lottery?: string }>;
 }) {
   const params = await searchParams;
   const search = params.search || "";
   const typeFilter = params.type || "";
+  const lotteryFilter = params.lottery || "";
 
   const contacts = await prisma.contact.findMany({
     where: {
@@ -29,6 +30,7 @@ export default async function ContactsPage({
             }
           : {},
         typeFilter ? { types: { has: typeFilter } } : {},
+        lotteryFilter === "yes" ? { isLotteryMember: true } : {},
       ],
     },
     include: {
@@ -86,6 +88,14 @@ export default async function ContactsPage({
             <option value="VOLUNTEER">Volunteer</option>
             <option value="DONOR">Donor</option>
           </select>
+          <select
+            name="lottery"
+            defaultValue={lotteryFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Lottery</option>
+            <option value="yes">Lottery Members</option>
+          </select>
           <Button type="submit" variant="outline" size="sm">
             Filter
           </Button>
@@ -118,6 +128,9 @@ export default async function ContactsPage({
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Gift Aid
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Lottery
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Organisation
@@ -165,6 +178,16 @@ export default async function ContactsPage({
                         <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800" title="Active Gift Aid declaration">
                           <Heart className="h-3 w-3 fill-green-600 text-green-600" />
                           GA
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {contact.isLotteryMember ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800" title="Lottery member">
+                          <Ticket className="h-3 w-3 text-amber-600" />
+                          LM
                         </span>
                       ) : (
                         <span className="text-gray-300">—</span>

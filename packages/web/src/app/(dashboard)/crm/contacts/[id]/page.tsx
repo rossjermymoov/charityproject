@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle, Edit3, Trash2, Archive, ArchiveX } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle, Edit3, Trash2, Archive, ArchiveX, Ticket } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -273,6 +273,13 @@ export default async function ContactDetailPage({
     if (!session) redirect("/login");
 
     const selectedTypes = formData.getAll("types") as string[];
+    const isLotteryMember = formData.get("isLotteryMember") === "on";
+
+    // Check if lottery membership is being enabled for the first time
+    const currentContact = await prisma.contact.findUnique({
+      where: { id },
+      select: { isLotteryMember: true },
+    });
 
     await prisma.contact.update({
       where: { id },
@@ -283,6 +290,8 @@ export default async function ContactDetailPage({
         phone: (formData.get("phone") as string) || null,
         type: selectedTypes[0] || "OTHER",
         types: selectedTypes,
+        isLotteryMember,
+        lotteryMemberSince: isLotteryMember && !currentContact?.isLotteryMember ? new Date() : undefined,
         dateOfBirth: (formData.get("dateOfBirth") as string) || null,
         addressLine1: (formData.get("addressLine1") as string) || null,
         city: (formData.get("city") as string) || null,
@@ -406,6 +415,11 @@ export default async function ContactDetailPage({
                     {contact.types.map((t) => (
                       <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>{t}</Badge>
                     ))}
+                    {contact.isLotteryMember && (
+                      <Badge className="bg-amber-100 text-amber-800">
+                        <Ticket className="h-3 w-3 mr-1" />Lottery Member
+                      </Badge>
+                    )}
                     {contact.isArchived && (
                       <Badge className="bg-red-100 text-red-800">Archived</Badge>
                     )}
@@ -542,6 +556,15 @@ export default async function ContactDetailPage({
                       className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                     />
                     Donor
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="isLotteryMember"
+                      defaultChecked={contact.isLotteryMember}
+                      className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    Lottery Member
                   </label>
                 </div>
               </div>
