@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { SingleLocationMap } from "@/components/ui/single-location-map";
+import { geocodeAddress } from "@/lib/geocode";
 
 export default async function TinLocationDetailPage({
   params,
@@ -53,15 +55,29 @@ export default async function TinLocationDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const address = (formData.get("address") as string) || null;
+
+    // Geocode the address if it changed
+    let geoData: { latitude?: number | null; longitude?: number | null } = {};
+    if (address) {
+      const coords = await geocodeAddress(address);
+      if (coords) {
+        geoData = { latitude: coords.lat, longitude: coords.lng };
+      }
+    } else {
+      geoData = { latitude: null, longitude: null };
+    }
+
     await prisma.tinLocation.update({
       where: { id },
       data: {
         name: formData.get("name") as string,
-        address: (formData.get("address") as string) || null,
+        address,
         type: (formData.get("type") as string) || "OTHER",
         contactName: (formData.get("contactName") as string) || null,
         contactPhone: (formData.get("contactPhone") as string) || null,
         notes: (formData.get("notes") as string) || null,
+        ...geoData,
       },
     });
 
@@ -150,6 +166,26 @@ export default async function TinLocationDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Map */}
+      {location.latitude && location.longitude && (
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-indigo-600" />
+              Map
+            </h3>
+          </CardHeader>
+          <CardContent>
+            <SingleLocationMap
+              name={location.name}
+              address={location.address}
+              latitude={location.latitude}
+              longitude={location.longitude}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Details */}
       <Card>

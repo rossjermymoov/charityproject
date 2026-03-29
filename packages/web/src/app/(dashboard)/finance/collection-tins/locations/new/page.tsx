@@ -7,20 +7,35 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { geocodeAddress } from "@/lib/geocode";
 
 async function createLocation(formData: FormData) {
   "use server";
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const address = (formData.get("address") as string) || null;
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+
+  if (address) {
+    const coords = await geocodeAddress(address);
+    if (coords) {
+      latitude = coords.lat;
+      longitude = coords.lng;
+    }
+  }
+
   const location = await prisma.tinLocation.create({
     data: {
       name: formData.get("name") as string,
-      address: (formData.get("address") as string) || null,
+      address,
       type: (formData.get("type") as string) || "OTHER",
       contactName: (formData.get("contactName") as string) || null,
       contactPhone: (formData.get("contactPhone") as string) || null,
       notes: (formData.get("notes") as string) || null,
+      latitude,
+      longitude,
     },
   });
 

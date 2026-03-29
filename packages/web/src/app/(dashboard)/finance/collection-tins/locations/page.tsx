@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocationsMap } from "@/components/ui/locations-map";
 
 export default async function TinLocationsPage({
   searchParams,
@@ -52,8 +53,19 @@ export default async function TinLocationsPage({
       0
     );
     const activeTins = loc.tins.filter((t) => t.status === "DEPLOYED").length;
-    return { ...loc, totalCollected, collectionCount, activeTins };
+    return { ...loc, totalCollected, collectionCount, activeTins, latitude: loc.latitude, longitude: loc.longitude };
   });
+
+  const mapLocations = locationsWithStats.map((loc) => ({
+    id: loc.id,
+    name: loc.name,
+    address: loc.address,
+    type: loc.type,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    activeTins: loc.activeTins,
+    totalCollected: loc.totalCollected,
+  }));
 
   const typeColors: Record<string, string> = {
     SHOP: "bg-blue-100 text-blue-800",
@@ -121,6 +133,23 @@ export default async function TinLocationsPage({
           </Button>
         </form>
       </Card>
+
+      {/* Map View */}
+      {locationsWithStats.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-sm font-semibold text-gray-900">
+              Location Map
+            </h2>
+            <span className="text-xs text-gray-500">
+              ({mapLocations.filter((l) => l.latitude && l.longitude).length} of{" "}
+              {mapLocations.length} mapped)
+            </span>
+          </div>
+          <LocationsMap locations={mapLocations} />
+        </Card>
+      )}
 
       {locationsWithStats.length === 0 ? (
         <EmptyState

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
+import { geocodeAddress } from "@/lib/geocode";
 
 export default async function NewCollectionTinPage() {
   const locations = await prisma.tinLocation.findMany({
@@ -40,12 +41,23 @@ export default async function NewCollectionTinPage() {
         locationAddress = loc.address;
       }
     } else if (newLocationName) {
-      // Auto-create a new TinLocation from the entered details
+      // Auto-create a new TinLocation from the entered details with geocoding
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+      if (newLocationAddress) {
+        const coords = await geocodeAddress(newLocationAddress);
+        if (coords) {
+          latitude = coords.lat;
+          longitude = coords.lng;
+        }
+      }
       const newLoc = await prisma.tinLocation.create({
         data: {
           name: newLocationName,
           address: newLocationAddress,
           type: newLocationType,
+          latitude,
+          longitude,
         },
       });
       locationId = newLoc.id;

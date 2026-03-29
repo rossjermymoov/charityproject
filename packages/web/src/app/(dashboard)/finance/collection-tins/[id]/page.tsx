@@ -13,6 +13,8 @@ import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
+import { SingleLocationMap } from "@/components/ui/single-location-map";
+import { geocodeAddress } from "@/lib/geocode";
 
 export default async function CollectionTinDetailPage({
   params,
@@ -149,12 +151,23 @@ export default async function CollectionTinDetailPage({
         locationAddress = loc.address;
       }
     } else if (newLocationName) {
-      // Auto-create a new TinLocation
+      // Auto-create a new TinLocation with geocoding
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+      if (newLocationAddress) {
+        const coords = await geocodeAddress(newLocationAddress);
+        if (coords) {
+          latitude = coords.lat;
+          longitude = coords.lng;
+        }
+      }
       const newLoc = await prisma.tinLocation.create({
         data: {
           name: newLocationName,
           address: newLocationAddress,
           type: newLocationType,
+          latitude,
+          longitude,
         },
       });
       locationId = newLoc.id;
@@ -407,6 +420,17 @@ export default async function CollectionTinDetailPage({
                       {tin.location.type}
                     </Badge>
                   )}
+                </div>
+              )}
+              {tin.location?.latitude && tin.location?.longitude && (
+                <div className="mb-4">
+                  <SingleLocationMap
+                    name={tin.location.name}
+                    address={tin.location.address}
+                    latitude={tin.location.latitude}
+                    longitude={tin.location.longitude}
+                    height="200px"
+                  />
                 </div>
               )}
 
