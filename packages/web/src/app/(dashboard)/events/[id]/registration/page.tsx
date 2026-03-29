@@ -141,6 +141,7 @@ export default async function EventRegistrationFormPage({
           ? parseInt(formData.get("maxQuantity") as string)
           : null,
         options,
+        imageUrl: (formData.get("imageUrl") as string)?.trim() || null,
         sortOrder: itemCount,
       },
     });
@@ -442,7 +443,15 @@ export default async function EventRegistrationFormPage({
                     className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
                   >
                     <GripVertical className="h-4 w-4 text-gray-400" />
-                    <Icon className="h-5 w-5 text-gray-600" />
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="h-12 w-12 rounded-lg object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <Icon className="h-5 w-5 text-gray-600" />
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">
@@ -553,13 +562,18 @@ export default async function EventRegistrationFormPage({
                   placeholder='e.g., S, M, L, XL or Red, Blue'
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
                   label="Max Quantity (stock limit)"
                   name="maxQuantity"
                   type="number"
                   min="0"
                   placeholder="Leave blank for unlimited"
+                />
+                <Input
+                  label="Image URL"
+                  name="imageUrl"
+                  placeholder="https://example.com/tshirt.jpg"
                 />
                 <div className="flex items-end gap-4">
                   <label className="flex items-center gap-2 text-sm pb-2">

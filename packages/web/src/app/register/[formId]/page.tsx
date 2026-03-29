@@ -57,6 +57,7 @@ export default async function PublicRegistrationPage({
       isGiftAidEligible: item.isGiftAidEligible,
       maxQuantity: item.maxQuantity,
       options: item.options,
+      imageUrl: item.imageUrl,
     })),
   };
 

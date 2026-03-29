@@ -13,6 +13,7 @@ interface FormItem {
   isGiftAidEligible: boolean;
   maxQuantity: number | null;
   options: string | null;
+  imageUrl: string | null;
 }
 
 interface FormData {
@@ -465,8 +466,8 @@ export function RegistrationFormClient({ form }: { form: FormData }) {
                           : undefined,
                       }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
                           <input
                             type="checkbox"
                             checked={selected}
@@ -475,6 +476,13 @@ export function RegistrationFormClient({ form }: { form: FormData }) {
                             className="mt-1 rounded"
                             style={{ accentColor: form.primaryColor }}
                           />
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="h-16 w-16 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                            />
+                          )}
                           <div>
                             <p className="font-medium text-gray-900">
                               {item.name}
@@ -494,7 +502,7 @@ export function RegistrationFormClient({ form }: { form: FormData }) {
                             )}
                           </div>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">
+                        <p className="text-lg font-bold text-gray-900 flex-shrink-0">
                           £{(item.price || 0).toFixed(2)}
                         </p>
                       </div>
