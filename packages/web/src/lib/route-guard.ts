@@ -11,6 +11,7 @@ const ROUTE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/finance", roles: ["ADMIN", "STAFF"] },
   { prefix: "/events", roles: ["ADMIN", "STAFF"] },
   { prefix: "/communications", roles: ["ADMIN", "STAFF"] },
+  { prefix: "/cases", roles: ["ADMIN", "STAFF"] },
   { prefix: "/compliance", roles: ["ADMIN", "STAFF"] },
   { prefix: "/insights", roles: ["ADMIN", "STAFF"] },
   // Volunteer-only

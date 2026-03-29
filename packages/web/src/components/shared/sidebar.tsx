@@ -34,6 +34,12 @@ import {
   Activity,
   ClipboardCheck,
   UserCog,
+  CreditCard,
+  RefreshCw,
+  BadgeCheck,
+  Landmark,
+  Briefcase,
+  FileInput,
   type LucideIcon,
 } from "lucide-react";
 
@@ -79,12 +85,21 @@ const navigation: NavItem[] = [
   // Finance
   { name: "divider", href: "", icon: LayoutDashboard, label: "Finance", roles: ALL_STAFF },
   { name: "Donations", href: "/finance/donations", icon: PoundSterling, roles: ALL_STAFF },
+  { name: "Payments", href: "/finance/payments", icon: CreditCard, roles: ALL_STAFF },
+  { name: "Subscriptions", href: "/finance/subscriptions", icon: RefreshCw, roles: ALL_STAFF },
+  { name: "Memberships", href: "/finance/memberships", icon: BadgeCheck, roles: ALL_STAFF },
   { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart, roles: ALL_STAFF },
+  { name: "Grants", href: "/finance/grants", icon: Landmark, roles: ALL_STAFF },
+  { name: "Legacies", href: "/finance/legacies", icon: Flower2, roles: ALL_STAFF },
   { name: "Ledger Codes", href: "/finance/ledger-codes", icon: BookOpen, roles: ALL_STAFF },
   { name: "Collection Tins", href: "/finance/collection-tins", icon: Package, roles: ALL_STAFF },
   { name: "Tin Locations", href: "/finance/collection-tins/locations", icon: MapPin, roles: ALL_STAFF },
   { name: "Tin Reports", href: "/finance/collection-tins/reports", icon: BarChart3, roles: ALL_STAFF },
   { name: "Tribute Funds", href: "/finance/tribute-funds", icon: Flower2, roles: ALL_STAFF },
+
+  // Cases
+  { name: "divider", href: "", icon: LayoutDashboard, label: "Case Management", roles: ALL_STAFF },
+  { name: "Cases", href: "/cases", icon: Briefcase, roles: ALL_STAFF },
 
   // Events & Marketing
   { name: "divider", href: "", icon: LayoutDashboard, label: "Events & Marketing", roles: ALL_STAFF },
@@ -106,6 +121,10 @@ const navigation: NavItem[] = [
   { name: "Asset Register", href: "/compliance/assets", icon: ClipboardCheck, roles: ALL_STAFF },
   { name: "Clinical Safety", href: "/compliance/clinical-safety", icon: Activity, roles: ALL_STAFF },
   { name: "Consent Trail", href: "/compliance/consent-trail", icon: Shield, roles: ALL_STAFF },
+
+  // Forms
+  { name: "divider", href: "", icon: LayoutDashboard, label: "Forms", roles: ALL_STAFF },
+  { name: "Form Builder", href: "/settings/forms", icon: FileInput, roles: ALL_STAFF },
 
   // Insights
   { name: "divider", href: "", icon: LayoutDashboard, label: "Insights", roles: ALL_STAFF },
