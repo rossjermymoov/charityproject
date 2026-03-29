@@ -43,30 +43,44 @@ export default async function DashboardPage() {
   const session = await getSession();
   const { start: twelveMonthsAgo, months } = getLast12Months();
 
-  const [
+  let contactCount = 0;
+  let volunteerCount = 0;
+  let activeVolunteers = 0;
+  let openBroadcasts = 0;
+  let totalDonationsThisYear: any = { _sum: { amount: 0 }, _count: 0 };
+  let donationsLast12Months: any[] = [];
+  let donationsByType: any[] = [];
+  let activeGiftAidDeclarations = 0;
+  let giftAidableUnclaimed: any = { _sum: { amount: 0 } };
+  let volunteerHoursLast12Months: any[] = [];
+  let totalHoursThisYear: any = { _sum: { hours: 0 } };
+  let deployedTins = 0;
+  let totalTins = 0;
+  let tinCollectionsThisYear: any = { _sum: { amount: 0 }, _count: 0 };
+  let upcomingEvents: any[] = [];
+  let activeCampaigns: any[] = [];
+  let recentDonations: any[] = [];
+  let recentBroadcasts: any[] = [];
+  let upcomingAssignments: any[] = [];
+
+  try {
+  [
     contactCount,
     volunteerCount,
     activeVolunteers,
     openBroadcasts,
-    // Donations
     totalDonationsThisYear,
     donationsLast12Months,
     donationsByType,
-    // Gift Aid
     activeGiftAidDeclarations,
     giftAidableUnclaimed,
-    // Volunteer Hours
     volunteerHoursLast12Months,
     totalHoursThisYear,
-    // Collection Tins
     deployedTins,
     totalTins,
     tinCollectionsThisYear,
-    // Events
     upcomingEvents,
-    // Campaigns
     activeCampaigns,
-    // Recent activity
     recentDonations,
     recentBroadcasts,
     upcomingAssignments,
@@ -174,6 +188,9 @@ export default async function DashboardPage() {
       },
     }),
   ]);
+  } catch (err) {
+    console.error("Dashboard data fetch error:", err);
+  }
 
   // Process monthly donations into chart data
   const monthlyMap: Record<string, { total: number; giftAid: number; count: number }> = {};
