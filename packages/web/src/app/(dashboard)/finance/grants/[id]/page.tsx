@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { PipelineTimeline, getGrantSteps } from "@/components/ui/pipeline-timeline";
 
 export default async function GrantDetailPage({
   params,
@@ -148,6 +149,29 @@ export default async function GrantDetailPage({
         <h1 className="text-2xl font-bold text-gray-900">Grant Details</h1>
       </div>
 
+      {/* Visual Pipeline Timeline */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Grant Pipeline</h3>
+        </CardHeader>
+        <CardContent>
+          <PipelineTimeline
+            steps={getGrantSteps(grant)}
+            currentStepKey={grant.status === "UNSUCCESSFUL" ? "SUBMITTED" : grant.status}
+            variant="grant"
+            size="full"
+          />
+          {grant.status === "UNSUCCESSFUL" && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-center">
+              <p className="text-sm text-red-700 font-medium">This grant application was unsuccessful</p>
+              {grant.decisionDate && (
+                <p className="text-xs text-red-500 mt-1">Decision: {formatDate(grant.decisionDate)}</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Summary Card */}
       <Card>
         <CardContent className="pt-6">
@@ -190,47 +214,6 @@ export default async function GrantDetailPage({
                     : "—"}
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Timeline */}
-          <div className="grid grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-100">
-            <div className="space-y-4">
-              {grant.applicationDeadline && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Application Deadline
-                  </p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(grant.applicationDeadline)}</p>
-                </div>
-              )}
-              {grant.submittedDate && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(grant.submittedDate)}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {grant.decisionDate && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Decision Date</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(grant.decisionDate)}</p>
-                </div>
-              )}
-              {grant.startDate && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(grant.startDate)}</p>
-                </div>
-              )}
-              {grant.endDate && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(grant.endDate)}</p>
-                </div>
-              )}
             </div>
           </div>
 

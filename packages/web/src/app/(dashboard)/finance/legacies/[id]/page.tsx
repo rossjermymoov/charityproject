@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { PipelineTimeline, getLegacySteps } from "@/components/ui/pipeline-timeline";
 
 export default async function LegacyDetailPage({
   params,
@@ -141,6 +142,30 @@ export default async function LegacyDetailPage({
         <h1 className="text-2xl font-bold text-gray-900">Legacy Details</h1>
       </div>
 
+      {/* Visual Pipeline Timeline */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Legacy Progress</h3>
+        </CardHeader>
+        <CardContent>
+          <PipelineTimeline
+            steps={getLegacySteps(legacy)}
+            currentStepKey={
+              legacy.status === "DISPUTED" || legacy.status === "PARTIAL"
+                ? "AWAITING_PAYMENT"
+                : legacy.status
+            }
+            variant="legacy"
+            size="full"
+          />
+          {legacy.status === "DISPUTED" && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-center">
+              <p className="text-sm text-red-700 font-medium">This legacy is currently under dispute</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Summary Card */}
       <Card>
         <CardContent className="pt-6">
@@ -192,37 +217,6 @@ export default async function LegacyDetailPage({
                     : "—"}
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Timeline */}
-          <div className="grid grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-100">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Notified</p>
-                <p className="text-sm text-gray-900 mt-1">{formatDate(legacy.dateNotified)}</p>
-              </div>
-              {legacy.dateOfDeath && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Of Death</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(legacy.dateOfDeath)}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {legacy.probateGranted && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Probate Granted</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(legacy.probateGranted)}</p>
-                </div>
-              )}
-              {legacy.dateReceived && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Received</p>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(legacy.dateReceived)}</p>
-                </div>
-              )}
             </div>
           </div>
 
