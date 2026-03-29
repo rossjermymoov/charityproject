@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { sendBroadcastNotifications } from "@/lib/broadcast-sender";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle, XCircle, HelpCircle, Send, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, HelpCircle, Send, RotateCcw, Trash2, Users } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -43,7 +43,7 @@ export default async function BroadcastDetailPage({
     const response = await prisma.broadcastResponse.update({
       where: { id: responseId },
       data: { confirmedById: session.id, confirmedAt: new Date() },
-      include: { volunteer: true },
+      include: { volunteer: { include: { contact: true } } },
     });
 
     // Check if we've filled all spots
@@ -90,7 +90,6 @@ export default async function BroadcastDetailPage({
 
   async function reactivateBroadcast() {
     "use server";
-    // Re-open the broadcast and extend expiry by 24 hours from now
     await prisma.broadcast.update({
       where: { id },
       data: {
@@ -114,7 +113,6 @@ export default async function BroadcastDetailPage({
     });
     if (!bc) return;
 
-    // Ensure the broadcast is open before resending
     if (bc.status !== "OPEN") {
       await prisma.broadcast.update({
         where: { id },
@@ -126,7 +124,6 @@ export default async function BroadcastDetailPage({
       });
     }
 
-    // Fire-and-forget: resend notifications to eligible volunteers
     sendBroadcastNotifications(bc).catch((err: unknown) =>
       console.error("[broadcast] Resend failed:", err)
     );
@@ -136,7 +133,6 @@ export default async function BroadcastDetailPage({
 
   async function deleteBroadcast() {
     "use server";
-    // Delete responses first (cascade should handle this, but be explicit)
     await prisma.broadcastResponse.deleteMany({ where: { broadcastId: id } });
     await prisma.broadcastSkill.deleteMany({ where: { broadcastId: id } });
     await prisma.broadcast.delete({ where: { id } });
@@ -153,6 +149,18 @@ export default async function BroadcastDetailPage({
   const isFilled = broadcast.status === "FILLED";
   const isExpired = new Date(broadcast.expiresAt) < new Date();
   const canReactivate = isCancelled || isFilled || (isExpired && isOpen);
+
+  const spotsTotal = broadcast.maxRespondents;
+  const spotsFilled = accepted.length + confirmed.length;
+  const spotsRemaining = Math.max(0, spotsTotal - spotsFilled);
+  const progressPct = Math.min(100, Math.round((spotsFilled / spotsTotal) * 100));
+
+  // Determine progress bar colour
+  const progressColor = spotsFilled >= spotsTotal
+    ? "bg-green-500"
+    : spotsFilled > 0
+    ? "bg-indigo-500"
+    : "bg-gray-300";
 
   const responseIcon: Record<string, typeof CheckCircle> = {
     ACCEPTED: CheckCircle,
@@ -175,6 +183,71 @@ export default async function BroadcastDetailPage({
         <h1 className="text-2xl font-bold text-gray-900">Broadcast Details</h1>
       </div>
 
+      {/* ====== PROMINENT SPOTS PROGRESS BANNER ====== */}
+      <Card className={`overflow-hidden ${
+        spotsFilled >= spotsTotal ? "ring-2 ring-green-500" : "ring-2 ring-indigo-200"
+      }`}>
+        <CardContent className="pt-6 pb-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-full ${
+                spotsFilled >= spotsTotal ? "bg-green-100" : "bg-indigo-100"
+              }`}>
+                <Users className={`h-6 w-6 ${
+                  spotsFilled >= spotsTotal ? "text-green-600" : "text-indigo-600"
+                }`} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {spotsFilled >= spotsTotal ? (
+                    "All spots filled!"
+                  ) : (
+                    <>{spotsRemaining} of {spotsTotal} {spotsRemaining === 1 ? "spot" : "spots"} still needed</>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {accepted.length} accepted{confirmed.length > 0 && `, ${confirmed.length} confirmed`}{tentative.length > 0 && `, ${tentative.length} maybe`}
+                </p>
+              </div>
+            </div>
+            <span className={`text-3xl font-bold ${
+              spotsFilled >= spotsTotal ? "text-green-600" : "text-indigo-600"
+            }`}>
+              {spotsFilled}/{spotsTotal}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className={`${progressColor} h-3 rounded-full transition-all duration-500`}
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          {/* Individual slot indicators */}
+          <div className="flex gap-2 mt-3">
+            {Array.from({ length: spotsTotal }).map((_, i) => {
+              const isConfirmed = i < confirmed.length;
+              const isAccepted = !isConfirmed && i < confirmed.length + (accepted.length - confirmed.length);
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 h-2 rounded-full ${
+                    isConfirmed ? "bg-green-500" : isAccepted ? "bg-indigo-400" : "bg-gray-200"
+                  }`}
+                  title={isConfirmed ? "Confirmed" : isAccepted ? "Accepted" : "Open"}
+                />
+              );
+            })}
+          </div>
+          <div className="flex gap-4 mt-2 text-xs text-gray-400">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Confirmed</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" /> Accepted</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /> Open</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Broadcast Info */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
@@ -192,7 +265,6 @@ export default async function BroadcastDetailPage({
                 <span>Date: {broadcast.targetDate}</span>
                 <span>Time: {broadcast.targetStartTime} - {broadcast.targetEndTime}</span>
                 {broadcast.department && <span>Dept: {broadcast.department.name}</span>}
-                <span>Need: {broadcast.maxRespondents} people</span>
               </div>
               <div className="flex gap-1 mt-2">
                 {broadcast.skills.map((bs) => (
@@ -234,26 +306,6 @@ export default async function BroadcastDetailPage({
           </div>
         </CardContent>
       </Card>
-
-      {/* Response Summary */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{broadcast.responses.length}</p>
-          <p className="text-sm text-gray-500">Total Responses</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{accepted.length}</p>
-          <p className="text-sm text-gray-500">Accepted</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-600">{tentative.length}</p>
-          <p className="text-sm text-gray-500">Tentative</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-indigo-600">{confirmed.length}</p>
-          <p className="text-sm text-gray-500">Confirmed</p>
-        </Card>
-      </div>
 
       {/* Responses */}
       <Card>

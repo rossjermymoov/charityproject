@@ -75,6 +75,7 @@ export default async function BroadcastRespondPage({
           { contact: { id: sess.contactId || "" } },
         ],
       },
+      include: { contact: { select: { firstName: true, lastName: true } } },
     });
 
     if (!vol) {
@@ -88,12 +89,19 @@ export default async function BroadcastRespondPage({
           },
         });
         await upsertResponse(broadcastId, newVol.id, response, message);
+        await notifyCreator(broadcastId, sess.name, response, message);
       }
       redirect(`/broadcasts/${broadcastId}/respond`);
       return;
     }
 
     await upsertResponse(broadcastId, vol.id, response, message);
+
+    const volName = vol.contact
+      ? `${vol.contact.firstName} ${vol.contact.lastName}`
+      : sess.name;
+    await notifyCreator(broadcastId, volName, response, message);
+
     redirect(`/broadcasts/${broadcastId}/respond`);
   }
 
@@ -296,5 +304,76 @@ async function upsertResponse(
     await prisma.broadcastResponse.create({
       data: { broadcastId, volunteerId, response, message: message || undefined },
     });
+  }
+}
+
+// Notify the broadcast creator via in-app notification + email
+async function notifyCreator(
+  broadcastId: string,
+  volunteerName: string,
+  response: string,
+  message: string | null
+) {
+  try {
+    const broadcast = await prisma.broadcast.findUnique({
+      where: { id: broadcastId },
+      include: { createdBy: { select: { id: true, email: true, name: true } } },
+    });
+    if (!broadcast) return;
+
+    const responseLabel =
+      response === "ACCEPTED" ? "accepted" :
+      response === "DECLINED" ? "declined" :
+      "responded maybe to";
+
+    const title = `${volunteerName} ${responseLabel} your broadcast`;
+    const body = message
+      ? `"${broadcast.title}" — ${volunteerName} said: "${message}"`
+      : `"${broadcast.title}"`;
+
+    // In-app notification
+    await prisma.notification.create({
+      data: {
+        recipientId: broadcast.createdById,
+        type: "BROADCAST",
+        title,
+        body: body.slice(0, 255),
+        link: `/broadcasts/${broadcastId}`,
+        channel: "BROADCAST",
+        status: "SENT",
+        sentAt: new Date(),
+      },
+    });
+
+    // Email notification to the creator (fire-and-forget)
+    const { sendEmail } = await import("@/lib/email");
+
+    const emoji = response === "ACCEPTED" ? "✅" : response === "DECLINED" ? "❌" : "🤔";
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://web-production-68151.up.railway.app";
+
+    sendEmail({
+      to: broadcast.createdBy.email,
+      subject: `${emoji} ${volunteerName} ${responseLabel} "${broadcast.title}"`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+          <h2 style="color: #111827; margin: 0 0 8px;">${emoji} Broadcast Response</h2>
+          <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+            <strong>${volunteerName}</strong> has <strong>${responseLabel}</strong> your broadcast
+            "<strong>${broadcast.title}</strong>" for ${broadcast.targetDate} (${broadcast.targetStartTime}–${broadcast.targetEndTime}).
+          </p>
+          ${message ? `
+          <div style="background: #f3f4f6; border-radius: 8px; padding: 12px 16px; margin: 0 0 16px;">
+            <p style="color: #6B7280; font-size: 12px; margin: 0 0 4px;">Their comment:</p>
+            <p style="color: #111827; font-size: 14px; margin: 0;">"${message}"</p>
+          </div>
+          ` : ""}
+          <a href="${APP_URL}/broadcasts/${broadcastId}" style="display: inline-block; background-color: #4f46e5; color: #fff; text-decoration: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;">
+            View Broadcast
+          </a>
+        </div>
+      `,
+    }).catch((err: unknown) => console.error("[broadcast-respond] Email to creator failed:", err));
+  } catch (err) {
+    console.error("[broadcast-respond] notifyCreator error:", err);
   }
 }
