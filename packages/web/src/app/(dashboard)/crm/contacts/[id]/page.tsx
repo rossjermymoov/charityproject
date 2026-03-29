@@ -420,6 +420,12 @@ export default async function ContactDetailPage({
                         <Ticket className="h-3 w-3 mr-1" />Lottery Member
                       </Badge>
                     )}
+                    {contact.giftAids.some((ga) => ga.type === "STANDARD" && ga.status === "ACTIVE") && (
+                      <Badge className="bg-pink-100 text-pink-800 text-xs font-bold">S</Badge>
+                    )}
+                    {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
+                      <Badge className="bg-purple-100 text-purple-800 text-xs font-bold">R</Badge>
+                    )}
                     {contact.isArchived && (
                       <Badge className="bg-red-100 text-red-800">Archived</Badge>
                     )}
@@ -794,8 +800,8 @@ export default async function ContactDetailPage({
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={ga.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-indigo-100 text-indigo-800"}>
-                          {ga.type === "RETAIL" ? "Retail" : "Standard"}
+                        <Badge className={ga.type === "RETAIL" ? "bg-purple-100 text-purple-800" : "bg-pink-100 text-pink-800"}>
+                          {ga.type === "RETAIL" ? "R" : "S"}
                         </Badge>
                         <Badge className={
                           ga.status === "ACTIVE" ? "bg-green-100 text-green-800" :

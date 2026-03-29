@@ -175,17 +175,15 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-6 py-4 text-center">
                       {contact.giftAids.length > 0 ? (
-                        <div className="flex flex-col items-center gap-1">
-                          {contact.giftAids.some((ga) => ga.type !== "RETAIL") && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800" title="Standard Gift Aid">
-                              <Heart className="h-3 w-3 fill-indigo-600 text-indigo-600" />
-                              Standard
+                        <div className="flex items-center justify-center gap-1">
+                          {contact.giftAids.some((ga) => ga.type === "STANDARD" || ga.type !== "RETAIL") && (
+                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 w-6 h-6 text-xs font-bold text-pink-800" title="Standard Gift Aid">
+                              S
                             </span>
                           )}
                           {contact.giftAids.some((ga) => ga.type === "RETAIL") && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800" title="Retail Gift Aid">
-                              <Heart className="h-3 w-3 fill-purple-600 text-purple-600" />
-                              Retail
+                            <span className="inline-flex items-center justify-center rounded-full bg-purple-100 w-6 h-6 text-xs font-bold text-purple-800" title="Retail Gift Aid">
+                              R
                             </span>
                           )}
                         </div>
