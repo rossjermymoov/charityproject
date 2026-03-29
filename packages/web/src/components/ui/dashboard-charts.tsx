@@ -45,7 +45,7 @@ export function DonationsChart({ data }: { data: MonthlyDonation[] }) {
         <Tooltip
           formatter={(value: any, name: any) => [
             `£${Number(value).toFixed(2)}`,
-            name === "total" ? "Donations" : "Gift Aid",
+            name === "Donations" ? "Donations" : "Gift Aid",
           ]}
           labelStyle={{ fontWeight: 600 }}
         />
