@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { sendBroadcastNotifications } from "@/lib/broadcast-sender";
 
 export default async function NewBroadcastPage() {
   const [departments, skills] = await Promise.all([
@@ -39,6 +40,22 @@ export default async function NewBroadcastPage() {
         },
       },
     });
+
+    // Send notifications (email + push) to eligible volunteers
+    // Fire-and-forget so the redirect isn't delayed
+    sendBroadcastNotifications({
+      id: broadcast.id,
+      title: broadcast.title,
+      message: broadcast.message,
+      urgency: broadcast.urgency,
+      targetDate: broadcast.targetDate,
+      targetStartTime: broadcast.targetStartTime,
+      targetEndTime: broadcast.targetEndTime,
+      maxRespondents: broadcast.maxRespondents,
+      departmentId: broadcast.departmentId,
+      createdById: broadcast.createdById,
+      skills: skillIds.map((id) => ({ skillId: id })),
+    }).catch((err) => console.error("[broadcast] Send error:", err));
 
     redirect(`/broadcasts/${broadcast.id}`);
   }

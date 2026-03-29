@@ -38,6 +38,7 @@ model User {
   skillsVerified         VolunteerSkill[]    @relation("SkillVerifiedBy")
   notifications          Notification[]      @relation("NotificationRecipient")
   notificationPreference NotificationPreference?
+  pushDevices            PushDevice[]
   volunteerProfile       VolunteerProfile?   @relation("UserVolunteerProfile")
   auditLogs              AuditLog[]          @relation("AuditLogUser")
   giftAidCreated         GiftAid[]           @relation("GiftAidCreatedBy")
@@ -407,6 +408,22 @@ model Notification {
   updatedAt   DateTime  @updatedAt
 
   recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+// Push device tokens for mobile app notifications
+model PushDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique // FCM or Expo push token
+  platform  String   @default("EXPO") // EXPO | FCM | APNS
+  deviceName String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ============================================
