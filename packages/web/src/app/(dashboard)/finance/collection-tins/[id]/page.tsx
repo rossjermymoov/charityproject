@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, PoundSterling, MapPin } from "lucide-react";
+import { ArrowLeft, Trash2, PoundSterling, MapPin, Rocket, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { SingleLocationMap } from "@/components/ui/single-location-map";
 import { geocodeAddress } from "@/lib/geocode";
+import { quickSetStatus } from "../actions";
 
 export default async function CollectionTinDetailPage({
   params,
@@ -46,6 +47,9 @@ export default async function CollectionTinDetailPage({
     (m) => m.type === "COUNTED" && m.amount
   ).length;
 
+  const canDeploy = tin.status === "IN_STOCK" || tin.status === "RETURNED";
+  const canReturn = tin.status === "DEPLOYED";
+
   async function updateStatus(formData: FormData) {
     "use server";
     const session = await getSession();
@@ -70,16 +74,15 @@ export default async function CollectionTinDetailPage({
       data: update,
     });
 
-    if (notes) {
-      await prisma.collectionTinMovement.create({
-        data: {
-          tinId: id,
-          type: newStatus,
-          date: new Date(),
-          notes,
-        },
-      });
-    }
+    // Always create a movement record for status changes
+    await prisma.collectionTinMovement.create({
+      data: {
+        tinId: id,
+        type: newStatus,
+        date: new Date(),
+        notes: notes || `Status changed to ${newStatus}`,
+      },
+    });
 
     await logAudit({ userId: session.id, action: "UPDATE", entityType: "CollectionTin", entityId: id, details: { status: newStatus } });
     redirect(`/finance/collection-tins/${id}`);
@@ -108,26 +111,6 @@ export default async function CollectionTinDetailPage({
     redirect(`/finance/collection-tins/${id}`);
   }
 
-  async function addMovement(formData: FormData) {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    await prisma.collectionTinMovement.create({
-      data: {
-        tinId: id,
-        type: formData.get("type") as string,
-        date: new Date(formData.get("date") as string),
-        amount: formData.get("amount")
-          ? parseFloat(formData.get("amount") as string)
-          : null,
-        notes: (formData.get("notes") as string) || null,
-      },
-    });
-
-    redirect(`/finance/collection-tins/${id}`);
-  }
-
   async function assignLocation(formData: FormData) {
     "use server";
     const session = await getSession();
@@ -151,7 +134,6 @@ export default async function CollectionTinDetailPage({
         locationAddress = loc.address;
       }
     } else if (newLocationName) {
-      // Auto-create a new TinLocation with geocoding
       let latitude: number | null = null;
       let longitude: number | null = null;
       if (newLocationAddress) {
@@ -231,6 +213,15 @@ export default async function CollectionTinDetailPage({
     RETIRED: "bg-gray-100 text-gray-800",
   };
 
+  const statusBgColors: Record<string, string> = {
+    IN_STOCK: "border-blue-200 bg-blue-50",
+    DEPLOYED: "border-green-200 bg-green-50",
+    RETURNED: "border-purple-200 bg-purple-50",
+    LOST: "border-red-200 bg-red-50",
+    STOLEN: "border-red-200 bg-red-50",
+    RETIRED: "border-gray-200 bg-gray-50",
+  };
+
   const movementColors: Record<string, string> = {
     DEPLOYED: "bg-green-100 text-green-800",
     COLLECTED: "bg-blue-100 text-blue-800",
@@ -253,9 +244,86 @@ export default async function CollectionTinDetailPage({
           Tin {tin.tinNumber}
         </h1>
         <Badge className={statusColors[tin.status] || ""}>
-          {tin.status}
+          {tin.status.replace("_", " ")}
         </Badge>
       </div>
+
+      {/* Status Bar — prominent one-click actions */}
+      <Card className={statusBgColors[tin.status] || ""}>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Current Status: <span className="font-bold">{tin.status.replace("_", " ")}</span>
+              </p>
+              {tin.deployedAt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Deployed {formatDate(tin.deployedAt)}
+                  {tin.location && <> at {tin.location.name}</>}
+                </p>
+              )}
+              {tin.returnedAt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Returned {formatDate(tin.returnedAt)}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {canDeploy && (
+                <form action={quickSetStatus}>
+                  <input type="hidden" name="tinId" value={tin.id} />
+                  <input type="hidden" name="status" value="DEPLOYED" />
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Deploy Tin
+                  </Button>
+                </form>
+              )}
+              {canReturn && (
+                <form action={quickSetStatus}>
+                  <input type="hidden" name="tinId" value={tin.id} />
+                  <input type="hidden" name="status" value="RETURNED" />
+                  <Button type="submit" variant="outline">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Return to Stock
+                  </Button>
+                </form>
+              )}
+              {/* Advanced status dropdown for other statuses */}
+              <details className="relative">
+                <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 underline py-2 px-1">
+                  More options
+                </summary>
+                <div className="absolute right-0 top-8 z-10 bg-white rounded-lg shadow-lg border p-4 w-64">
+                  <form action={updateStatus} className="space-y-3">
+                    <select
+                      name="status"
+                      defaultValue={tin.status}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="IN_STOCK">In Stock</option>
+                      <option value="DEPLOYED">Deployed</option>
+                      <option value="RETURNED">Returned</option>
+                      <option value="LOST">Lost</option>
+                      <option value="STOLEN">Stolen</option>
+                      <option value="RETIRED">Retired</option>
+                    </select>
+                    <Textarea
+                      name="notes"
+                      placeholder="Notes (optional)"
+                      className="text-sm"
+                    />
+                    <Button type="submit" size="sm" className="w-full">
+                      Update Status
+                    </Button>
+                  </form>
+                </div>
+              </details>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -373,16 +441,6 @@ export default async function CollectionTinDetailPage({
                 <span>Created by {tin.createdBy.name}</span>
                 <span>{formatDate(tin.createdAt)}</span>
               </div>
-              {tin.deployedAt && (
-                <p className="text-sm text-gray-500">
-                  Deployed: {formatDate(tin.deployedAt)}
-                </p>
-              )}
-              {tin.returnedAt && (
-                <p className="text-sm text-gray-500">
-                  Returned: {formatDate(tin.returnedAt)}
-                </p>
-              )}
               <Button type="submit" size="sm">
                 Save Changes
               </Button>
@@ -390,156 +448,123 @@ export default async function CollectionTinDetailPage({
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          {/* Location - single source of truth */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-indigo-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Location
-                </h3>
+        {/* Location */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-indigo-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Location
+              </h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {tin.location && (
+              <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
+                <Link
+                  href={`/finance/collection-tins/locations/${tin.location.id}`}
+                  className="text-sm font-medium text-blue-600 hover:underline"
+                >
+                  {tin.location.name}
+                </Link>
+                {tin.location.address && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {tin.location.address}
+                  </p>
+                )}
+                {tin.location.type && tin.location.type !== "OTHER" && (
+                  <Badge className="mt-2 bg-gray-100 text-gray-700 text-xs">
+                    {tin.location.type}
+                  </Badge>
+                )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {tin.location && (
-                <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
-                  <Link
-                    href={`/finance/collection-tins/locations/${tin.location.id}`}
-                    className="text-sm font-medium text-blue-600 hover:underline"
-                  >
-                    {tin.location.name}
-                  </Link>
-                  {tin.location.address && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {tin.location.address}
-                    </p>
-                  )}
-                  {tin.location.type && tin.location.type !== "OTHER" && (
-                    <Badge className="mt-2 bg-gray-100 text-gray-700 text-xs">
-                      {tin.location.type}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              {tin.location?.latitude && tin.location?.longitude && (
-                <div className="mb-4">
-                  <SingleLocationMap
-                    name={tin.location.name}
-                    address={tin.location.address}
-                    latitude={tin.location.latitude}
-                    longitude={tin.location.longitude}
-                    height="200px"
-                  />
-                </div>
-              )}
+            )}
+            {tin.location?.latitude && tin.location?.longitude && (
+              <div className="mb-4">
+                <SingleLocationMap
+                  name={tin.location.name}
+                  address={tin.location.address}
+                  latitude={tin.location.latitude}
+                  longitude={tin.location.longitude}
+                  height="200px"
+                />
+              </div>
+            )}
 
-              <form action={assignLocation} className="space-y-4">
+            <form action={assignLocation} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {tin.location ? "Change to Existing Location" : "Select Existing Location"}
+                </label>
+                <SearchableSelect
+                  name="locationId"
+                  placeholder="Search locations..."
+                  defaultValue={tin.locationId || ""}
+                  options={allLocations.map((loc) => ({
+                    value: loc.id,
+                    label: `${loc.name}${loc.type !== "OTHER" ? ` (${loc.type})` : ""}`,
+                  }))}
+                />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-gray-500">or create new</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Input
+                  label="New Location Name"
+                  name="newLocationName"
+                  placeholder="e.g., The Red Lion Pub"
+                />
+                <Input
+                  label="Address"
+                  name="newLocationAddress"
+                  placeholder="Full address (optional)"
+                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {tin.location ? "Change to Existing Location" : "Select Existing Location"}
+                    Type
                   </label>
-                  <SearchableSelect
-                    name="locationId"
-                    placeholder="Search locations..."
-                    defaultValue={tin.locationId || ""}
-                    options={allLocations.map((loc) => ({
-                      value: loc.id,
-                      label: `${loc.name}${loc.type !== "OTHER" ? ` (${loc.type})` : ""}`,
-                    }))}
-                  />
+                  <select
+                    name="newLocationType"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="OTHER">Other</option>
+                    <option value="SHOP">Shop</option>
+                    <option value="PUB">Pub</option>
+                    <option value="RESTAURANT">Restaurant</option>
+                    <option value="OFFICE">Office</option>
+                    <option value="SCHOOL">School</option>
+                    <option value="CHURCH">Church</option>
+                  </select>
                 </div>
+              </div>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-2 text-gray-500">or create new</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Input
-                    label="New Location Name"
-                    name="newLocationName"
-                    placeholder="e.g., The Red Lion Pub"
-                  />
-                  <Input
-                    label="Address"
-                    name="newLocationAddress"
-                    placeholder="Full address (optional)"
-                  />
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Type
-                    </label>
-                    <select
-                      name="newLocationType"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    >
-                      <option value="OTHER">Other</option>
-                      <option value="SHOP">Shop</option>
-                      <option value="PUB">Pub</option>
-                      <option value="RESTAURANT">Restaurant</option>
-                      <option value="OFFICE">Office</option>
-                      <option value="SCHOOL">School</option>
-                      <option value="CHURCH">Church</option>
-                    </select>
-                  </div>
-                </div>
-
-                <Button type="submit" size="sm">
-                  {tin.location ? "Update Location" : "Set Location"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Status Update */}
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Update Status
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <form action={updateStatus} className="space-y-4">
-                <select
-                  name="status"
-                  defaultValue={tin.status}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="IN_STOCK">In Stock</option>
-                  <option value="DEPLOYED">Deployed</option>
-                  <option value="RETURNED">Returned</option>
-                  <option value="LOST">Lost</option>
-                  <option value="STOLEN">Stolen</option>
-                  <option value="RETIRED">Retired</option>
-                </select>
-                <Textarea
-                  name="notes"
-                  placeholder="Optional notes for this status change..."
-                />
-                <Button type="submit">Update Status</Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              <Button type="submit" size="sm">
+                {tin.location ? "Update Location" : "Set Location"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Movement History */}
       <Card>
         <CardHeader>
           <h3 className="text-lg font-semibold text-gray-900">
-            Movement & Collection History
+            Activity History
           </h3>
         </CardHeader>
         <CardContent>
           {tin.movements.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">
-              No movements recorded yet
+              No activity recorded yet
             </p>
           ) : (
             <div className="space-y-3">
@@ -570,49 +595,6 @@ export default async function CollectionTinDetailPage({
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Other Movement */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Record Other Movement
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <form action={addMovement} className="space-y-4">
-            <select
-              name="type"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              required
-            >
-              <option value="DEPLOYED">Deployed</option>
-              <option value="COLLECTED">Collected (returned for counting)</option>
-              <option value="LOST">Lost</option>
-              <option value="STOLEN">Stolen</option>
-              <option value="RETURNED">Returned to Stock</option>
-            </select>
-            <Input
-              label="Date"
-              name="date"
-              type="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
-              required
-            />
-            <Input
-              label="Amount (optional)"
-              name="amount"
-              type="number"
-              step="0.01"
-              placeholder="£0.00"
-            />
-            <Textarea name="notes" placeholder="Additional notes..." />
-            <Button type="submit" variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Record Movement
-            </Button>
-          </form>
         </CardContent>
       </Card>
 

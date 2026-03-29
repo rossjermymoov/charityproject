@@ -26,13 +26,13 @@ export default async function NewCollectionTinPage() {
     const newLocationName = (formData.get("newLocationName") as string)?.trim() || null;
     const newLocationAddress = (formData.get("newLocationAddress") as string)?.trim() || null;
     const newLocationType = (formData.get("newLocationType") as string) || "OTHER";
+    const initialStatus = (formData.get("status") as string) || "IN_STOCK";
 
     let locationId: string | null = existingLocationId;
     let locationName = "";
     let locationAddress: string | null = null;
 
     if (existingLocationId) {
-      // Using an existing location
       const loc = await prisma.tinLocation.findUnique({
         where: { id: existingLocationId },
       });
@@ -41,7 +41,6 @@ export default async function NewCollectionTinPage() {
         locationAddress = loc.address;
       }
     } else if (newLocationName) {
-      // Auto-create a new TinLocation from the entered details with geocoding
       let latitude: number | null = null;
       let longitude: number | null = null;
       if (newLocationAddress) {
@@ -73,12 +72,25 @@ export default async function NewCollectionTinPage() {
         locationAddress,
         locationId,
         notes: (formData.get("notes") as string) || null,
-        status: "IN_STOCK",
+        status: initialStatus,
+        deployedAt: initialStatus === "DEPLOYED" ? new Date() : null,
         createdById: session.id,
       },
     });
 
-    await logAudit({ userId: session.id, action: "CREATE", entityType: "CollectionTin", entityId: tin.id, details: { tinNumber: formData.get("tinNumber"), locationId } });
+    // If deploying immediately, create a movement record
+    if (initialStatus === "DEPLOYED") {
+      await prisma.collectionTinMovement.create({
+        data: {
+          tinId: tin.id,
+          type: "DEPLOYED",
+          date: new Date(),
+          notes: "Deployed on creation",
+        },
+      });
+    }
+
+    await logAudit({ userId: session.id, action: "CREATE", entityType: "CollectionTin", entityId: tin.id, details: { tinNumber: formData.get("tinNumber"), locationId, status: initialStatus } });
     redirect(`/finance/collection-tins/${tin.id}`);
   }
 
@@ -99,12 +111,26 @@ export default async function NewCollectionTinPage() {
       <Card>
         <CardContent className="pt-6">
           <form action={createTin} className="space-y-6">
-            <Input
-              label="Tin Number"
-              name="tinNumber"
-              placeholder="e.g., TIN-001"
-              required
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Tin Number"
+                name="tinNumber"
+                placeholder="e.g., TIN-001"
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Initial Status
+                </label>
+                <select
+                  name="status"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="IN_STOCK">In Stock</option>
+                  <option value="DEPLOYED">Deploy Immediately</option>
+                </select>
+              </div>
+            </div>
 
             <div className="border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="text-sm font-semibold text-gray-900">Location</h3>

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
+import { quickSetStatus } from "./actions";
 
 export default async function CollectionTinsPage({
   searchParams,
@@ -40,6 +41,15 @@ export default async function CollectionTinsPage({
     orderBy: { createdAt: "desc" },
     take: 50,
   });
+
+  // Summary stats
+  const totalTins = tins.length;
+  const deployed = tins.filter((t) => t.status === "DEPLOYED").length;
+  const inStock = tins.filter((t) => t.status === "IN_STOCK").length;
+  const totalCollected = tins.reduce(
+    (sum, t) => sum + t.movements.reduce((s, m) => s + (m.amount || 0), 0),
+    0
+  );
 
   const statusColors: Record<string, string> = {
     IN_STOCK: "bg-blue-100 text-blue-800",
@@ -77,6 +87,28 @@ export default async function CollectionTinsPage({
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-gray-900">{totalTins}</p>
+          <p className="text-xs text-gray-500 mt-1">Total Tins</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-green-600">{deployed}</p>
+          <p className="text-xs text-gray-500 mt-1">Deployed</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-blue-600">{inStock}</p>
+          <p className="text-xs text-gray-500 mt-1">In Stock</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-amber-600">
+            £{totalCollected.toFixed(2)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Total Collected</p>
+        </Card>
       </div>
 
       {/* Search and filters */}
@@ -127,7 +159,7 @@ export default async function CollectionTinsPage({
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tin Number
+                    Tin
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Location
@@ -136,19 +168,23 @@ export default async function CollectionTinsPage({
                     Status
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Collected
+                    Collected
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Deployed
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quick Action
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {tins.map((tin) => {
-                  const totalCollected = tin.movements.reduce(
+                  const tinTotal = tin.movements.reduce(
                     (s, m) => s + (m.amount || 0),
                     0
                   );
+                  // Determine what quick action makes sense
+                  const canDeploy = tin.status === "IN_STOCK" || tin.status === "RETURNED";
+                  const canReturn = tin.status === "DEPLOYED";
+
                   return (
                     <tr key={tin.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
@@ -158,6 +194,11 @@ export default async function CollectionTinsPage({
                         >
                           {tin.tinNumber}
                         </Link>
+                        {tin.deployedAt && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            Deployed {formatDate(tin.deployedAt)}
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -168,30 +209,53 @@ export default async function CollectionTinsPage({
                             >
                               {tin.location.name}
                             </Link>
-                          ) : (
+                          ) : tin.locationName ? (
                             <p className="text-sm font-medium text-gray-900">
                               {tin.locationName}
                             </p>
-                          )}
-                          {(tin.location?.address || tin.locationAddress) && (
-                            <p className="text-xs text-gray-500">
-                              {tin.location?.address || tin.locationAddress}
-                            </p>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No location</p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <Badge className={statusColors[tin.status] || ""}>
-                          {tin.status}
+                          {tin.status.replace("_", " ")}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
-                        {totalCollected > 0
-                          ? `£${totalCollected.toFixed(2)}`
+                        {tinTotal > 0
+                          ? `£${tinTotal.toFixed(2)}`
                           : "—"}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {tin.deployedAt ? formatDate(tin.deployedAt) : "—"}
+                      <td className="px-6 py-4 text-right">
+                        {canDeploy && (
+                          <form action={quickSetStatus} className="inline">
+                            <input type="hidden" name="tinId" value={tin.id} />
+                            <input type="hidden" name="status" value="DEPLOYED" />
+                            <Button
+                              type="submit"
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-xs"
+                            >
+                              Deploy
+                            </Button>
+                          </form>
+                        )}
+                        {canReturn && (
+                          <form action={quickSetStatus} className="inline">
+                            <input type="hidden" name="tinId" value={tin.id} />
+                            <input type="hidden" name="status" value="RETURNED" />
+                            <Button
+                              type="submit"
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              Return
+                            </Button>
+                          </form>
+                        )}
                       </td>
                     </tr>
                   );
