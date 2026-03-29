@@ -33,6 +33,7 @@ export default async function ContactDetailPage({
       donations: { orderBy: { date: "desc" }, take: 5 },
       eventAttendees: { include: { event: true }, orderBy: { createdAt: "desc" }, take: 5 },
       eventOrders: { include: { event: true, lineItems: { include: { item: true } } }, orderBy: { createdAt: "desc" }, take: 5 },
+      justGivingDonations: { include: { event: true }, orderBy: { donationDate: "desc" }, take: 5 },
       relationshipsFrom: { include: { toContact: true } },
       relationshipsTo: { include: { fromContact: true } },
     },
@@ -808,6 +809,39 @@ export default async function ContactDetailPage({
             </Card>
           )}
         </div>
+      )}
+
+      {/* JustGiving Donations */}
+      {contact.justGivingDonations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <img src="https://images.justgiving.com/image/favicon.ico" alt="JG" className="h-4 w-4" />
+              <h3 className="text-lg font-semibold text-gray-900">JustGiving Donations</h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {contact.justGivingDonations.map((jgd) => (
+                <div key={jgd.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{jgd.event.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatDate(jgd.donationDate)}
+                      {jgd.message ? ` — "${jgd.message}"` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-purple-600">£{jgd.amount.toFixed(2)}</p>
+                    {jgd.isGiftAidEligible && jgd.estimatedTaxReclaim && (
+                      <p className="text-xs text-amber-700">+£{jgd.estimatedTaxReclaim.toFixed(2)} Gift Aid</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

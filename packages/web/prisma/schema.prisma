@@ -140,8 +140,9 @@ model Contact {
   eventAttendees     EventAttendee[]
   relationshipsFrom  ContactRelationship[] @relation("RelationshipFrom")
   relationshipsTo    ContactRelationship[] @relation("RelationshipTo")
-  tributeGuardians   TributeFundGuardian[]
-  eventOrders        EventOrder[]
+  tributeGuardians       TributeFundGuardian[]
+  eventOrders            EventOrder[]
+  justGivingDonations    JustGivingDonation[]
 }
 
 model Organisation {
@@ -570,6 +571,12 @@ model Event {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  // JustGiving integration
+  justGivingPageSlug   String?  // e.g. "john-smith-midnight-walk" from the JG URL
+  justGivingEventId    String?  // JG event/campaign ID
+  justGivingLastSyncAt DateTime?
+  justGivingTotalRaised Float?
+
   campaign    Campaign?       @relation(fields: [campaignId], references: [id])
   ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
   createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])
@@ -578,6 +585,33 @@ model Event {
   merchandise      EventMerchandise[]
   registrationForm EventRegistrationForm?
   orders           EventOrder[]
+  justGivingDonations JustGivingDonation[]
+}
+
+model JustGivingDonation {
+  id                  String   @id @default(cuid())
+  eventId             String
+  justGivingId        String   @unique // JG donation ID to prevent duplicates
+  donorName           String?
+  donorEmail          String?
+  amount              Float
+  currencyCode        String   @default("GBP")
+  donationDate        DateTime
+  message             String?
+  estimatedTaxReclaim Float?   // gift aid amount JG reports
+  isGiftAidEligible   Boolean  @default(false)
+  status              String   @default("RECEIVED") // RECEIVED | REFUNDED
+  source              String   @default("JUSTGIVING") // always JUSTGIVING
+  contactId           String?  // linked CRM contact (matched or created)
+  donationId          String?  // linked to Donation record
+  rawData             String?  // JSON of full JG response
+  syncedAt            DateTime @default(now())
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id])
+
+  @@index([eventId])
+  @@index([donationDate])
 }
 
 model EventAttendee {
