@@ -65,24 +65,26 @@ export async function sendBroadcastNotifications(
     }
 
     // Find eligible volunteers
+    // When skills are specified, match on skills (department is informational).
+    // When only a department is specified (no skills), match on department.
+    // When neither is specified, broadcast to all active volunteers.
     const volunteers = await prisma.volunteerProfile.findMany({
       where: {
         status: "ACTIVE",
-        // If department specified, volunteer must be in that department
-        ...(broadcast.departmentId
-          ? {
-              departments: {
-                some: { departmentId: broadcast.departmentId },
-              },
-            }
-          : {}),
-        // If skills specified, volunteer must have at least one matching
         ...(broadcast.skills.length > 0
           ? {
+              // Skill match takes priority — find anyone with the right skills
               skills: {
                 some: {
                   skillId: { in: broadcast.skills.map((s) => s.skillId) },
                 },
+              },
+            }
+          : broadcast.departmentId
+          ? {
+              // No skills specified, fall back to department match
+              departments: {
+                some: { departmentId: broadcast.departmentId },
               },
             }
           : {}),
