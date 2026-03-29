@@ -1,13 +1,6 @@
-import sgMail from "@sendgrid/mail";
+import { sendEmailViaProvider } from "./email-providers";
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@charity.org";
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "CharityOS";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://web-production-68151.up.railway.app";
-
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
-}
 
 interface EmailOptions {
   to: string | string[];
@@ -17,42 +10,11 @@ interface EmailOptions {
 }
 
 /**
- * Send an email via SendGrid.
+ * Send an email via the configured provider (database) or SENDGRID_API_KEY env var fallback.
  * Returns true if sent successfully, false otherwise.
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
-    console.warn("[email] SendGrid API key not configured — skipping send");
-    return false;
-  }
-
-  try {
-    const recipients = Array.isArray(options.to) ? options.to : [options.to];
-
-    // SendGrid supports up to 1000 recipients per request
-    // Send in batches if needed
-    const batchSize = 1000;
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
-      await sgMail.sendMultiple({
-        to: batch,
-        from: { email: EMAIL_FROM, name: EMAIL_FROM_NAME },
-        subject: options.subject,
-        html: options.html,
-        text: options.text || stripHtml(options.html),
-      });
-    }
-
-    console.log(`[email] Sent to ${recipients.length} recipient(s): ${options.subject}`);
-    return true;
-  } catch (error: any) {
-    console.error("[email] SendGrid error:", error?.response?.body || error.message);
-    return false;
-  }
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  return sendEmailViaProvider(options);
 }
 
 // ============================================

@@ -53,6 +53,7 @@ model User {
   sarsCreated            SubjectAccessRequest[] @relation("SarCreatedBy")
   sarsAssigned           SubjectAccessRequest[] @relation("SarAssignedTo")
   consentRecords         ConsentRecord[]     @relation("ConsentRecordedBy")
+  emailProviders         EmailProvider[]     @relation("EmailProviderCreatedBy")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
 
@@ -1245,4 +1246,42 @@ model ConsentRecord {
   @@index([contactId])
   @@index([consentType])
   @@index([recordedAt])
+}
+
+// ============================================
+// EMAIL PROVIDER CONFIGURATION
+// ============================================
+
+model EmailProvider {
+  id            String   @id @default(cuid())
+  name          String   // Display name e.g. "Our SendGrid"
+  provider      String   // SENDGRID | SES | MAILGUN
+  isActive      Boolean  @default(true)
+  isDefault     Boolean  @default(false)
+
+  // Credentials (encrypted at rest via application layer)
+  apiKey        String?  // SendGrid API key or Mailgun API key
+  region        String?  // SES region e.g. "eu-west-1", Mailgun region "EU" or "US"
+  domain        String?  // Mailgun sending domain
+
+  // SES-specific
+  accessKeyId   String?  // AWS access key
+  secretAccessKey String? // AWS secret key
+
+  // Sender settings
+  fromEmail     String   // e.g. "noreply@charity.org"
+  fromName      String   // e.g. "Our Charity"
+  replyToEmail  String?  // optional reply-to address
+
+  // Status
+  lastTestedAt  DateTime?
+  lastTestResult String? // "success" or error message
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdById   String
+
+  createdBy     User     @relation("EmailProviderCreatedBy", fields: [createdById], references: [id])
+
+  @@index([isDefault])
 }

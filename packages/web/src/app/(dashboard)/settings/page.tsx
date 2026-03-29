@@ -29,9 +29,8 @@ export default async function SettingsPage() {
     {
       icon: Zap,
       title: "Integrations",
-      description: "Connect third-party services (coming soon)",
-      href: "#",
-      disabled: true,
+      description: "Email providers, API connections, and third-party services",
+      href: "/settings/integrations",
     },
     {
       icon: Users,
@@ -78,16 +77,9 @@ export default async function SettingsPage() {
           return (
             <Card
               key={link.title}
-              className={`p-6 transition-colors ${
-                link.disabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              }`}
+              className="p-6 transition-colors hover:bg-gray-50"
             >
-              <Link
-                href={link.href}
-                className={link.disabled ? "pointer-events-none" : ""}
-              >
+              <Link href={link.href}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
                     <Icon className="h-6 w-6 text-indigo-600 mt-1" />
@@ -100,14 +92,7 @@ export default async function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                  {!link.disabled && (
-                    <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                  )}
-                  {link.disabled && (
-                    <span className="text-xs text-gray-400 flex-shrink-0">
-                      Coming soon
-                    </span>
-                  )}
+                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                 </div>
               </Link>
             </Card>
