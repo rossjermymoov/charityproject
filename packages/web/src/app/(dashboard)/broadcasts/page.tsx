@@ -1,18 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Radio, Plus } from "lucide-react";
+import { Radio, Plus, CheckCircle, HelpCircle, XCircle, Clock, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getStatusColor, formatDate } from "@/lib/utils";
 
 export default async function BroadcastsPage() {
   const broadcasts = await prisma.broadcast.findMany({
     include: {
       department: true,
       skills: { include: { skill: true } },
-      responses: { include: { volunteer: { include: { contact: true } } } },
+      responses: true,
       createdBy: true,
     },
     orderBy: { createdAt: "desc" },
@@ -48,44 +46,143 @@ export default async function BroadcastsPage() {
             const accepted = b.responses.filter((r) => r.response === "ACCEPTED").length;
             const declined = b.responses.filter((r) => r.response === "DECLINED").length;
             const tentative = b.responses.filter((r) => r.response === "TENTATIVE").length;
+            const confirmed = b.responses.filter((r) => r.confirmedAt).length;
+            const filled = accepted + confirmed;
+            const needed = b.maxRespondents;
+            const remaining = Math.max(0, needed - filled);
+            const pct = Math.min(100, Math.round((filled / needed) * 100));
+            const isAllFilled = filled >= needed;
+            const isCancelled = b.status === "CANCELLED";
+            const isExpired = new Date(b.expiresAt) < new Date() && b.status === "OPEN";
+
+            // Gradient colours per state
+            const gradient = isCancelled
+              ? "from-gray-400 to-gray-500"
+              : isAllFilled
+              ? "from-green-500 to-emerald-600"
+              : remaining === 1
+              ? "from-amber-500 to-orange-600"
+              : "from-indigo-500 to-purple-600";
+
+            const urgencyRing = b.urgency === "CRITICAL"
+              ? "ring-2 ring-red-500 ring-offset-2"
+              : b.urgency === "HIGH"
+              ? "ring-2 ring-amber-400 ring-offset-2"
+              : "";
 
             return (
               <Link key={b.id} href={`/broadcasts/${b.id}`}>
-                <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer mb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-lg font-semibold text-gray-900">{b.title}</h3>
-                        <Badge className={getStatusColor(b.urgency)}>{b.urgency}</Badge>
-                        <Badge className={getStatusColor(b.status)}>{b.status}</Badge>
+                <div className={`rounded-2xl overflow-hidden bg-gradient-to-r ${gradient} text-white shadow-lg hover:shadow-xl transition-all cursor-pointer mb-4 ${urgencyRing}`}>
+                  <div className="flex items-stretch">
+                    {/* Left: Big number */}
+                    <div className="flex flex-col items-center justify-center px-8 py-6 bg-black/10 min-w-[120px]">
+                      <div className="text-5xl font-black tabular-nums leading-none">
+                        {filled}
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">{b.message}</p>
-                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-400">
-                        <span>{b.targetDate} • {b.targetStartTime}-{b.targetEndTime}</span>
-                        {b.department && <span>{b.department.name}</span>}
-                        <span>By {b.createdBy.name}</span>
+                      <div className="text-lg font-bold text-white/50 -mt-1">
+                        /{needed}
                       </div>
-                      <div className="flex gap-1 mt-2">
-                        {b.skills.map((bs) => (
-                          <Badge key={bs.skillId} variant="outline" className="text-xs">
-                            {bs.skill.name}
-                          </Badge>
-                        ))}
+                      <div className="text-[10px] uppercase tracking-widest text-white/60 mt-2 font-semibold">
+                        {isAllFilled ? "Filled" : isCancelled ? "Cancelled" : "Filled"}
                       </div>
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="text-sm font-medium text-gray-900">
-                        {b.responses.length} response{b.responses.length !== 1 ? "s" : ""}
-                      </p>
-                      <div className="flex gap-2 mt-1 justify-end">
-                        {accepted > 0 && <span className="text-xs text-green-600">{accepted} accepted</span>}
-                        {tentative > 0 && <span className="text-xs text-yellow-600">{tentative} tentative</span>}
-                        {declined > 0 && <span className="text-xs text-red-600">{declined} declined</span>}
+
+                    {/* Middle: Details */}
+                    <div className="flex-1 px-6 py-5">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="text-lg font-bold">{b.title}</h3>
+                        {b.urgency === "CRITICAL" && (
+                          <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+                            URGENT
+                          </span>
+                        )}
+                        {b.urgency === "HIGH" && (
+                          <span className="text-xs font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                            HIGH
+                          </span>
+                        )}
+                        {isCancelled && (
+                          <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">CANCELLED</span>
+                        )}
+                        {isExpired && (
+                          <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">EXPIRED</span>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">Need {b.maxRespondents}</p>
+                      <p className="text-white/80 text-sm line-clamp-1">{b.message}</p>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {b.targetDate} • {b.targetStartTime}–{b.targetEndTime}
+                        </span>
+                        {b.department && <span>{b.department.name}</span>}
+                      </div>
+                      {b.skills.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {b.skills.map((bs) => (
+                            <span key={bs.skillId} className="text-[10px] bg-white/15 px-2 py-0.5 rounded-full font-medium">
+                              {bs.skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Progress bar */}
+                      {!isCancelled && (
+                        <div className="mt-3 w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-white h-2.5 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Status callout */}
+                    <div className="flex flex-col items-center justify-center px-6 py-5 min-w-[160px]">
+                      {isAllFilled ? (
+                        <div className="text-center">
+                          <CheckCircle className="h-8 w-8 mx-auto mb-1" />
+                          <p className="text-sm font-bold">All Filled</p>
+                        </div>
+                      ) : isCancelled ? (
+                        <div className="text-center">
+                          <XCircle className="h-8 w-8 mx-auto mb-1 text-white/60" />
+                          <p className="text-sm font-bold text-white/60">Cancelled</p>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <p className="text-3xl font-black">{remaining}</p>
+                          <p className="text-xs font-bold uppercase tracking-wider text-white/70">
+                            {remaining === 1 ? "spot left" : "spots left"}
+                          </p>
+                          {/* Response breakdown */}
+                          <div className="flex gap-2 mt-2 text-[10px]">
+                            {accepted > 0 && (
+                              <span className="flex items-center gap-0.5">
+                                <CheckCircle className="h-3 w-3" />{accepted}
+                              </span>
+                            )}
+                            {tentative > 0 && (
+                              <span className="flex items-center gap-0.5 text-white/60">
+                                <HelpCircle className="h-3 w-3" />{tentative}
+                              </span>
+                            )}
+                            {declined > 0 && (
+                              <span className="flex items-center gap-0.5 text-white/40">
+                                <XCircle className="h-3 w-3" />{declined}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Chevron */}
+                    <div className="flex items-center pr-4">
+                      <ChevronRight className="h-5 w-5 text-white/40" />
                     </div>
                   </div>
-                </Card>
+                </div>
               </Link>
             );
           })}
