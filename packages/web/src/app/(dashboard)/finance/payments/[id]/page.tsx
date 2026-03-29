@@ -33,14 +33,17 @@ export default async function PaymentDetailPage({
     "use server";
     const session = await requireAuth();
 
+    const current = await prisma.payment.findUnique({ where: { id } });
+    if (!current) return;
+
     const status = formData.get("status") as string;
 
     await prisma.payment.update({
       where: { id },
       data: {
         status,
-        paidAt: status === "SUCCEEDED" ? new Date() : payment.paidAt,
-        refundedAt: status === "REFUNDED" ? new Date() : payment.refundedAt,
+        paidAt: status === "SUCCEEDED" ? new Date() : current.paidAt,
+        refundedAt: status === "REFUNDED" ? new Date() : current.refundedAt,
       },
     });
 

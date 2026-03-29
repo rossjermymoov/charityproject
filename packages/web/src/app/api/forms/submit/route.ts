@@ -71,6 +71,7 @@ export async function POST(request: Request) {
             phone: data.phone?.trim() || null,
             types: form.type === "DONATION" ? ["DONOR"] : [],
             status: "ACTIVE",
+            createdById: form.createdById,
           },
         });
         contactId = newContact.id;
@@ -111,6 +112,7 @@ export async function POST(request: Request) {
           date: new Date(),
           reference: `FORM-${submission.id.substring(0, 8).toUpperCase()}`,
           notes: `Submitted via form: ${form.name}${isRecurring ? " (Monthly)" : ""}`,
+          createdById: form.createdById,
         },
       });
     }

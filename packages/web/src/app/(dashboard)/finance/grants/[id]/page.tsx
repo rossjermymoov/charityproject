@@ -32,20 +32,23 @@ export default async function GrantDetailPage({
     "use server";
     const session = await requireAuth();
 
+    const currentGrant = await prisma.grant.findUnique({ where: { id } });
+    if (!currentGrant) return;
+
     const status = formData.get("status") as string;
     const updateData: any = { status };
 
     // Update date fields based on status changes
-    if (status === "SUBMITTED" && !grant.submittedDate) {
+    if (status === "SUBMITTED" && !currentGrant.submittedDate) {
       updateData.submittedDate = new Date();
     }
-    if (status === "SUCCESSFUL" && !grant.decisionDate) {
+    if (status === "SUCCESSFUL" && !currentGrant.decisionDate) {
       updateData.decisionDate = new Date();
     }
-    if (status === "UNSUCCESSFUL" && !grant.decisionDate) {
+    if (status === "UNSUCCESSFUL" && !currentGrant.decisionDate) {
       updateData.decisionDate = new Date();
     }
-    if (status === "REPORTING" && !grant.startDate) {
+    if (status === "REPORTING" && !currentGrant.startDate) {
       updateData.startDate = new Date();
     }
 

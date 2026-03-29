@@ -32,13 +32,16 @@ export default async function LegacyDetailPage({
     "use server";
     const session = await requireAuth();
 
+    const currentLegacy = await prisma.legacy.findUnique({ where: { id } });
+    if (!currentLegacy) return;
+
     const status = formData.get("status") as string;
     const updateData: any = { status };
 
-    if (status === "RECEIVED" && !legacy.dateReceived) {
+    if (status === "RECEIVED" && !currentLegacy.dateReceived) {
       updateData.dateReceived = new Date();
     }
-    if (status === "PROBATE" && !legacy.probateGranted) {
+    if (status === "PROBATE" && !currentLegacy.probateGranted) {
       updateData.probateGranted = new Date();
     }
 

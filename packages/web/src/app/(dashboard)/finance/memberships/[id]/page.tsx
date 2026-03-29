@@ -92,10 +92,12 @@ export default async function MembershipDetailPage({
 
   async function toggleAutoRenew() {
     "use server";
+    const current = await prisma.membership.findUnique({ where: { id } });
+    if (!current) return;
     await prisma.membership.update({
       where: { id },
       data: {
-        autoRenew: !membership.autoRenew,
+        autoRenew: !current.autoRenew,
       },
     });
 

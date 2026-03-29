@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find or create contact by email
-    let contact = await prisma.contact.findUnique({
+    let contact = await prisma.contact.findFirst({
       where: { email: contactEmail },
     });
 
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
           firstName,
           lastName,
           email: contactEmail,
+          createdById: session.id,
         },
       });
     }

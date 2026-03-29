@@ -36,6 +36,9 @@ export default async function SubscriptionDetailPage({
     "use server";
     const session = await requireAuth();
 
+    const current = await prisma.subscription.findUnique({ where: { id } });
+    if (!current) return;
+
     const status = formData.get("status") as string;
     const updateData: any = { status };
 

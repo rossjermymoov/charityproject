@@ -51,8 +51,9 @@ export default async function NewSubscriptionPage() {
       data: {
         contactId: formData.get("contactId") as string,
         amount,
-        currency: formData.get("currency") as string,
+        currency: formData.get("currency") as string || "GBP",
         frequency,
+        type: "DONATION",
         status: "ACTIVE",
         startDate,
         nextPaymentDate,

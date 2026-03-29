@@ -66,15 +66,16 @@ export default async function ClaimDetailPage({
     const hmrcReference = formData.get("hmrcReference") as string;
     const amountReceived = formData.get("amountReceived") as string;
 
+    const currentClaim = await prisma.giftAidClaim.findUnique({ where: { id } });
+    if (!currentClaim) return;
+
     await prisma.giftAidClaim.update({
       where: { id },
       data: {
-        status: amountReceived ? (parseFloat(amountReceived) < claim.totalClaimable ? "PARTIAL" : "ACCEPTED") : "ACCEPTED",
+        status: amountReceived ? (parseFloat(amountReceived) < currentClaim.totalClaimable ? "PARTIAL" : "ACCEPTED") : "ACCEPTED",
         acceptedAt: new Date(),
-        responseDate: new Date(),
         hmrcReference: hmrcReference || undefined,
         amountReceived: amountReceived ? parseFloat(amountReceived) : undefined,
-        receivedAt: amountReceived ? new Date() : undefined,
       },
     });
 
@@ -93,7 +94,6 @@ export default async function ClaimDetailPage({
       data: {
         status: "REJECTED",
         rejectedAt: new Date(),
-        responseDate: new Date(),
         rejectionReason: rejectionReason || undefined,
         hmrcReference: hmrcReference || undefined,
       },
@@ -324,7 +324,7 @@ export default async function ClaimDetailPage({
         </Card>
       )}
 
-      {claim.status === "SUBMITTED" && !claim.responseDate && (
+      {claim.status === "SUBMITTED" && !claim.acceptedAt && !claim.rejectedAt && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Mark Accepted */}
           <Card className="border-green-200 bg-green-50">

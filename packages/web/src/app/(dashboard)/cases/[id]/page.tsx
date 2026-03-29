@@ -116,6 +116,9 @@ export default async function CaseDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
+    const current = await prisma.caseRecord.findUnique({ where: { id } });
+    if (!current) return;
+
     const newStatus = formData.get("status") as string;
     const resolutionNotes = formData.get("resolutionNotes") as string;
 
