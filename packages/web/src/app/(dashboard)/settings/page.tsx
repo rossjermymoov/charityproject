@@ -7,6 +7,7 @@ import {
   FileText,
   Zap,
   Users,
+  Calendar,
   ChevronRight,
 } from "lucide-react";
 
@@ -14,6 +15,12 @@ export default async function SettingsPage() {
   const user = await requireAuth();
 
   const settingsLinks = [
+    {
+      icon: Calendar,
+      title: "Financial Year End",
+      description: "Set your organisation's financial year end date for reporting and forecasting",
+      href: "/settings/financial-year",
+    },
     {
       icon: Shield,
       title: "Audit Log",

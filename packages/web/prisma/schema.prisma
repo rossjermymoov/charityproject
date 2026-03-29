@@ -8,6 +8,17 @@ datasource db {
 }
 
 // ============================================
+// SYSTEM SETTINGS (singleton — one row)
+// ============================================
+
+model SystemSettings {
+  id                    String   @id @default("default")
+  financialYearEndMonth Int      @default(3)  // 1=Jan … 12=Dec, default March (UK charity standard)
+  financialYearEndDay   Int      @default(31) // day of month
+  updatedAt             DateTime @updatedAt
+}
+
+// ============================================
 // CORE / SHARED
 // ============================================
 

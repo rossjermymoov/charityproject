@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSystemSettings, getFinancialYearDates, getCurrentFinancialYear } from "@/lib/settings";
 import Link from "next/link";
 import { Heart, Plus, Search, TrendingUp, Banknote, Clock, PiggyBank, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,17 +20,19 @@ export default async function LegaciesPage({
   const statusFilter = params.status || "";
   const yearFilter = params.year || "";
 
-  const currentYear = new Date().getFullYear();
+  // Get financial year settings
+  const settings = await getSystemSettings();
+  const fyEndMonth = settings.financialYearEndMonth;
+  const fyEndDay = settings.financialYearEndDay;
+  const currentFY = getCurrentFinancialYear(fyEndMonth, fyEndDay);
 
-  // Build date filter
+  // Build date filter based on financial year
   let dateFilter = {};
   if (yearFilter) {
-    const y = parseInt(yearFilter);
+    const fy = parseInt(yearFilter);
+    const { start, end } = getFinancialYearDates(fy, fyEndMonth, fyEndDay);
     dateFilter = {
-      dateNotified: {
-        gte: new Date(`${y}-01-01`),
-        lt: new Date(`${y + 1}-01-01`),
-      },
+      dateNotified: { gte: start, lte: end },
     };
   }
 
@@ -39,11 +42,11 @@ export default async function LegaciesPage({
         search
           ? {
               OR: [
-                { deceasedName: { contains: search, mode: "insensitive" } },
-                { solicitorName: { contains: search, mode: "insensitive" } },
-                { solicitorFirm: { contains: search, mode: "insensitive" } },
-                { contact: { firstName: { contains: search, mode: "insensitive" } } },
-                { contact: { lastName: { contains: search, mode: "insensitive" } } },
+                { deceasedName: { contains: search, mode: "insensitive" as const } },
+                { solicitorName: { contains: search, mode: "insensitive" as const } },
+                { solicitorFirm: { contains: search, mode: "insensitive" as const } },
+                { contact: { firstName: { contains: search, mode: "insensitive" as const } } },
+                { contact: { lastName: { contains: search, mode: "insensitive" as const } } },
               ],
             }
           : {},
@@ -59,7 +62,7 @@ export default async function LegaciesPage({
     take: 200,
   });
 
-  // Fetch all legacies for historic analysis
+  // Fetch all legacies for historic analysis & forecasting
   const allLegacies = await prisma.legacy.findMany({
     select: {
       status: true,
@@ -67,20 +70,26 @@ export default async function LegaciesPage({
       receivedAmount: true,
       dateNotified: true,
       dateReceived: true,
+      probateGranted: true,
       createdAt: true,
     },
   });
 
-  // Year options from data
-  const yearsSet = new Set<number>();
+  // Financial year options
+  const fySet = new Set<number>();
   allLegacies.forEach((l) => {
-    yearsSet.add(l.dateNotified.getFullYear());
-    if (l.dateReceived) yearsSet.add(l.dateReceived.getFullYear());
+    // Determine which FY this legacy belongs to
+    const notifiedDate = l.dateNotified;
+    const nm = notifiedDate.getMonth() + 1;
+    const nd = notifiedDate.getDate();
+    const ny = notifiedDate.getFullYear();
+    const fy = (nm > fyEndMonth || (nm === fyEndMonth && nd > fyEndDay)) ? ny + 1 : ny;
+    fySet.add(fy);
   });
-  yearsSet.add(currentYear);
-  yearsSet.add(currentYear - 1);
-  yearsSet.add(currentYear - 2);
-  const years = Array.from(yearsSet).sort((a, b) => b - a);
+  fySet.add(currentFY);
+  fySet.add(currentFY - 1);
+  fySet.add(currentFY - 2);
+  const financialYears = Array.from(fySet).sort((a, b) => b - a);
 
   // Current filtered view stats
   const totalEstimated = legacies.reduce((sum, l) => sum + (l.estimatedAmount || 0), 0);
@@ -90,44 +99,122 @@ export default async function LegaciesPage({
   ).length;
   const notified = legacies.filter((l) => l.status === "NOTIFIED").length;
 
-  // Historic year-over-year
-  const buildYearStats = (y: number) => {
-    const yearLegacies = allLegacies.filter((l) => l.dateNotified.getFullYear() === y);
+  // Pipeline value (legacies not yet received)
+  const pipelineValue = allLegacies
+    .filter((l) => ["NOTIFIED", "INVESTIGATING", "PROBATE", "AWAITING_PAYMENT"].includes(l.status))
+    .reduce((s, l) => s + (l.estimatedAmount || 0), 0);
+
+  // Average time to receipt
+  const completedLegacies = allLegacies.filter((l) => l.dateReceived && l.status === "RECEIVED");
+  const avgMonths = completedLegacies.length > 0
+    ? Math.round(
+        completedLegacies.reduce((sum, l) => {
+          const notifiedTime = l.dateNotified.getTime();
+          const receivedTime = l.dateReceived!.getTime();
+          return sum + (receivedTime - notifiedTime) / (1000 * 60 * 60 * 24 * 30);
+        }, 0) / completedLegacies.length
+      )
+    : null;
+
+  // Historic FY comparison
+  const buildFYStats = (fy: number) => {
+    const { start, end } = getFinancialYearDates(fy, fyEndMonth, fyEndDay);
+    const fyLegacies = allLegacies.filter(
+      (l) => l.dateNotified >= start && l.dateNotified <= end
+    );
     const received = allLegacies.filter(
-      (l) => l.dateReceived && l.dateReceived.getFullYear() === y
+      (l) => l.dateReceived && l.dateReceived >= start && l.dateReceived <= end
     );
     return {
-      notified: yearLegacies.length,
-      estimatedValue: yearLegacies.reduce((s, l) => s + (l.estimatedAmount || 0), 0),
+      notified: fyLegacies.length,
+      estimatedValue: fyLegacies.reduce((s, l) => s + (l.estimatedAmount || 0), 0),
       receivedCount: received.length,
       receivedValue: received.reduce((s, l) => s + (l.receivedAmount || 0), 0),
     };
   };
 
-  const thisYear = buildYearStats(currentYear);
-  const lastYear = buildYearStats(currentYear - 1);
-  const twoYearsAgo = buildYearStats(currentYear - 2);
+  const thisFY = buildFYStats(currentFY);
+  const lastFY = buildFYStats(currentFY - 1);
+  const twoFYAgo = buildFYStats(currentFY - 2);
 
-  // Forecast: pipeline value (legacies not yet received)
-  const pipelineValue = allLegacies
-    .filter((l) => ["NOTIFIED", "INVESTIGATING", "PROBATE", "AWAITING_PAYMENT"].includes(l.status))
-    .reduce((s, l) => s + (l.estimatedAmount || 0), 0);
-
-  // Average time to receipt (for legacies that have been received)
-  const completedLegacies = allLegacies.filter((l) => l.dateReceived && l.status === "RECEIVED");
-  const avgMonths = completedLegacies.length > 0
-    ? Math.round(
-        completedLegacies.reduce((sum, l) => {
-          const notified = l.dateNotified.getTime();
-          const received = l.dateReceived!.getTime();
-          return sum + (received - notified) / (1000 * 60 * 60 * 24 * 30);
-        }, 0) / completedLegacies.length
-      )
+  const yoyChange = lastFY.receivedValue > 0
+    ? (((thisFY.receivedValue - lastFY.receivedValue) / lastFY.receivedValue) * 100).toFixed(0)
     : null;
 
-  const yoyChange = lastYear.receivedValue > 0
-    ? (((thisYear.receivedValue - lastYear.receivedValue) / lastYear.receivedValue) * 100).toFixed(0)
-    : null;
+  // === MONTHLY FORECAST ===
+  // Show next 12 months of expected legacy payments based on pipeline + average time from status to receipt
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const now = new Date();
+  const forecastMonths: { label: string; month: number; year: number; estimated: number; count: number }[] = [];
+
+  // Average time from probate to receipt and from notification to receipt
+  const avgProbateToReceipt = completedLegacies.filter((l) => l.probateGranted).length > 0
+    ? completedLegacies
+        .filter((l) => l.probateGranted)
+        .reduce((sum, l) => {
+          return sum + (l.dateReceived!.getTime() - l.probateGranted!.getTime()) / (1000 * 60 * 60 * 24 * 30);
+        }, 0) / completedLegacies.filter((l) => l.probateGranted).length
+    : 3; // default 3 months
+
+  const avgNotifiedToReceipt = avgMonths || 12; // default 12 months
+
+  // Build 12 months forecast
+  for (let i = 0; i < 12; i++) {
+    const forecastDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const m = forecastDate.getMonth();
+    const y = forecastDate.getFullYear();
+    forecastMonths.push({
+      label: `${monthNames[m]} ${y}`,
+      month: m,
+      year: y,
+      estimated: 0,
+      count: 0,
+    });
+  }
+
+  // Assign pipeline legacies to forecast months
+  const pipelineLegacies = allLegacies.filter((l) =>
+    ["NOTIFIED", "INVESTIGATING", "PROBATE", "AWAITING_PAYMENT"].includes(l.status)
+  );
+
+  pipelineLegacies.forEach((l) => {
+    let expectedDate: Date;
+
+    if (l.status === "AWAITING_PAYMENT") {
+      // Expected within 1–2 months
+      expectedDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+    } else if (l.status === "PROBATE" && l.probateGranted) {
+      // Use average probate-to-receipt time
+      const msToAdd = avgProbateToReceipt * 30 * 24 * 60 * 60 * 1000;
+      expectedDate = new Date(l.probateGranted.getTime() + msToAdd);
+    } else {
+      // Use average notification-to-receipt time
+      const msToAdd = avgNotifiedToReceipt * 30 * 24 * 60 * 60 * 1000;
+      expectedDate = new Date(l.dateNotified.getTime() + msToAdd);
+    }
+
+    // If the expected date has passed, push to next month
+    if (expectedDate < now) {
+      expectedDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+    }
+
+    // Find matching forecast month
+    const idx = forecastMonths.findIndex(
+      (fm) => fm.month === expectedDate.getMonth() && fm.year === expectedDate.getFullYear()
+    );
+    if (idx >= 0) {
+      forecastMonths[idx].estimated += l.estimatedAmount || 0;
+      forecastMonths[idx].count += 1;
+    }
+  });
+
+  const maxForecast = Math.max(...forecastMonths.map((fm) => fm.estimated), 1);
+
+  // FY label helper
+  const fyLabel = (fy: number) => {
+    if (fyEndMonth === 12 && fyEndDay === 31) return `${fy}`; // calendar year
+    return `FY ${fy - 1}/${String(fy).slice(2)}`;
+  };
 
   const statusColors: Record<string, string> = {
     NOTIFIED: "bg-blue-100 text-blue-800",
@@ -144,6 +231,7 @@ export default async function LegaciesPage({
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Legacies</h1>
@@ -209,9 +297,9 @@ export default async function LegaciesPage({
               <TrendingUp className="h-4 w-4 text-indigo-600" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">{currentYear} vs {currentYear - 1}</p>
+              <p className="text-xs font-medium text-gray-500">{fyLabel(currentFY)} vs {fyLabel(currentFY - 1)}</p>
               <p className="text-lg font-bold text-gray-900">
-                {fmt(thisYear.receivedValue)}
+                {fmt(thisFY.receivedValue)}
                 {yoyChange && (
                   <span className={`text-xs ml-1 ${parseInt(yoyChange) >= 0 ? "text-green-600" : "text-red-600"}`}>
                     {parseInt(yoyChange) >= 0 ? "+" : ""}{yoyChange}%
@@ -223,12 +311,204 @@ export default async function LegaciesPage({
         </Card>
       </div>
 
-      {/* Historic Year Comparison & Forecast */}
+      {/* Search and filters — now right under stats */}
+      <Card className="p-4">
+        <form className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Search className="h-5 w-5 text-gray-400" />
+            <input
+              name="search"
+              type="text"
+              defaultValue={search}
+              placeholder="Search by deceased name, solicitor, or firm..."
+              className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
+            />
+          </div>
+          <select
+            name="status"
+            defaultValue={statusFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Status</option>
+            <option value="NOTIFIED">Notified</option>
+            <option value="INVESTIGATING">Investigating</option>
+            <option value="PROBATE">Probate</option>
+            <option value="AWAITING_PAYMENT">Awaiting Payment</option>
+            <option value="RECEIVED">Received</option>
+            <option value="PARTIAL">Partial</option>
+            <option value="DISPUTED">Disputed</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+          <select
+            name="year"
+            defaultValue={yearFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Years</option>
+            {financialYears.map((fy) => (
+              <option key={fy} value={fy}>{fyLabel(fy)}</option>
+            ))}
+          </select>
+          <Button type="submit" variant="outline" size="sm">
+            Filter
+          </Button>
+        </form>
+      </Card>
+
+      {/* Legacies table — now right under search, with deceased name prominent */}
+      {legacies.length === 0 ? (
+        <EmptyState
+          icon={Heart}
+          title="No legacies found"
+          description="Get started by recording your first legacy gift."
+          actionLabel="New Legacy"
+          actionHref="/finance/legacies/new"
+        />
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Deceased Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                    Progress
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Notified
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Solicitor
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {legacies.map((legacy) => (
+                  <tr key={legacy.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/finance/legacies/${legacy.id}`}
+                        className="text-indigo-600 hover:text-indigo-700 font-semibold text-base"
+                      >
+                        {legacy.deceasedName}
+                      </Link>
+                      {legacy.contact && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Contact: {legacy.contact.firstName} {legacy.contact.lastName}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-xs">
+                      {legacy.type}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {legacy.estimatedAmount ? fmt(legacy.estimatedAmount) : "—"}
+                      </div>
+                      {legacy.receivedAmount ? (
+                        <div className="text-xs text-green-600">
+                          Received: {fmt(legacy.receivedAmount)}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="px-6 py-4">
+                      <PipelineTimeline
+                        steps={getLegacySteps(legacy)}
+                        currentStepKey={
+                          legacy.status === "DISPUTED" || legacy.status === "PARTIAL"
+                            ? "AWAITING_PAYMENT"
+                            : legacy.status
+                        }
+                        variant="legacy"
+                        size="compact"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge className={statusColors[legacy.status] || ""}>{legacy.status}</Badge>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-xs">
+                      {formatDate(legacy.dateNotified)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-xs">
+                      {legacy.solicitorName || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Monthly Forecast — shows expected payments by month for budgeting */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900">Year-on-Year Analysis & Forecast</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Monthly Payment Forecast</h3>
+              <p className="text-xs text-gray-500">Expected legacy receipts over the next 12 months based on pipeline status and historic averages</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pipelineLegacies.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No legacies in the pipeline to forecast.</p>
+          ) : (
+            <div className="space-y-3">
+              {forecastMonths.map((fm) => (
+                <div key={fm.label} className="flex items-center gap-3">
+                  <div className="w-20 text-xs font-medium text-gray-600 text-right shrink-0">
+                    {fm.label}
+                  </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                      {fm.estimated > 0 && (
+                        <div
+                          className="bg-gradient-to-r from-indigo-400 to-indigo-600 h-6 rounded-full transition-all flex items-center justify-end pr-2"
+                          style={{ width: `${Math.max(8, (fm.estimated / maxForecast) * 100)}%` }}
+                        >
+                          <span className="text-[10px] font-bold text-white whitespace-nowrap">
+                            {fmt(fm.estimated)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {fm.count > 0 && (
+                      <span className="text-xs text-gray-500 shrink-0 w-16">
+                        {fm.count} {fm.count === 1 ? "legacy" : "legacies"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {avgMonths && (
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Based on an average of {avgMonths} months from notification to receipt
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Historic Year Comparison — now at the bottom */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900">Year-on-Year Analysis</h3>
           </div>
         </CardHeader>
         <CardContent>
@@ -236,7 +516,7 @@ export default async function LegaciesPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
+                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase">Financial Year</th>
                   <th className="py-2 text-right text-xs font-medium text-gray-500 uppercase">Notified</th>
                   <th className="py-2 text-right text-xs font-medium text-gray-500 uppercase">Est. Value</th>
                   <th className="py-2 text-right text-xs font-medium text-gray-500 uppercase">Received</th>
@@ -246,11 +526,11 @@ export default async function LegaciesPage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {[
-                  { year: currentYear, stats: thisYear, label: `${currentYear} (YTD)` },
-                  { year: currentYear - 1, stats: lastYear, label: `${currentYear - 1}` },
-                  { year: currentYear - 2, stats: twoYearsAgo, label: `${currentYear - 2}` },
+                  { fy: currentFY, stats: thisFY, label: `${fyLabel(currentFY)} (YTD)` },
+                  { fy: currentFY - 1, stats: lastFY, label: fyLabel(currentFY - 1) },
+                  { fy: currentFY - 2, stats: twoFYAgo, label: fyLabel(currentFY - 2) },
                 ].map((row) => (
-                  <tr key={row.year} className="hover:bg-gray-50">
+                  <tr key={row.fy} className="hover:bg-gray-50">
                     <td className="py-3 font-medium text-gray-900">{row.label}</td>
                     <td className="py-3 text-right text-gray-700">{row.stats.notified}</td>
                     <td className="py-3 text-right text-gray-700">{fmt(row.stats.estimatedValue)}</td>
@@ -266,9 +546,9 @@ export default async function LegaciesPage({
                                 100,
                                 (row.stats.receivedValue /
                                   Math.max(
-                                    thisYear.receivedValue,
-                                    lastYear.receivedValue,
-                                    twoYearsAgo.receivedValue,
+                                    thisFY.receivedValue,
+                                    lastFY.receivedValue,
+                                    twoFYAgo.receivedValue,
                                     1
                                   )) *
                                   100
@@ -300,151 +580,6 @@ export default async function LegaciesPage({
           </div>
         </CardContent>
       </Card>
-
-      {/* Search and filters */}
-      <Card className="p-4">
-        <form className="flex flex-col sm:flex-row gap-3">
-          <div className="flex items-center gap-2 flex-1">
-            <Search className="h-5 w-5 text-gray-400" />
-            <input
-              name="search"
-              type="text"
-              defaultValue={search}
-              placeholder="Search by name, solicitor, or firm..."
-              className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
-            />
-          </div>
-          <select
-            name="status"
-            defaultValue={statusFilter}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Status</option>
-            <option value="NOTIFIED">Notified</option>
-            <option value="INVESTIGATING">Investigating</option>
-            <option value="PROBATE">Probate</option>
-            <option value="AWAITING_PAYMENT">Awaiting Payment</option>
-            <option value="RECEIVED">Received</option>
-            <option value="PARTIAL">Partial</option>
-            <option value="DISPUTED">Disputed</option>
-            <option value="CLOSED">Closed</option>
-          </select>
-          <select
-            name="year"
-            defaultValue={yearFilter}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Years</option>
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <Button type="submit" variant="outline" size="sm">
-            Filter
-          </Button>
-        </form>
-      </Card>
-
-      {/* Legacies table */}
-      {legacies.length === 0 ? (
-        <EmptyState
-          icon={Heart}
-          title="No legacies found"
-          description="Get started by recording your first legacy gift."
-          actionLabel="New Legacy"
-          actionHref="/finance/legacies/new"
-        />
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Deceased Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                    Progress
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Notified
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Solicitor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {legacies.map((legacy) => (
-                  <tr key={legacy.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      <Link
-                        href={`/finance/legacies/${legacy.id}`}
-                        className="text-indigo-600 hover:text-indigo-700"
-                      >
-                        {legacy.deceasedName}
-                      </Link>
-                      {legacy.contact && (
-                        <p className="text-xs text-gray-500">
-                          Contact: {legacy.contact.firstName} {legacy.contact.lastName}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {legacy.estimatedAmount ? fmt(legacy.estimatedAmount) : "—"}
-                      </div>
-                      {legacy.receivedAmount ? (
-                        <div className="text-xs text-green-600">
-                          Received: {fmt(legacy.receivedAmount)}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="px-6 py-4">
-                      <PipelineTimeline
-                        steps={getLegacySteps(legacy)}
-                        currentStepKey={
-                          legacy.status === "DISPUTED" || legacy.status === "PARTIAL"
-                            ? "AWAITING_PAYMENT"
-                            : legacy.status
-                        }
-                        variant="legacy"
-                        size="compact"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge className={statusColors[legacy.status] || ""}>{legacy.status}</Badge>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {formatDate(legacy.dateNotified)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {legacy.solicitorName || "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/finance/legacies/${legacy.id}`}
-                        className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
     </div>
   );
 }
