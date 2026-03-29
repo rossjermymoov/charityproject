@@ -160,5 +160,5 @@ export async function swapTin(formData: FormData) {
   });
 
   revalidatePath("/finance/collection-tins");
-  redirect(`/finance/collection-tins/${replacement.id}`);
+  redirect("/finance/collection-tins");
 }
