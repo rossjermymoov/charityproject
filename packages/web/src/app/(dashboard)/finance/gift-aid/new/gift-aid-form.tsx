@@ -28,7 +28,8 @@ export function GiftAidForm({ contacts: initialContacts, action }: GiftAidFormPr
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [postcode, setPostcode] = useState("");
 
   async function handleCreateContact() {
     if (!firstName.trim() || !lastName.trim()) return;
@@ -38,7 +39,7 @@ export function GiftAidForm({ contacts: initialContacts, action }: GiftAidFormPr
       const res = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim() || undefined, address: address.trim() || undefined }),
+        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim() || undefined, addressLine1: addressLine1.trim() || undefined, postcode: postcode.trim() || undefined }),
       });
 
       if (!res.ok) throw new Error("Failed to create contact");
@@ -59,7 +60,8 @@ export function GiftAidForm({ contacts: initialContacts, action }: GiftAidFormPr
       setFirstName("");
       setLastName("");
       setEmail("");
-      setAddress("");
+      setAddressLine1("");
+      setPostcode("");
       setShowNewContact(false);
     } catch {
       alert("Failed to create contact. Please try again.");
@@ -136,10 +138,20 @@ export function GiftAidForm({ contacts: initialContacts, action }: GiftAidFormPr
                 <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
                 <input
                   type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Address (optional)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Postcode</label>
+                <input
+                  type="text"
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Postcode (optional)"
                 />
               </div>
             </div>

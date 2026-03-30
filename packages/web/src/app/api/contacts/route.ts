@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { firstName, lastName, email, address } = body;
+    const { firstName, lastName, email, addressLine1, postcode } = body;
 
     if (!firstName || !lastName) {
       return NextResponse.json(
@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
         firstName,
         lastName,
         email: email || null,
-        address: address || null,
+        addressLine1: addressLine1 || null,
+        postcode: postcode || null,
         createdById: session.id,
       },
       select: {
