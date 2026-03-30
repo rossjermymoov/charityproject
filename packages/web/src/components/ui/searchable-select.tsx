@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Plus } from "lucide-react";
 
 interface Option {
   value: string;
@@ -14,6 +15,9 @@ interface SearchableSelectProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  /** When provided, shows a "+ Create New" button in the dropdown */
+  onCreateNew?: () => void;
+  createNewLabel?: string;
 }
 
 export function SearchableSelect({
@@ -23,6 +27,8 @@ export function SearchableSelect({
   placeholder = "Search...",
   required = false,
   className = "",
+  onCreateNew,
+  createNewLabel = "Create New",
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -36,6 +42,11 @@ export function SearchableSelect({
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Allow parent to programmatically set value (e.g. after creating a new contact)
+  useEffect(() => {
+    setSelectedValue(defaultValue);
+  }, [defaultValue]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -122,6 +133,22 @@ export function SearchableSelect({
               autoComplete="off"
             />
           </div>
+
+          {/* Create New button */}
+          {onCreateNew && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setSearch("");
+                onCreateNew();
+              }}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 border-b border-gray-100"
+            >
+              <Plus className="h-4 w-4" />
+              {createNewLabel}
+            </button>
+          )}
 
           {/* Options */}
           <div className="max-h-60 overflow-y-auto">

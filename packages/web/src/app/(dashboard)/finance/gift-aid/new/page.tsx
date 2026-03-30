@@ -2,14 +2,12 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { GiftAidForm } from "./gift-aid-form";
 
 export default async function NewGiftAidPage() {
   const contacts = await prisma.contact.findMany({
@@ -40,6 +38,11 @@ export default async function NewGiftAidPage() {
     redirect(`/finance/gift-aid/${giftAid.id}`);
   }
 
+  const contactOptions = contacts.map((c) => ({
+    value: c.id,
+    label: `${c.firstName} ${c.lastName}`,
+  }));
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -52,43 +55,7 @@ export default async function NewGiftAidPage() {
       <Card>
         <CardContent className="pt-6">
           <form action={createGiftAid} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-              <SearchableSelect
-                name="contactId"
-                required
-                placeholder="Search contacts..."
-                options={contacts.map((contact) => ({
-                  value: contact.id,
-                  label: `${contact.firstName} ${contact.lastName}`,
-                }))}
-              />
-            </div>
-
-            <Select
-              label="Declaration Type"
-              name="type"
-              required
-              defaultValue="STANDARD"
-              options={[
-                { value: "STANDARD", label: "Standard Gift Aid" },
-                { value: "RETAIL", label: "Retail Gift Aid" },
-              ]}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Declaration Date" name="declarationDate" type="date" required />
-              <Input label="Start Date" name="startDate" type="date" required />
-            </div>
-
-            <Input
-              label="End Date (optional - leave blank for ongoing)"
-              name="endDate"
-              type="date"
-              placeholder="Leave blank if ongoing"
-            />
-
-            <Input label="Notes" name="notes" placeholder="Additional notes..." />
+            <GiftAidForm contacts={contactOptions} action="" />
 
             <div className="flex justify-end gap-3">
               <Link href="/finance/gift-aid">

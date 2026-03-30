@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,6 +20,48 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching contacts:", error);
     return NextResponse.json(
       { error: "Failed to fetch contacts" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { firstName, lastName, email, address } = body;
+
+    if (!firstName || !lastName) {
+      return NextResponse.json(
+        { error: "First name and last name are required" },
+        { status: 400 }
+      );
+    }
+
+    const contact = await prisma.contact.create({
+      data: {
+        firstName,
+        lastName,
+        email: email || null,
+        address: address || null,
+        createdById: session.id,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    return NextResponse.json(contact);
+  } catch (error) {
+    console.error("Error creating contact:", error);
+    return NextResponse.json(
+      { error: "Failed to create contact" },
       { status: 500 }
     );
   }
