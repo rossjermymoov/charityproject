@@ -109,6 +109,8 @@ async function sendViaProvider(
       return sendViaSES(provider, options);
     case "MAILGUN":
       return sendViaMailgun(provider, options);
+    case "MAILCHIMP":
+      return sendViaMailchimp(provider, options);
     default:
       console.error(`[email-providers] Unknown provider: ${provider.provider}`);
       return false;
@@ -289,6 +291,64 @@ async function sendViaMailgun(
     return true;
   } catch (error: any) {
     console.error("[email-providers] Mailgun error:", error.message);
+    return false;
+  }
+}
+
+// ============================================
+// MAILCHIMP (MANDRILL TRANSACTIONAL)
+// ============================================
+
+async function sendViaMailchimp(
+  provider: {
+    apiKey: string | null;
+    fromEmail: string;
+    fromName: string;
+  },
+  options: EmailOptions
+): Promise<boolean> {
+  if (!provider.apiKey) {
+    console.error("[email-providers] Mailchimp/Mandrill: missing API key");
+    return false;
+  }
+
+  try {
+    const recipients = Array.isArray(options.to) ? options.to : [options.to];
+
+    const message = {
+      html: options.html,
+      text: options.text || stripHtml(options.html),
+      subject: options.subject,
+      from_email: provider.fromEmail,
+      from_name: provider.fromName,
+      to: recipients.map((email) => ({ email, type: "to" as const })),
+    };
+
+    const res = await fetch("https://mandrillapp.com/api/1.0/messages/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: provider.apiKey,
+        message,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`[email-providers] Mailchimp/Mandrill error ${res.status}:`, text);
+      return false;
+    }
+
+    const results = await res.json();
+    const failed = results.filter((r: any) => r.status === "rejected" || r.status === "invalid");
+    if (failed.length > 0) {
+      console.warn(`[email-providers] Mailchimp/Mandrill: ${failed.length} recipient(s) rejected`);
+    }
+
+    console.log(`[email-providers] Mailchimp/Mandrill: sent to ${recipients.length} recipient(s)`);
+    return true;
+  } catch (error: any) {
+    console.error("[email-providers] Mailchimp/Mandrill error:", error.message);
     return false;
   }
 }

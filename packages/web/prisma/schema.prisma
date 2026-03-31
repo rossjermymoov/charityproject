@@ -1305,7 +1305,7 @@ model ConsentRecord {
 model EmailProvider {
   id            String   @id @default(cuid())
   name          String   // Display name e.g. "Our SendGrid"
-  provider      String   // SENDGRID | SES | MAILGUN
+  provider      String   // SENDGRID | SES | MAILGUN | MAILCHIMP
   isActive      Boolean  @default(true)
   isDefault     Boolean  @default(false)
 

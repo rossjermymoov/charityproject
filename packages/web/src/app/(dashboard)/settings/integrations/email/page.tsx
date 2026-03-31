@@ -46,6 +46,8 @@ export default async function EmailProvidersPage() {
       data.apiKey = formData.get("apiKey") as string;
       data.domain = formData.get("domain") as string;
       data.region = formData.get("mgRegion") as string || "US";
+    } else if (provider === "MAILCHIMP") {
+      data.apiKey = formData.get("apiKey") as string;
     }
 
     // If no other providers exist, make this the default
@@ -142,11 +144,13 @@ export default async function EmailProvidersPage() {
                   <div className={`p-2 rounded-lg ${
                     p.provider === "SENDGRID" ? "bg-blue-100" :
                     p.provider === "SES" ? "bg-orange-100" :
+                    p.provider === "MAILCHIMP" ? "bg-yellow-100" :
                     "bg-red-100"
                   }`}>
                     <Mail className={`h-5 w-5 ${
                       p.provider === "SENDGRID" ? "text-blue-600" :
                       p.provider === "SES" ? "text-orange-600" :
+                      p.provider === "MAILCHIMP" ? "text-yellow-600" :
                       "text-red-600"
                     }`} />
                   </div>
@@ -232,6 +236,7 @@ export default async function EmailProvidersPage() {
                 <option value="SENDGRID">SendGrid</option>
                 <option value="SES">Amazon SES</option>
                 <option value="MAILGUN">Mailgun</option>
+                <option value="MAILCHIMP">Mailchimp (Mandrill)</option>
               </select>
             </div>
 
@@ -302,6 +307,20 @@ export default async function EmailProvidersPage() {
                   Mailgun → Settings → API Security
                 </a>
                 . Your sending domain must be verified.
+              </p>
+            </fieldset>
+
+            {/* Provider-specific: Mailchimp (Mandrill) */}
+            <fieldset id="mailchimpFields" className="space-y-4 border-t pt-4">
+              <legend className="text-sm font-semibold text-gray-700">Mailchimp / Mandrill Credentials</legend>
+              <Input label="Mandrill API Key" name="apiKey" type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" />
+              <p className="text-xs text-gray-500">
+                Mailchimp uses{" "}
+                <a href="https://mandrillapp.com/settings" target="_blank" rel="noopener" className="text-indigo-600 underline">
+                  Mandrill
+                </a>
+                {" "}for transactional email. You need a paid Mailchimp plan with the Transactional Email add-on.
+                Find your API key in Mandrill → Settings → SMTP & API Info.
               </p>
             </fieldset>
 
