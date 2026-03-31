@@ -6,6 +6,25 @@ import { prisma } from "@/lib/prisma";
 
 // ── Inline SVG Logos ──────────────────────────────────────────────
 
+function MailchimpLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#FFE01B" />
+      <text x="24" y="30" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#241C15">M</text>
+    </svg>
+  );
+}
+
+function AmazonSESLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#FF9900" />
+      <path d="M14 28c4 3 10 4 16 2l1.5 2C25 35 17 34 12 30l2-2z" fill="#fff" />
+      <path d="M33 28l-2-1.5c1.5-2 2-4 2-6.5 0-5-4-9-9-9s-9 4-9 9 4 9 9 9c2 0 4-.5 5.5-1.5l2 1.5c-2 1.5-4.5 2.5-7.5 2.5-7 0-12-5-12-11.5S17 9 24 9s12 5 12 11.5c0 3-1 5.5-3 7.5z" fill="#fff" />
+    </svg>
+  );
+}
+
 function SendGridLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -15,11 +34,12 @@ function SendGridLogo({ className }: { className?: string }) {
   );
 }
 
-function MailchimpLogo({ className }: { className?: string }) {
+function MailgunLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="10" fill="#FFE01B" />
-      <text x="24" y="30" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#241C15">M</text>
+      <rect width="48" height="48" rx="10" fill="#F06B54" />
+      <path d="M24 12c-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12-5.4-12-12-12zm0 20c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z" fill="#fff" />
+      <circle cx="24" cy="24" r="4" fill="#fff" />
     </svg>
   );
 }
@@ -33,15 +53,6 @@ function StripeLogo({ className }: { className?: string }) {
   );
 }
 
-function JustGivingLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="10" fill="#AD29B6" />
-      <text x="24" y="31" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#fff">JG</text>
-    </svg>
-  );
-}
-
 function GoCardlessLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -51,50 +62,97 @@ function GoCardlessLogo({ className }: { className?: string }) {
   );
 }
 
+function JustGivingLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#AD29B6" />
+      <text x="24" y="31" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#fff">JG</text>
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default async function IntegrationsPage() {
   await requireAuth();
 
-  const activeEmailProvider = await prisma.emailProvider.findFirst({
-    where: { isDefault: true, isActive: true },
-    select: { provider: true, fromEmail: true },
+  // Check which email providers are configured
+  const configuredProviders = await prisma.emailProvider.findMany({
+    where: { isActive: true },
+    select: { provider: true, isDefault: true, fromEmail: true },
   });
+
+  const providerStatus = (type: string) => {
+    const found = configuredProviders.filter((p) => p.provider === type);
+    if (found.length === 0) return { status: "not configured", description: "" };
+    const def = found.find((p) => p.isDefault);
+    return {
+      status: "connected",
+      description: def ? `Default — ${def.fromEmail}` : `${found.length} configured`,
+    };
+  };
+
+  const mailchimp = providerStatus("MAILCHIMP");
+  const ses = providerStatus("SES");
+  const sendgrid = providerStatus("SENDGRID");
+  const mailgun = providerStatus("MAILGUN");
 
   const integrations = [
     {
-      logo: SendGridLogo,
-      title: "Email Providers",
-      description: activeEmailProvider
-        ? `${activeEmailProvider.provider} — ${activeEmailProvider.fromEmail}`
-        : "Configure SendGrid, Amazon SES, Mailgun, or Mailchimp for transactional email",
-      href: "/settings/integrations/email",
-      status: activeEmailProvider ? "connected" : "not configured",
+      logo: MailchimpLogo,
+      title: "Mailchimp",
+      description: mailchimp.status === "connected"
+        ? mailchimp.description
+        : "Email marketing, audience sync, and transactional email via Mandrill",
+      href: "/settings/integrations/mailchimp",
+      status: mailchimp.status,
       category: "Email & Marketing",
     },
     {
-      logo: MailchimpLogo,
-      title: "Mailchimp Marketing",
-      description: "Sync contacts with Mailchimp audiences, manage lists, and track campaign engagement",
-      href: "/settings/integrations/mailchimp",
-      status: "not configured",
+      logo: AmazonSESLogo,
+      title: "Amazon SES",
+      description: ses.status === "connected"
+        ? ses.description
+        : "AWS Simple Email Service for high-volume, cost-effective delivery",
+      href: "/settings/integrations/ses",
+      status: ses.status,
+      category: "Email & Marketing",
+    },
+    {
+      logo: SendGridLogo,
+      title: "SendGrid",
+      description: sendgrid.status === "connected"
+        ? sendgrid.description
+        : "Cloud-based email delivery for transactional and marketing emails",
+      href: "/settings/integrations/sendgrid",
+      status: sendgrid.status,
+      category: "Email & Marketing",
+    },
+    {
+      logo: MailgunLogo,
+      title: "Mailgun",
+      description: mailgun.status === "connected"
+        ? mailgun.description
+        : "Powerful email API for sending, receiving, and tracking emails",
+      href: "/settings/integrations/mailgun",
+      status: mailgun.status,
       category: "Email & Marketing",
     },
     {
       logo: StripeLogo,
-      title: "Payment Providers",
-      description: "Accept online donations via Stripe, GoCardless direct debit, and other payment gateways",
+      title: "Stripe",
+      description: "Accept card payments, Apple Pay, and Google Pay for online donations",
       href: "/settings/integrations/payments",
       status: "not configured",
-      category: "Payments & Donations",
+      category: "Payment Providers",
     },
     {
       logo: GoCardlessLogo,
       title: "GoCardless",
-      description: "Set up recurring direct debit donations and standing order collection",
+      description: "Collect recurring donations via Direct Debit",
       href: "/settings/integrations/gocardless",
       status: "not configured",
-      category: "Payments & Donations",
+      category: "Payment Providers",
     },
     {
       logo: JustGivingLogo,
@@ -125,7 +183,7 @@ export default async function IntegrationsPage() {
       {categories.map((category) => (
         <div key={category}>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{category}</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {integrations
               .filter((item) => item.category === category)
               .map((item) => {
@@ -134,13 +192,13 @@ export default async function IntegrationsPage() {
                   <Card key={item.title} className="p-0 hover:bg-gray-50 transition-colors overflow-hidden">
                     <Link href={item.href} className="block p-5">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-3">
                           <Logo className="h-10 w-10 flex-shrink-0" />
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-gray-900">{item.title}</h3>
                               <span
-                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
                                   item.status === "connected"
                                     ? "bg-green-100 text-green-700"
                                     : "bg-gray-100 text-gray-500"
@@ -152,7 +210,7 @@ export default async function IntegrationsPage() {
                             <p className="text-sm text-gray-500 mt-1">{item.description}</p>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                        <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1 ml-2" />
                       </div>
                     </Link>
                   </Card>
