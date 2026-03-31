@@ -149,13 +149,13 @@ export function PLDashboard({
             {margin}% margin
           </p>
         </div>
-        {isCompleted && finalTakings !== null ? (
+        {isCompleted ? (
           <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-            <p className="text-xs font-medium text-purple-700 uppercase">Final Takings</p>
-            <p className="text-2xl font-bold text-purple-800 mt-1">
-              £{finalTakings.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-purple-600 mt-0.5">Event completed</p>
+            <p className="text-xs font-medium text-purple-700 uppercase">Status</p>
+            <p className="text-lg font-bold text-purple-800 mt-1">Completed</p>
+            {finalTakings != null && finalTakings > 0 && (
+              <p className="text-xs text-purple-600 mt-0.5">+£{finalTakings.toLocaleString("en-GB", { minimumFractionDigits: 2 })} additional</p>
+            )}
           </div>
         ) : (
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">

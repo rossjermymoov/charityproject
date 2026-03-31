@@ -11,6 +11,7 @@ import {
   Store,
   Palette,
   ChevronRight,
+  Target,
 } from "lucide-react";
 
 export default async function SettingsPage() {
@@ -22,6 +23,12 @@ export default async function SettingsPage() {
       title: "Financial Year End",
       description: "Set your organisation's financial year end date for reporting and forecasting",
       href: "/settings/financial-year",
+    },
+    {
+      icon: Target,
+      title: "Events Targets",
+      description: "Set annual income, cost budget, and profit targets for your events programme",
+      href: "/settings/events",
     },
     {
       icon: Store,

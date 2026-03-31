@@ -30,6 +30,7 @@ export async function addIncomeLine(formData: FormData) {
   });
 
   revalidatePath(path(eventId));
+  revalidatePath("/events");
 }
 
 export async function updateIncomeLine(formData: FormData) {
@@ -81,6 +82,7 @@ export async function addCostLine(formData: FormData) {
   });
 
   revalidatePath(path(eventId));
+  revalidatePath("/events");
 }
 
 export async function updateCostLine(formData: FormData) {
@@ -144,19 +146,32 @@ export async function completeEvent(formData: FormData) {
   if (!session) redirect("/login");
 
   const eventId = formData.get("eventId") as string;
-  const finalTakings = parseFloat(formData.get("finalTakings") as string) || 0;
+  const additionalIncome = parseFloat(formData.get("additionalIncome") as string) || 0;
   const notes = (formData.get("notes") as string) || null;
+
+  // If additional income was specified, create an income line for it
+  if (additionalIncome > 0) {
+    await prisma.eventIncomeLine.create({
+      data: {
+        eventId,
+        category: "OTHER",
+        label: "Additional Income (at completion)",
+        actual: additionalIncome,
+        estimated: 0,
+      },
+    });
+  }
 
   await prisma.eventFinance.upsert({
     where: { eventId },
     update: {
-      finalTakings,
+      finalTakings: additionalIncome,
       completedAt: new Date(),
       notes,
     },
     create: {
       eventId,
-      finalTakings,
+      finalTakings: additionalIncome,
       completedAt: new Date(),
       notes,
     },
@@ -168,4 +183,5 @@ export async function completeEvent(formData: FormData) {
   });
 
   revalidatePath(path(eventId));
+  revalidatePath("/events");
 }

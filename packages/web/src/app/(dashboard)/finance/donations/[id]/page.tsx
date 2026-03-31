@@ -25,6 +25,7 @@ export default async function DonationDetailPage({
     include: {
       contact: true,
       campaign: true,
+      event: true,
       ledgerCode: true,
       createdBy: true,
     },
@@ -32,18 +33,16 @@ export default async function DonationDetailPage({
 
   if (!donation) notFound();
 
-  const contacts = await prisma.contact.findMany({
-    orderBy: { lastName: "asc" },
-  });
-
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { name: "asc" },
-  });
-
-  const ledgerCodes = await prisma.ledgerCode.findMany({
-    where: { isActive: true },
-    orderBy: { code: "asc" },
-  });
+  const [contacts, campaigns, ledgerCodes, events] = await Promise.all([
+    prisma.contact.findMany({ orderBy: { lastName: "asc" } }),
+    prisma.campaign.findMany({ orderBy: { name: "asc" } }),
+    prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
+    prisma.event.findMany({
+      where: { status: { not: "CANCELLED" } },
+      orderBy: { startDate: "desc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   async function updateDonation(formData: FormData) {
     "use server";
@@ -64,6 +63,7 @@ export default async function DonationDetailPage({
         date: new Date(formData.get("date") as string),
         ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
         campaignId: (formData.get("campaignId") as string) || null,
+        eventId: (formData.get("eventId") as string) || null,
         isGiftAidable,
         notes: (formData.get("notes") as string) || null,
       },
@@ -206,6 +206,19 @@ export default async function DonationDetailPage({
                   </Link>
                 </div>
               )}
+              {donation.event && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Event
+                  </p>
+                  <Link
+                    href={`/events/${donation.event.id}`}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 block"
+                  >
+                    {donation.event.name}
+                  </Link>
+                </div>
+              )}
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Recorded by
@@ -324,16 +337,28 @@ export default async function DonationDetailPage({
               }))}
             />
 
-            <Select
-              label="Campaign"
-              name="campaignId"
-              placeholder="Select campaign (optional)"
-              defaultValue={donation.campaignId || ""}
-              options={campaigns.map((campaign) => ({
-                value: campaign.id,
-                label: campaign.name,
-              }))}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Campaign"
+                name="campaignId"
+                placeholder="Select campaign (optional)"
+                defaultValue={donation.campaignId || ""}
+                options={campaigns.map((campaign) => ({
+                  value: campaign.id,
+                  label: campaign.name,
+                }))}
+              />
+              <Select
+                label="Event"
+                name="eventId"
+                placeholder="Select event (optional)"
+                defaultValue={donation.eventId || ""}
+                options={events.map((event) => ({
+                  value: event.id,
+                  label: event.name,
+                }))}
+              />
+            </div>
 
             <div className="flex items-center gap-3">
               <input

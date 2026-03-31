@@ -368,18 +368,18 @@ export default async function EventFinancePage({
               <CheckCircle2 className="h-5 w-5 text-purple-600" /> Complete Event
             </h2>
             <p className="text-sm text-gray-500 mb-4">
-              Once the event is over, enter the final takings and any notes. This will mark the event as completed.
+              Close out this event. Income and cost lines above are already tracked. If there was any additional income not yet recorded, add it here. You can still add income lines and assign donations after completion.
             </p>
             <form action={completeEvent} className="space-y-4">
               <input type="hidden" name="eventId" value={id} />
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Final Takings (£)"
-                  name="finalTakings"
+                  label="Additional Income (£)"
+                  name="additionalIncome"
                   type="number"
                   step="0.01"
-                  required
-                  placeholder="Total amount raised"
+                  placeholder="0.00"
+                  defaultValue="0"
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Completion Notes</label>
@@ -391,8 +391,11 @@ export default async function EventFinancePage({
                   />
                 </div>
               </div>
+              <div className="p-3 rounded-lg bg-gray-50 text-sm text-gray-600">
+                <p>Current totals — <span className="font-medium text-green-700">Income: £{totalIncome.toFixed(2)}</span> · <span className="font-medium text-red-700">Costs: £{totalCosts.toFixed(2)}</span> · <span className="font-medium text-blue-700">Profit: £{profit.toFixed(2)}</span></p>
+              </div>
               <Button type="submit" className="bg-purple-600 hover:bg-purple-700 gap-1">
-                <CheckCircle2 className="h-4 w-4" /> Complete Event &amp; Record Final Takings
+                <CheckCircle2 className="h-4 w-4" /> Complete Event
               </Button>
             </form>
           </CardContent>
@@ -407,7 +410,9 @@ export default async function EventFinancePage({
               <CheckCircle2 className="h-5 w-5" /> Event Completed
             </h2>
             <div className="mt-3 space-y-2 text-sm">
-              <p><span className="font-medium text-gray-700">Final Takings:</span> £{finance.finalTakings?.toFixed(2)}</p>
+              {finance.finalTakings != null && finance.finalTakings > 0 && (
+                <p><span className="font-medium text-gray-700">Additional Income at Completion:</span> £{finance.finalTakings.toFixed(2)}</p>
+              )}
               {finance.notes && (
                 <p><span className="font-medium text-gray-700">Notes:</span> {finance.notes}</p>
               )}

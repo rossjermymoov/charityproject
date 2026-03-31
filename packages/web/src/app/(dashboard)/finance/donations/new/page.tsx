@@ -12,18 +12,16 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function NewDonationPage() {
-  const contacts = await prisma.contact.findMany({
-    orderBy: { lastName: "asc" },
-  });
-
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { name: "asc" },
-  });
-
-  const ledgerCodes = await prisma.ledgerCode.findMany({
-    where: { isActive: true },
-    orderBy: { code: "asc" },
-  });
+  const [contacts, campaigns, ledgerCodes, events] = await Promise.all([
+    prisma.contact.findMany({ orderBy: { lastName: "asc" } }),
+    prisma.campaign.findMany({ orderBy: { name: "asc" } }),
+    prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
+    prisma.event.findMany({
+      where: { status: { not: "CANCELLED" } },
+      orderBy: { startDate: "desc" },
+      select: { id: true, name: true, startDate: true },
+    }),
+  ]);
 
   async function createDonation(formData: FormData) {
     "use server";
@@ -43,6 +41,7 @@ export default async function NewDonationPage() {
         date: new Date(formData.get("date") as string),
         ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
         campaignId: (formData.get("campaignId") as string) || null,
+        eventId: (formData.get("eventId") as string) || null,
         isGiftAidable,
         notes: (formData.get("notes") as string) || null,
         createdById: session.id,
@@ -136,15 +135,26 @@ export default async function NewDonationPage() {
               }))}
             />
 
-            <Select
-              label="Campaign"
-              name="campaignId"
-              placeholder="Select campaign (optional)"
-              options={campaigns.map((campaign) => ({
-                value: campaign.id,
-                label: campaign.name,
-              }))}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Campaign"
+                name="campaignId"
+                placeholder="Select campaign (optional)"
+                options={campaigns.map((campaign) => ({
+                  value: campaign.id,
+                  label: campaign.name,
+                }))}
+              />
+              <Select
+                label="Event"
+                name="eventId"
+                placeholder="Select event (optional)"
+                options={events.map((event) => ({
+                  value: event.id,
+                  label: event.name,
+                }))}
+              />
+            </div>
 
             <div className="flex items-center gap-3">
               <input

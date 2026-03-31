@@ -16,6 +16,11 @@ model SystemSettings {
   financialYearEndMonth Int      @default(3)  // 1=Jan … 12=Dec, default March (UK charity standard)
   financialYearEndDay   Int      @default(31) // day of month
 
+  // ── Annual events targets ──
+  eventsIncomeTarget Float?  // Annual target income from events e.g. 400000
+  eventsCostBudget   Float?  // Annual predicted cost budget e.g. 250000
+  eventsProfitTarget Float?  // Annual profit target
+
   // ── White-label branding ──
   orgName               String?  // Display name (replaces "CharityOS" in sidebar)
   logoUrl               String?  // URL or /uploads/logo.png path for the logo
