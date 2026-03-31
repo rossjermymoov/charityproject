@@ -205,6 +205,61 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Create / update Event P&L income lines ──────────────
+    // Map form item types to P&L income categories
+    const TYPE_TO_CATEGORY: Record<string, string> = {
+      REGISTRATION_FEE: "REGISTRATION_FEES",
+      MERCHANDISE: "MERCHANDISE",
+      DONATION: "DONATIONS_ON_DAY",
+    };
+
+    // Group line items by category for aggregation
+    const categoryTotals = new Map<string, { category: string; label: string; amount: number }>();
+
+    for (const lineItem of lineItemsData) {
+      const item = itemMap.get(lineItem.itemId);
+      if (!item || lineItem.total <= 0) continue;
+
+      const category = TYPE_TO_CATEGORY[item.type] || "OTHER";
+      const existing = categoryTotals.get(category);
+      if (existing) {
+        existing.amount += lineItem.total;
+      } else {
+        const label =
+          category === "REGISTRATION_FEES"
+            ? "Registration Fees"
+            : category === "MERCHANDISE"
+            ? "Merchandise Sales"
+            : category === "DONATIONS_ON_DAY"
+            ? "Donations"
+            : item.name;
+        categoryTotals.set(category, { category, label, amount: lineItem.total });
+      }
+    }
+
+    // For each category, find existing income line or create one, then add the amount
+    for (const { category, label, amount } of categoryTotals.values()) {
+      const existingLine = await prisma.eventIncomeLine.findFirst({
+        where: { eventId, category },
+      });
+
+      if (existingLine) {
+        await prisma.eventIncomeLine.update({
+          where: { id: existingLine.id },
+          data: { actual: existingLine.actual + amount },
+        });
+      } else {
+        await prisma.eventIncomeLine.create({
+          data: {
+            eventId,
+            category,
+            label,
+            actual: amount,
+          },
+        });
+      }
+    }
+
     // If gift aid declared and no existing declaration, create one
     if (giftAidDeclared && giftAidTotal > 0) {
       const existingGiftAid = await prisma.giftAid.findFirst({
