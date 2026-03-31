@@ -363,6 +363,7 @@ export default async function ContactDetailPage({
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
     VOLUNTEER: "bg-indigo-100 text-indigo-800",
+    SUPPLIER: "bg-orange-100 text-orange-800",
   };
 
   const interactionIcons: Record<string, string> = {
@@ -563,6 +564,16 @@ export default async function ContactDetailPage({
                       className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                     />
                     Donor
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="types"
+                      value="SUPPLIER"
+                      defaultChecked={contact.types.includes("SUPPLIER")}
+                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    Supplier
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-700">
                     <input

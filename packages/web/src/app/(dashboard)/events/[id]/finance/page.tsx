@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Trash2, Target, CheckCircle2, Mail } from "lucide-reac
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { PLDashboard } from "./pl-dashboard";
 import {
   addIncomeLine,
@@ -81,7 +82,7 @@ export default async function EventFinancePage({
       },
     }),
     prisma.contact.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", types: { has: "SUPPLIER" } },
       orderBy: { lastName: "asc" },
       select: { id: true, firstName: true, lastName: true, organisation: { select: { name: true } } },
     }),
@@ -206,15 +207,15 @@ export default async function EventFinancePage({
                 <Input label="Amount (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Contact / Supplier (optional)</label>
-                <select name="contactId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                  <option value="">— None —</option>
-                  {contacts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}{c.organisation ? ` (${c.organisation.name})` : ""}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Supplier (optional)</label>
+                <SearchableSelect
+                  name="contactId"
+                  placeholder="Search suppliers..."
+                  options={contacts.map((c) => ({
+                    value: c.id,
+                    label: `${c.firstName} ${c.lastName}${c.organisation ? ` (${c.organisation.name})` : ""}`,
+                  }))}
+                />
               </div>
               <Button type="submit" size="sm" className="gap-1">
                 <Plus className="h-3 w-3" /> Add Income
@@ -293,15 +294,15 @@ export default async function EventFinancePage({
                 <Input label="Actual (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Contact / Supplier (optional)</label>
-                <select name="contactId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                  <option value="">— None —</option>
-                  {contacts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}{c.organisation ? ` (${c.organisation.name})` : ""}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Supplier (optional)</label>
+                <SearchableSelect
+                  name="contactId"
+                  placeholder="Search suppliers..."
+                  options={contacts.map((c) => ({
+                    value: c.id,
+                    label: `${c.firstName} ${c.lastName}${c.organisation ? ` (${c.organisation.name})` : ""}`,
+                  }))}
+                />
               </div>
               <Button type="submit" size="sm" className="gap-1">
                 <Plus className="h-3 w-3" /> Add Cost

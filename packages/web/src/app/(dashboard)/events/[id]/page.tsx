@@ -2,16 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, FileText, ExternalLink, PoundSterling } from "lucide-react";
+import { ArrowLeft, Trash2, FileText, ExternalLink, PoundSterling, Users, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
-import { Heart } from "lucide-react";
+import { PLDashboard } from "./finance/pl-dashboard";
 
 export default async function EventDetailPage({
   params,
@@ -24,11 +22,10 @@ export default async function EventDetailPage({
     include: {
       campaign: true,
       ledgerCode: true,
-      attendees: {
-        include: { contact: true },
-        orderBy: { createdAt: "desc" },
-      },
-      merchandise: { orderBy: { createdAt: "desc" } },
+      _count: { select: { attendees: true } },
+      incomeLines: { orderBy: { sortOrder: "asc" } },
+      costLines: { orderBy: { sortOrder: "asc" } },
+      finance: true,
       donations: {
         include: { contact: true },
         orderBy: { date: "desc" },
@@ -46,10 +43,14 @@ export default async function EventDetailPage({
 
   if (!event) notFound();
 
-  const contacts = await prisma.contact.findMany({
-    where: { isArchived: false },
-    orderBy: { lastName: "asc" },
-  });
+  // P&L calculations
+  const totalIncome = event.incomeLines.reduce((s, l) => s + l.actual, 0);
+  const totalCosts = event.costLines.reduce((s, l) => s + l.actual, 0);
+  const estimatedCosts = event.costLines.reduce((s, l) => s + l.estimated, 0);
+  const profit = totalIncome - totalCosts;
+  const finance = event.finance;
+  const isCompleted = event.status === "COMPLETED" && !!finance?.completedAt;
+  const totalDonations = event.donations.reduce((sum, d) => sum + d.amount, 0);
 
   const statusColors: Record<string, string> = {
     PLANNED: "bg-gray-100 text-gray-800",
@@ -58,79 +59,6 @@ export default async function EventDetailPage({
     COMPLETED: "bg-green-100 text-green-800",
     CANCELLED: "bg-red-100 text-red-800",
   };
-
-  const attendeeStatusColors: Record<string, string> = {
-    REGISTERED: "bg-blue-100 text-blue-800",
-    CONFIRMED: "bg-green-100 text-green-800",
-    ATTENDED: "bg-green-100 text-green-800",
-    NO_SHOW: "bg-red-100 text-red-800",
-    CANCELLED: "bg-gray-100 text-gray-800",
-  };
-
-  async function addAttendee(formData: FormData) {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    const contactId = formData.get("contactId") as string;
-
-    await prisma.eventAttendee.create({
-      data: {
-        eventId: id,
-        contactId,
-        status: (formData.get("status") as string) || "REGISTERED",
-        ticketType: (formData.get("ticketType") as string) || null,
-      },
-    });
-
-    revalidatePath(`/events/${id}`);
-  }
-
-  async function removeAttendee(formData: FormData) {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    const attendeeId = formData.get("attendeeId") as string;
-
-    await prisma.eventAttendee.delete({
-      where: { id: attendeeId },
-    });
-
-    revalidatePath(`/events/${id}`);
-  }
-
-  async function addMerchandise(formData: FormData) {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    await prisma.eventMerchandise.create({
-      data: {
-        eventId: id,
-        name: formData.get("name") as string,
-        description: (formData.get("description") as string) || null,
-        quantity: formData.get("quantity") ? parseInt(formData.get("quantity") as string) : 0,
-        unitPrice: formData.get("unitPrice") ? parseFloat(formData.get("unitPrice") as string) : null,
-      },
-    });
-
-    revalidatePath(`/events/${id}`);
-  }
-
-  async function removeMerchandise(formData: FormData) {
-    "use server";
-    const session = await getSession();
-    if (!session) redirect("/login");
-
-    const merchandiseId = formData.get("merchandiseId") as string;
-
-    await prisma.eventMerchandise.delete({
-      where: { id: merchandiseId },
-    });
-
-    revalidatePath(`/events/${id}`);
-  }
 
   async function updateStatus(formData: FormData) {
     "use server";
@@ -161,28 +89,21 @@ export default async function EventDetailPage({
     redirect("/events");
   }
 
-  // JustGiving/fundraising pages are now managed from Contact records
-  // Event just shows linked pages via the fundraisingPages relation
-  async function _placeholder() {
-    "use server";
-    // placeholder to maintain function count
-    revalidatePath(`/events/${id}`);
-  }
-
-  const totalMerchandiseRevenue = event.merchandise.reduce((sum, item) => {
-    return sum + (item.quantitySold * (item.unitPrice || 0));
-  }, 0);
-
-  const totalDonations = event.donations.reduce((sum, donation) => sum + donation.amount, 0);
-
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/events" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
         <div className="ml-auto flex items-center gap-2">
+          <Link href={`/events/${id}/attendees`}>
+            <Button variant="outline" size="sm">
+              <Users className="h-4 w-4 mr-2" />
+              Attendees ({event._count.attendees})
+            </Button>
+          </Link>
           <Link href={`/events/${id}/finance`}>
             <Button variant="outline" size="sm">
               <PoundSterling className="h-4 w-4 mr-2" />
@@ -238,9 +159,9 @@ export default async function EventDetailPage({
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Capacity</p>
+                <p className="text-xs text-gray-500 uppercase">Attendees</p>
                 <p className="text-sm font-medium text-gray-900">
-                  {event.capacity ? `${event.attendees.length}/${event.capacity}` : event.attendees.length}
+                  {event.capacity ? `${event._count.attendees}/${event.capacity}` : event._count.attendees}
                 </p>
               </div>
               {event.campaign && (
@@ -282,146 +203,32 @@ export default async function EventDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendees */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">Attendees</h3>
-          </CardHeader>
-          <CardContent>
-            <form action={addAttendee} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <SearchableSelect
-                  name="contactId"
-                  placeholder="Search contacts..."
-                  options={contacts.map((contact) => ({
-                    value: contact.id,
-                    label: `${contact.firstName} ${contact.lastName}`,
-                  }))}
-                  required
-                />
-              </div>
-              <Input
-                label="Ticket Type"
-                name="ticketType"
-                placeholder="e.g., VIP, Standard"
-              />
-              <select
-                name="status"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full"
-              >
-                <option value="REGISTERED">Registered</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="ATTENDED">Attended</option>
-                <option value="NO_SHOW">No Show</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-              <Button type="submit" size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Add Attendee
+      {/* P&L Dashboard */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Profit &amp; Loss</h3>
+            <Link href={`/events/${id}/finance`}>
+              <Button variant="outline" size="sm" className="gap-1">
+                <PoundSterling className="h-4 w-4" /> View Full P&amp;L
               </Button>
-            </form>
-
-            {event.attendees.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No attendees yet</p>
-            ) : (
-              <div className="space-y-2">
-                {event.attendees.map((attendee) => (
-                  <div
-                    key={attendee.id}
-                    className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        {attendee.contact.firstName} {attendee.contact.lastName}
-                      </p>
-                      {attendee.ticketType && (
-                        <p className="text-xs text-gray-500">{attendee.ticketType}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={attendeeStatusColors[attendee.status]}>
-                        {attendee.status}
-                      </Badge>
-                      <form action={removeAttendee}>
-                        <input type="hidden" name="attendeeId" value={attendee.id} />
-                        <button
-                          type="submit"
-                          className="text-gray-400 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Merchandise */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">Merchandise</h3>
-          </CardHeader>
-          <CardContent>
-            <form action={addMerchandise} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-              <Input label="Item Name" name="name" required />
-              <Input
-                label="Quantity"
-                name="quantity"
-                type="number"
-              />
-              <Input
-                label="Unit Price (£)"
-                name="unitPrice"
-                type="number"
-                step="0.01"
-                placeholder="Optional"
-              />
-              <Button type="submit" size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Add Item
-              </Button>
-            </form>
-
-            {event.merchandise.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No merchandise</p>
-            ) : (
-              <div className="space-y-2">
-                {event.merchandise.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {item.quantitySold} sold of {item.quantity}
-                        {item.unitPrice && ` • £${(item.quantitySold * item.unitPrice).toFixed(2)}`}
-                      </p>
-                    </div>
-                    <form action={removeMerchandise}>
-                      <input type="hidden" name="merchandiseId" value={item.id} />
-                      <button
-                        type="submit"
-                        className="text-gray-400 hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </form>
-                  </div>
-                ))}
-                <div className="pt-3 border-t border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
-                    Total Revenue: £{totalMerchandiseRevenue.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <PLDashboard
+            totalIncome={totalIncome}
+            totalCosts={totalCosts}
+            profit={profit}
+            incomeTarget={finance?.incomeTarget || 0}
+            costTarget={finance?.costTarget || 0}
+            profitTarget={finance?.profitTarget || 0}
+            estimatedCosts={estimatedCosts}
+            finalTakings={finance?.finalTakings ?? null}
+            isCompleted={isCompleted}
+          />
+        </CardContent>
+      </Card>
 
       {/* Fundraising Pages linked to this event */}
       {event.fundraisingPages.length > 0 && (

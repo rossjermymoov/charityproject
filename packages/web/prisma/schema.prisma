@@ -161,7 +161,7 @@ model Contact {
   postcode       String?
   country        String?
   type           String   @default("OTHER") // DEPRECATED - use types[] instead
-  types          String[] @default([])      // VOLUNTEER | DONOR (multi-select)
+  types          String[] @default([])      // VOLUNTEER | DONOR | SUPPLIER (multi-select)
   organisationId String?
   customFields   String?  // JSON key-value store for configurable fields
   status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | DECEASED | ANONYMISED
