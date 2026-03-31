@@ -25,10 +25,6 @@ export default async function NewDonationPage() {
     orderBy: { code: "asc" },
   });
 
-  const events = await prisma.event.findMany({
-    orderBy: { startDate: "desc" },
-  });
-
   async function createDonation(formData: FormData) {
     "use server";
     const session = await requireAuth();
@@ -47,7 +43,6 @@ export default async function NewDonationPage() {
         date: new Date(formData.get("date") as string),
         ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
         campaignId: (formData.get("campaignId") as string) || null,
-        eventId: (formData.get("eventId") as string) || null,
         isGiftAidable,
         notes: (formData.get("notes") as string) || null,
         createdById: session.id,
@@ -141,26 +136,15 @@ export default async function NewDonationPage() {
               }))}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Campaign"
-                name="campaignId"
-                placeholder="Select campaign (optional)"
-                options={campaigns.map((campaign) => ({
-                  value: campaign.id,
-                  label: campaign.name,
-                }))}
-              />
-              <Select
-                label="Event"
-                name="eventId"
-                placeholder="Select event (optional)"
-                options={events.map((event) => ({
-                  value: event.id,
-                  label: event.name,
-                }))}
-              />
-            </div>
+            <Select
+              label="Campaign"
+              name="campaignId"
+              placeholder="Select campaign (optional)"
+              options={campaigns.map((campaign) => ({
+                value: campaign.id,
+                label: campaign.name,
+              }))}
+            />
 
             <div className="flex items-center gap-3">
               <input

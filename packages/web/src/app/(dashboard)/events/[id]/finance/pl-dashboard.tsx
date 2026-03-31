@@ -7,7 +7,6 @@ interface Props {
   incomeTarget: number;
   costTarget: number;
   profitTarget: number;
-  estimatedIncome: number;
   estimatedCosts: number;
   finalTakings: number | null;
   isCompleted: boolean;
@@ -114,7 +113,6 @@ export function PLDashboard({
   incomeTarget,
   costTarget,
   profitTarget,
-  estimatedIncome,
   estimatedCosts,
   finalTakings,
   isCompleted,
@@ -130,11 +128,6 @@ export function PLDashboard({
           <p className="text-2xl font-bold text-green-800 mt-1">
             £{totalIncome.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
           </p>
-          {estimatedIncome > 0 && (
-            <p className="text-xs text-green-600 mt-0.5">
-              Est. £{estimatedIncome.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
-            </p>
-          )}
         </div>
         <div className="bg-red-50 rounded-xl p-4 border border-red-200">
           <p className="text-xs font-medium text-red-700 uppercase">Total Costs</p>
@@ -181,12 +174,6 @@ export function PLDashboard({
           <GaugeDial value={profit} target={profitTarget} label="Profit" colour="#2563eb" />
         </div>
       )}
-
-      {/* Stacked Bars — Income */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Income Breakdown</h4>
-        <BarRow label="Total Income" estimated={estimatedIncome} actual={totalIncome} colour="#16a34a" />
-      </div>
 
       {/* Stacked Bars — Costs */}
       <div className="space-y-3">

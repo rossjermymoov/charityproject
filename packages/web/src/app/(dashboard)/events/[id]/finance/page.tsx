@@ -78,7 +78,6 @@ export default async function EventFinancePage({
 
   const totalIncome = event.incomeLines.reduce((s, l) => s + l.actual, 0);
   const totalCosts = event.costLines.reduce((s, l) => s + l.actual, 0);
-  const estimatedIncome = event.incomeLines.reduce((s, l) => s + l.estimated, 0);
   const estimatedCosts = event.costLines.reduce((s, l) => s + l.estimated, 0);
   const profit = totalIncome - totalCosts;
 
@@ -117,7 +116,6 @@ export default async function EventFinancePage({
             incomeTarget={finance?.incomeTarget || 0}
             costTarget={finance?.costTarget || 0}
             profitTarget={finance?.profitTarget || 0}
-            estimatedIncome={estimatedIncome}
             estimatedCosts={estimatedCosts}
             finalTakings={finance?.finalTakings ?? null}
             isCompleted={isCompleted}
@@ -176,20 +174,18 @@ export default async function EventFinancePage({
             {/* Add new */}
             <form action={addIncomeLine} className="space-y-3 pb-4 border-b border-gray-100">
               <input type="hidden" name="eventId" value={id} />
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                  <select name="category" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                    {INCOME_CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <Input label="Label" name="label" required placeholder="e.g. Early Bird Tickets" />
+              <input type="hidden" name="estimated" value="0" />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  {INCOME_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Input label="Estimated (£)" name="estimated" type="number" step="0.01" placeholder="0.00" />
-                <Input label="Actual (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
+                <Input label="Label" name="label" required placeholder="e.g. Early Bird Tickets" />
+                <Input label="Amount (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
               </div>
               <Button type="submit" size="sm" className="gap-1">
                 <Plus className="h-3 w-3" /> Add Income
@@ -202,44 +198,35 @@ export default async function EventFinancePage({
             ) : (
               <div className="space-y-2">
                 {event.incomeLines.map((line) => (
-                  <div key={line.id} className="p-3 border border-gray-100 rounded-lg hover:bg-green-50/50">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{line.label}</p>
-                        <p className="text-xs text-gray-500">
-                          {INCOME_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
-                        </p>
-                      </div>
-                      <form action={removeIncomeLine} className="flex-shrink-0">
-                        <input type="hidden" name="id" value={line.id} />
-                        <input type="hidden" name="eventId" value={id} />
-                        <button type="submit" className="text-gray-400 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </form>
+                  <div key={line.id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-green-50/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{line.label}</p>
+                      <p className="text-xs text-gray-500">
+                        {INCOME_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
+                      </p>
                     </div>
-                    <div className="mt-2 flex items-center gap-3">
-                      <span className="text-xs text-gray-500">
-                        Est: £{line.estimated.toFixed(2)}
-                      </span>
-                      <form action={updateIncomeLine} className="flex items-center gap-2">
-                        <input type="hidden" name="id" value={line.id} />
-                        <input type="hidden" name="eventId" value={id} />
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-green-700">Actual: £</span>
-                          <input
-                            name="actual"
-                            type="number"
-                            step="0.01"
-                            defaultValue={line.actual}
-                            className="w-24 rounded border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </div>
-                        <Button type="submit" size="sm" variant="outline" className="text-xs h-7 px-2">
-                          Update
-                        </Button>
-                      </form>
-                    </div>
+                    <form action={updateIncomeLine} className="flex items-center gap-2 flex-shrink-0">
+                      <input type="hidden" name="id" value={line.id} />
+                      <input type="hidden" name="eventId" value={id} />
+                      <span className="text-xs font-medium text-green-700">£</span>
+                      <input
+                        name="actual"
+                        type="number"
+                        step="0.01"
+                        defaultValue={line.actual}
+                        className="w-24 rounded border border-gray-300 px-2 py-1 text-sm text-right"
+                      />
+                      <Button type="submit" size="sm" variant="outline" className="text-xs h-7 px-2">
+                        Save
+                      </Button>
+                    </form>
+                    <form action={removeIncomeLine} className="flex-shrink-0">
+                      <input type="hidden" name="id" value={line.id} />
+                      <input type="hidden" name="eventId" value={id} />
+                      <button type="submit" className="text-gray-400 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </form>
                   </div>
                 ))}
                 <div className="pt-3 border-t border-gray-200 flex justify-between text-sm font-semibold">
@@ -260,17 +247,15 @@ export default async function EventFinancePage({
             {/* Add new */}
             <form action={addCostLine} className="space-y-3 pb-4 border-b border-gray-100">
               <input type="hidden" name="eventId" value={id} />
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                  <select name="category" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                    {COST_CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <Input label="Label" name="label" required placeholder="e.g. Main Hall Hire" />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  {COST_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
               </div>
+              <Input label="Label" name="label" required placeholder="e.g. Main Hall Hire" />
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Estimated (£)" name="estimated" type="number" step="0.01" placeholder="0.00" />
                 <Input label="Actual (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
@@ -286,44 +271,36 @@ export default async function EventFinancePage({
             ) : (
               <div className="space-y-2">
                 {event.costLines.map((line) => (
-                  <div key={line.id} className="p-3 border border-gray-100 rounded-lg hover:bg-red-50/50">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{line.label}</p>
-                        <p className="text-xs text-gray-500">
-                          {COST_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
-                        </p>
-                      </div>
-                      <form action={removeCostLine} className="flex-shrink-0">
-                        <input type="hidden" name="id" value={line.id} />
-                        <input type="hidden" name="eventId" value={id} />
-                        <button type="submit" className="text-gray-400 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </form>
+                  <div key={line.id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-red-50/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{line.label}</p>
+                      <p className="text-xs text-gray-500">
+                        {COST_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
+                        {line.estimated > 0 && ` • Est: £${line.estimated.toFixed(2)}`}
+                      </p>
                     </div>
-                    <div className="mt-2 flex items-center gap-3">
-                      <span className="text-xs text-gray-500">
-                        Est: £{line.estimated.toFixed(2)}
-                      </span>
-                      <form action={updateCostLine} className="flex items-center gap-2">
-                        <input type="hidden" name="id" value={line.id} />
-                        <input type="hidden" name="eventId" value={id} />
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-red-700">Actual: £</span>
-                          <input
-                            name="actual"
-                            type="number"
-                            step="0.01"
-                            defaultValue={line.actual}
-                            className="w-24 rounded border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </div>
-                        <Button type="submit" size="sm" variant="outline" className="text-xs h-7 px-2">
-                          Update
-                        </Button>
-                      </form>
-                    </div>
+                    <form action={updateCostLine} className="flex items-center gap-2 flex-shrink-0">
+                      <input type="hidden" name="id" value={line.id} />
+                      <input type="hidden" name="eventId" value={id} />
+                      <span className="text-xs font-medium text-red-700">£</span>
+                      <input
+                        name="actual"
+                        type="number"
+                        step="0.01"
+                        defaultValue={line.actual}
+                        className="w-24 rounded border border-gray-300 px-2 py-1 text-sm text-right"
+                      />
+                      <Button type="submit" size="sm" variant="outline" className="text-xs h-7 px-2">
+                        Save
+                      </Button>
+                    </form>
+                    <form action={removeCostLine} className="flex-shrink-0">
+                      <input type="hidden" name="id" value={line.id} />
+                      <input type="hidden" name="eventId" value={id} />
+                      <button type="submit" className="text-gray-400 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </form>
                   </div>
                 ))}
                 <div className="pt-3 border-t border-gray-200 flex justify-between text-sm font-semibold">
