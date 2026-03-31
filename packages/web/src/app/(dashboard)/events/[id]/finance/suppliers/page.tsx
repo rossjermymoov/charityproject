@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Download, Mail, Phone, MapPin, Building2, User2 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ArrowLeft, Download, Mail, Phone, MapPin, Building2, Globe } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { revalidatePath } from "next/cache";
@@ -24,23 +24,33 @@ export default async function EventSuppliersPage({
       name: true,
       startDate: true,
       incomeLines: {
-        where: { contactId: { not: null } },
+        where: { organisationId: { not: null } },
         orderBy: { sortOrder: "asc" },
         include: {
-          contact: {
+          organisation: {
             include: {
-              organisation: true,
+              contacts: {
+                where: { status: "ACTIVE" },
+                take: 3,
+                orderBy: { createdAt: "asc" },
+                select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+              },
             },
           },
         },
       },
       costLines: {
-        where: { contactId: { not: null } },
+        where: { organisationId: { not: null } },
         orderBy: { sortOrder: "asc" },
         include: {
-          contact: {
+          organisation: {
             include: {
-              organisation: true,
+              contacts: {
+                where: { status: "ACTIVE" },
+                take: 3,
+                orderBy: { createdAt: "asc" },
+                select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+              },
             },
           },
         },
@@ -50,51 +60,51 @@ export default async function EventSuppliersPage({
 
   if (!event) notFound();
 
-  // Deduplicate contacts across income and cost lines
-  const contactMap = new Map<string, {
+  // Deduplicate organisations across income and cost lines
+  const orgMap = new Map<string, {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string | null;
+    name: string;
     phone: string | null;
+    email: string | null;
+    website: string | null;
     addressLine1: string | null;
     addressLine2: string | null;
     city: string | null;
     postcode: string | null;
-    organisation: { name: string } | null;
-    lines: { type: "income" | "cost"; label: string; category: string }[];
+    contacts: { id: string; firstName: string; lastName: string; email: string | null; phone: string | null }[];
+    lines: { type: "income" | "cost"; label: string }[];
   }>();
 
   for (const line of event.incomeLines) {
-    if (!line.contact) continue;
-    const existing = contactMap.get(line.contact.id);
-    const lineInfo = { type: "income" as const, label: line.label, category: line.category };
+    if (!line.organisation) continue;
+    const existing = orgMap.get(line.organisation.id);
+    const lineInfo = { type: "income" as const, label: line.label };
     if (existing) {
       existing.lines.push(lineInfo);
     } else {
-      contactMap.set(line.contact.id, {
-        ...line.contact,
+      orgMap.set(line.organisation.id, {
+        ...line.organisation,
         lines: [lineInfo],
       });
     }
   }
 
   for (const line of event.costLines) {
-    if (!line.contact) continue;
-    const existing = contactMap.get(line.contact.id);
-    const lineInfo = { type: "cost" as const, label: line.label, category: line.category };
+    if (!line.organisation) continue;
+    const existing = orgMap.get(line.organisation.id);
+    const lineInfo = { type: "cost" as const, label: line.label };
     if (existing) {
       existing.lines.push(lineInfo);
     } else {
-      contactMap.set(line.contact.id, {
-        ...line.contact,
+      orgMap.set(line.organisation.id, {
+        ...line.organisation,
         lines: [lineInfo],
       });
     }
   }
 
-  const suppliers = Array.from(contactMap.values()).sort((a, b) =>
-    a.lastName.localeCompare(b.lastName)
+  const suppliers = Array.from(orgMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
   );
 
   async function emailSupplierList(formData: FormData) {
@@ -105,7 +115,6 @@ export default async function EventSuppliersPage({
     const emailTo = formData.get("emailTo") as string;
     const eventId = formData.get("eventId") as string;
 
-    // Call the PDF API route to generate and email
     const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
@@ -181,10 +190,10 @@ export default async function EventSuppliersPage({
       {suppliers.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <User2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+            <Building2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">No suppliers assigned yet.</p>
             <p className="text-sm text-gray-400 mt-1">
-              Assign contacts to income or cost lines in the{" "}
+              Assign supplier organisations to income or cost lines in the{" "}
               <Link href={`/events/${id}/finance`} className="text-indigo-600 hover:text-indigo-700">P&amp;L</Link>{" "}
               to see them here.
             </p>
@@ -196,22 +205,12 @@ export default async function EventSuppliersPage({
             <Card key={supplier.id}>
               <CardContent className="pt-5 pb-5">
                 <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <User2 className="h-5 w-5 text-indigo-600" />
+                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 text-orange-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/crm/contacts/${supplier.id}`}
-                      className="text-base font-semibold text-indigo-600 hover:text-indigo-700"
-                    >
-                      {supplier.firstName} {supplier.lastName}
-                    </Link>
-                    {supplier.organisation && (
-                      <p className="text-sm text-gray-600 flex items-center gap-1 mt-0.5">
-                        <Building2 className="h-3.5 w-3.5" /> {supplier.organisation.name}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-sm text-gray-600">
+                    <p className="text-base font-semibold text-gray-900">{supplier.name}</p>
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-sm text-gray-600">
                       {supplier.phone && (
                         <span className="flex items-center gap-1">
                           <Phone className="h-3.5 w-3.5 text-gray-400" />
@@ -224,6 +223,12 @@ export default async function EventSuppliersPage({
                           <a href={`mailto:${supplier.email}`} className="hover:text-gray-900">{supplier.email}</a>
                         </span>
                       )}
+                      {supplier.website && (
+                        <span className="flex items-center gap-1">
+                          <Globe className="h-3.5 w-3.5 text-gray-400" />
+                          <a href={supplier.website} target="_blank" rel="noopener" className="hover:text-gray-900">{supplier.website}</a>
+                        </span>
+                      )}
                       {supplier.addressLine1 && (
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3.5 w-3.5 text-gray-400" />
@@ -231,6 +236,23 @@ export default async function EventSuppliersPage({
                         </span>
                       )}
                     </div>
+
+                    {/* Key contacts at this organisation */}
+                    {supplier.contacts.length > 0 && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        <span className="font-medium text-gray-600">Contacts: </span>
+                        {supplier.contacts.map((c, i) => (
+                          <span key={c.id}>
+                            {i > 0 && ", "}
+                            <Link href={`/crm/contacts/${c.id}`} className="text-indigo-600 hover:text-indigo-700">
+                              {c.firstName} {c.lastName}
+                            </Link>
+                            {c.phone && <span className="text-gray-400"> ({c.phone})</span>}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {supplier.lines.map((l, i) => (
                         <span

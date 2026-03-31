@@ -63,7 +63,7 @@ export default async function EventFinancePage({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [event, contacts] = await Promise.all([
+  const [event, suppliers] = await Promise.all([
     prisma.event.findUnique({
       where: { id },
       select: {
@@ -72,19 +72,19 @@ export default async function EventFinancePage({
         status: true,
         incomeLines: {
           orderBy: { sortOrder: "asc" },
-          include: { contact: { select: { id: true, firstName: true, lastName: true, phone: true, email: true, organisation: { select: { name: true } } } } },
+          include: { organisation: { select: { id: true, name: true } } },
         },
         costLines: {
           orderBy: { sortOrder: "asc" },
-          include: { contact: { select: { id: true, firstName: true, lastName: true, phone: true, email: true, organisation: { select: { name: true } } } } },
+          include: { organisation: { select: { id: true, name: true } } },
         },
         finance: true,
       },
     }),
-    prisma.contact.findMany({
-      where: { status: "ACTIVE", types: { has: "SUPPLIER" } },
-      orderBy: { lastName: "asc" },
-      select: { id: true, firstName: true, lastName: true, organisation: { select: { name: true } } },
+    prisma.organisation.findMany({
+      where: { isSupplier: true, isArchived: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -209,11 +209,11 @@ export default async function EventFinancePage({
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Supplier (optional)</label>
                 <SearchableSelect
-                  name="contactId"
+                  name="organisationId"
                   placeholder="Search suppliers..."
-                  options={contacts.map((c) => ({
-                    value: c.id,
-                    label: `${c.firstName} ${c.lastName}${c.organisation ? ` (${c.organisation.name})` : ""}`,
+                  options={suppliers.map((s) => ({
+                    value: s.id,
+                    label: s.name,
                   }))}
                 />
               </div>
@@ -233,8 +233,8 @@ export default async function EventFinancePage({
                       <p className="text-sm font-medium text-gray-900">{line.label}</p>
                       <p className="text-xs text-gray-500">
                         {INCOME_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
-                        {line.contact && (
-                          <> · <Link href={`/crm/contacts/${line.contact.id}`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.contact.firstName} {line.contact.lastName}{line.contact.organisation ? ` (${line.contact.organisation.name})` : ""}</Link></>
+                        {line.organisation && (
+                          <> · <Link href={`/crm/organisations`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.organisation.name}</Link></>
                         )}
                       </p>
                     </div>
@@ -296,11 +296,11 @@ export default async function EventFinancePage({
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Supplier (optional)</label>
                 <SearchableSelect
-                  name="contactId"
+                  name="organisationId"
                   placeholder="Search suppliers..."
-                  options={contacts.map((c) => ({
-                    value: c.id,
-                    label: `${c.firstName} ${c.lastName}${c.organisation ? ` (${c.organisation.name})` : ""}`,
+                  options={suppliers.map((s) => ({
+                    value: s.id,
+                    label: s.name,
                   }))}
                 />
               </div>
@@ -321,8 +321,8 @@ export default async function EventFinancePage({
                       <p className="text-xs text-gray-500">
                         {COST_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
                         {line.estimated > 0 && ` · Est: £${line.estimated.toFixed(2)}`}
-                        {line.contact && (
-                          <> · <Link href={`/crm/contacts/${line.contact.id}`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.contact.firstName} {line.contact.lastName}{line.contact.organisation ? ` (${line.contact.organisation.name})` : ""}</Link></>
+                        {line.organisation && (
+                          <> · <Link href={`/crm/organisations`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.organisation.name}</Link></>
                         )}
                       </p>
                     </div>

@@ -50,7 +50,6 @@ export default async function ContactsPage({
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
     VOLUNTEER: "bg-indigo-100 text-indigo-800",
-    SUPPLIER: "bg-orange-100 text-orange-800",
   };
 
   return (
@@ -89,7 +88,6 @@ export default async function ContactsPage({
             <option value="">All Types</option>
             <option value="VOLUNTEER">Volunteer</option>
             <option value="DONOR">Donor</option>
-            <option value="SUPPLIER">Supplier</option>
           </select>
           <select
             name="lottery"

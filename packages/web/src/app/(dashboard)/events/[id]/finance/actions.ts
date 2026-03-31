@@ -25,7 +25,7 @@ export async function addIncomeLine(formData: FormData) {
       description: (formData.get("description") as string) || null,
       estimated: parseFloat(formData.get("estimated") as string) || 0,
       actual: parseFloat(formData.get("actual") as string) || 0,
-      contactId: (formData.get("contactId") as string) || null,
+      organisationId: (formData.get("organisationId") as string) || null,
     },
   });
 
@@ -76,7 +76,7 @@ export async function addCostLine(formData: FormData) {
       description: (formData.get("description") as string) || null,
       estimated: parseFloat(formData.get("estimated") as string) || 0,
       actual: parseFloat(formData.get("actual") as string) || 0,
-      contactId: (formData.get("contactId") as string) || null,
+      organisationId: (formData.get("organisationId") as string) || null,
     },
   });
 

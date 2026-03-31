@@ -26,6 +26,9 @@ export default async function OrganisationsPage() {
         name: formData.get("name") as string,
         type: (formData.get("type") as string) || null,
         website: (formData.get("website") as string) || null,
+        phone: (formData.get("phone") as string) || null,
+        email: (formData.get("email") as string) || null,
+        isSupplier: formData.get("isSupplier") === "on",
       },
     });
     revalidatePath("/crm/organisations");
@@ -44,6 +47,9 @@ export default async function OrganisationsPage() {
         name: formData.get("name") as string,
         type: (formData.get("type") as string) || null,
         website: (formData.get("website") as string) || null,
+        phone: (formData.get("phone") as string) || null,
+        email: (formData.get("email") as string) || null,
+        isSupplier: formData.get("isSupplier") === "on",
       },
     });
     revalidatePath("/crm/organisations");
@@ -74,29 +80,39 @@ export default async function OrganisationsPage() {
 
       {/* Quick add form */}
       <Card className="p-4">
-        <form action={createOrg} className="flex items-end gap-3">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input name="name" required placeholder="Organisation name" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <form action={createOrg} className="space-y-3">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input name="name" required placeholder="Organisation name" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select name="type" className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">Select type</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Foundation">Foundation</option>
+                <option value="Government">Government</option>
+                <option value="Charity">Charity</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input name="phone" placeholder="01onal..." className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input name="email" type="email" placeholder="info@..." className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 pb-2">
+              <input type="checkbox" name="isSupplier" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+              Supplier
+            </label>
+            <Button type="submit">
+              <Plus className="h-4 w-4 mr-2" /> Add
+            </Button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select name="type" className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-              <option value="">Select type</option>
-              <option value="Corporate">Corporate</option>
-              <option value="Foundation">Foundation</option>
-              <option value="Government">Government</option>
-              <option value="Charity">Charity</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-            <input name="website" placeholder="https://..." className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <Button type="submit">
-            <Plus className="h-4 w-4 mr-2" /> Add
-          </Button>
         </form>
       </Card>
 
@@ -116,10 +132,17 @@ export default async function OrganisationsPage() {
                     <Building2 className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{org.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{org.name}</h3>
+                      {org.isSupplier && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">Supplier</span>
+                      )}
+                    </div>
                     {org.type && <p className="text-sm text-gray-500">{org.type}</p>}
                     <p className="text-sm text-gray-400 mt-1">
                       {org._count.contacts} contact{org._count.contacts !== 1 ? "s" : ""}
+                      {org.phone && ` · ${org.phone}`}
+                      {org.email && ` · ${org.email}`}
                     </p>
                     {org.website && (
                       <a href={org.website} target="_blank" rel="noopener" className="text-sm text-indigo-600 hover:underline mt-1 block">
@@ -164,6 +187,20 @@ export default async function OrganisationsPage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Website</label>
                       <Input name="website" defaultValue={org.website || ""} placeholder="https://..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                      <Input name="phone" defaultValue={org.phone || ""} placeholder="01onal..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                      <Input name="email" type="email" defaultValue={org.email || ""} placeholder="info@..." />
+                    </div>
+                    <div className="flex items-end pb-2">
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" name="isSupplier" defaultChecked={org.isSupplier} className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+                        Supplier
+                      </label>
                     </div>
                   </div>
                   <Button type="submit" size="sm">Save Changes</Button>

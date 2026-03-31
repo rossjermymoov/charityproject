@@ -161,7 +161,7 @@ model Contact {
   postcode       String?
   country        String?
   type           String   @default("OTHER") // DEPRECATED - use types[] instead
-  types          String[] @default([])      // VOLUNTEER | DONOR | SUPPLIER (multi-select)
+  types          String[] @default([])      // VOLUNTEER | DONOR (multi-select)
   organisationId String?
   customFields   String?  // JSON key-value store for configurable fields
   status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | DECEASED | ANONYMISED
@@ -199,8 +199,6 @@ model Contact {
   memberships    Membership[]
   legacies       Legacy[]
   cases          CaseRecord[]
-  eventIncomeLines EventIncomeLine[] @relation("IncomeLineContact")
-  eventCostLines   EventCostLine[]   @relation("CostLineContact")
 }
 
 model Organisation {
@@ -208,12 +206,15 @@ model Organisation {
   name         String
   type         String?  // Corporate | Foundation | Government | Trust | Other
   website      String?
+  phone        String?
+  email        String?
   addressLine1 String?
   addressLine2 String?
   city         String?
   postcode     String?
   country      String?
   parentId     String?  // FK → Organisation (parent/child hierarchy)
+  isSupplier   Boolean  @default(false)
   isArchived   Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -222,6 +223,8 @@ model Organisation {
   children Organisation[] @relation("OrgHierarchy")
   contacts Contact[]
   grants         Grant[]
+  eventIncomeLines EventIncomeLine[] @relation("IncomeLineOrg")
+  eventCostLines   EventCostLine[]   @relation("CostLineOrg")
 }
 
 model Tag {
@@ -681,43 +684,43 @@ model EventFinance {
 }
 
 model EventIncomeLine {
-  id          String   @id @default(cuid())
-  eventId     String
-  contactId   String?  // Optional link to supplier/contact
-  category    String   // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
-  label       String   // Display label e.g. "Early Bird Tickets"
-  description String?
-  estimated   Float    @default(0) // Budgeted / estimated amount
-  actual      Float    @default(0) // Actual amount received
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  eventId         String
+  organisationId  String?  // Optional link to supplier organisation
+  category        String   // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
+  label           String   // Display label e.g. "Early Bird Tickets"
+  description     String?
+  estimated       Float    @default(0) // Budgeted / estimated amount
+  actual          Float    @default(0) // Actual amount received
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  contact Contact? @relation("IncomeLineContact", fields: [contactId], references: [id], onDelete: SetNull)
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organisation Organisation? @relation("IncomeLineOrg", fields: [organisationId], references: [id], onDelete: SetNull)
 
   @@index([eventId])
-  @@index([contactId])
+  @@index([organisationId])
 }
 
 model EventCostLine {
-  id          String   @id @default(cuid())
-  eventId     String
-  contactId   String?  // Optional link to supplier/contact
-  category    String   // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
-  label       String   // Display label e.g. "Main Hall Hire"
-  description String?
-  estimated   Float    @default(0) // Budgeted / estimated amount
-  actual      Float    @default(0) // Actual amount paid
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  eventId         String
+  organisationId  String?  // Optional link to supplier organisation
+  category        String   // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
+  label           String   // Display label e.g. "Main Hall Hire"
+  description     String?
+  estimated       Float    @default(0) // Budgeted / estimated amount
+  actual          Float    @default(0) // Actual amount paid
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  contact Contact? @relation("CostLineContact", fields: [contactId], references: [id], onDelete: SetNull)
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organisation Organisation? @relation("CostLineOrg", fields: [organisationId], references: [id], onDelete: SetNull)
 
   @@index([eventId])
-  @@index([contactId])
+  @@index([organisationId])
 }
 
 // ============================================

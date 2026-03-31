@@ -6,15 +6,15 @@ import { loadBranding } from "@/lib/branding";
 
 interface SupplierInfo {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string | null;
+  name: string;
   phone: string | null;
+  email: string | null;
+  website: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
   city: string | null;
   postcode: string | null;
-  organisation: { name: string } | null;
+  contacts: { firstName: string; lastName: string; phone: string | null; email: string | null }[];
   lines: { type: "income" | "cost"; label: string }[];
 }
 
@@ -27,47 +27,67 @@ async function getEventSuppliers(eventId: string) {
       startDate: true,
       location: true,
       incomeLines: {
-        where: { contactId: { not: null } },
-        include: { contact: { include: { organisation: true } } },
+        where: { organisationId: { not: null } },
+        include: {
+          organisation: {
+            include: {
+              contacts: {
+                where: { status: "ACTIVE" },
+                take: 3,
+                orderBy: { createdAt: "asc" },
+                select: { firstName: true, lastName: true, phone: true, email: true },
+              },
+            },
+          },
+        },
       },
       costLines: {
-        where: { contactId: { not: null } },
-        include: { contact: { include: { organisation: true } } },
+        where: { organisationId: { not: null } },
+        include: {
+          organisation: {
+            include: {
+              contacts: {
+                where: { status: "ACTIVE" },
+                take: 3,
+                orderBy: { createdAt: "asc" },
+                select: { firstName: true, lastName: true, phone: true, email: true },
+              },
+            },
+          },
+        },
       },
     },
   });
 
   if (!event) return null;
 
-  const contactMap = new Map<string, SupplierInfo>();
+  const orgMap = new Map<string, SupplierInfo>();
 
   for (const line of event.incomeLines) {
-    if (!line.contact) continue;
-    const existing = contactMap.get(line.contact.id);
+    if (!line.organisation) continue;
+    const existing = orgMap.get(line.organisation.id);
     const lineInfo = { type: "income" as const, label: line.label };
     if (existing) {
       existing.lines.push(lineInfo);
     } else {
-      contactMap.set(line.contact.id, { ...line.contact, lines: [lineInfo] });
+      orgMap.set(line.organisation.id, { ...line.organisation, lines: [lineInfo] });
     }
   }
 
   for (const line of event.costLines) {
-    if (!line.contact) continue;
-    const existing = contactMap.get(line.contact.id);
+    if (!line.organisation) continue;
+    const existing = orgMap.get(line.organisation.id);
     const lineInfo = { type: "cost" as const, label: line.label };
     if (existing) {
       existing.lines.push(lineInfo);
     } else {
-      contactMap.set(line.contact.id, { ...line.contact, lines: [lineInfo] });
+      orgMap.set(line.organisation.id, { ...line.organisation, lines: [lineInfo] });
     }
   }
 
   return {
     event,
-    suppliers: Array.from(contactMap.values()).sort((a, b) =>
-      a.lastName.localeCompare(b.lastName)
-    ),
+    suppliers: Array.from(orgMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 
@@ -82,7 +102,7 @@ async function generatePDF(
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const PAGE_W = 595.28; // A4
+  const PAGE_W = 595.28;
   const PAGE_H = 841.89;
   const MARGIN = 50;
   const LINE_HEIGHT = 16;
@@ -103,7 +123,7 @@ async function generatePDF(
     page.drawText(text, { x, y, size: fontSize, font: f, color: colour });
   }
 
-  // ── Header ──────────────────────────────────────────────────
+  // Header
   drawText(orgName, MARGIN, 10, false, rgb(0.4, 0.4, 0.4));
   y -= 24;
   drawText("Supplier Contact Sheet", MARGIN, 20, true);
@@ -117,7 +137,6 @@ async function generatePDF(
   drawText(meta.join("  |  "), MARGIN, 9, false, rgb(0.4, 0.4, 0.4));
   y -= 12;
 
-  // Divider
   page.drawLine({
     start: { x: MARGIN, y },
     end: { x: PAGE_W - MARGIN, y },
@@ -126,26 +145,21 @@ async function generatePDF(
   });
   y -= SECTION_GAP;
 
-  // ── Suppliers ───────────────────────────────────────────────
+  // Suppliers
   for (const supplier of suppliers) {
-    const linesNeeded = 5 * LINE_HEIGHT + SECTION_GAP;
+    const contactLines = supplier.contacts.length;
+    const linesNeeded = (5 + contactLines) * LINE_HEIGHT + SECTION_GAP;
     checkNewPage(linesNeeded);
 
-    // Name
-    const name = `${supplier.firstName} ${supplier.lastName}`;
-    drawText(name, MARGIN, 12, true);
+    // Organisation name
+    drawText(supplier.name, MARGIN, 12, true);
     y -= LINE_HEIGHT;
 
-    // Organisation
-    if (supplier.organisation) {
-      drawText(supplier.organisation.name, MARGIN + 10, 10, false, rgb(0.3, 0.3, 0.3));
-      y -= LINE_HEIGHT;
-    }
-
-    // Contact details
+    // Org contact details
     const details: string[] = [];
     if (supplier.phone) details.push(`Tel: ${supplier.phone}`);
     if (supplier.email) details.push(`Email: ${supplier.email}`);
+    if (supplier.website) details.push(`Web: ${supplier.website}`);
     if (details.length > 0) {
       drawText(details.join("    "), MARGIN + 10, 9, false, rgb(0.25, 0.25, 0.25));
       y -= LINE_HEIGHT;
@@ -158,12 +172,24 @@ async function generatePDF(
       y -= LINE_HEIGHT;
     }
 
-    // Lines they're assigned to
+    // Key contacts
+    if (supplier.contacts.length > 0) {
+      drawText("Key Contacts:", MARGIN + 10, 9, true, rgb(0.3, 0.3, 0.3));
+      y -= LINE_HEIGHT;
+      for (const contact of supplier.contacts) {
+        const cDetails = [`${contact.firstName} ${contact.lastName}`];
+        if (contact.phone) cDetails.push(contact.phone);
+        if (contact.email) cDetails.push(contact.email);
+        drawText(`  • ${cDetails.join("  —  ")}`, MARGIN + 15, 8, false, rgb(0.3, 0.3, 0.3));
+        y -= LINE_HEIGHT * 0.9;
+      }
+    }
+
+    // Lines assigned
     const lineLabels = supplier.lines.map((l) => `${l.label} (${l.type})`).join(", ");
     drawText(`Assigned: ${lineLabels}`, MARGIN + 10, 8, false, rgb(0.5, 0.5, 0.5));
     y -= LINE_HEIGHT;
 
-    // Separator
     y -= 4;
     page.drawLine({
       start: { x: MARGIN, y },
@@ -174,21 +200,18 @@ async function generatePDF(
     y -= SECTION_GAP * 0.5;
   }
 
-  // ── Footer ──────────────────────────────────────────────────
+  // Footer
   y -= 12;
   checkNewPage(30);
   drawText(
     `Generated ${new Date().toLocaleDateString("en-GB")} at ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
-    MARGIN,
-    8,
-    false,
-    rgb(0.6, 0.6, 0.6)
+    MARGIN, 8, false, rgb(0.6, 0.6, 0.6)
   );
 
   return pdfDoc.save();
 }
 
-// ── GET: Download PDF ─────────────────────────────────────────
+// GET: Download PDF
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -220,7 +243,7 @@ export async function GET(
   });
 }
 
-// ── POST: Email PDF ───────────────────────────────────────────
+// POST: Email PDF
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

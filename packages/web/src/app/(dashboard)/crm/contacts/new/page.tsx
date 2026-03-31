@@ -106,15 +106,6 @@ export default async function NewContactPage() {
                   />
                   Donor
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="types"
-                    value="SUPPLIER"
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  Supplier
-                </label>
               </div>
             </div>
 
