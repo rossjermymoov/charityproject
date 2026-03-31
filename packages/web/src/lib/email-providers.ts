@@ -11,11 +11,18 @@ import sgMail from "@sendgrid/mail";
  * in the database (backwards compatibility).
  */
 
-interface EmailOptions {
+export interface EmailAttachment {
+  content: string;  // base64-encoded content
+  filename: string;
+  type: string;     // MIME type e.g. "application/pdf"
+}
+
+export interface EmailOptions {
   to: string | string[];
   subject: string;
   html: string;
   text?: string;
+  attachments?: EmailAttachment[];
 }
 
 interface TestResult {
@@ -143,6 +150,14 @@ async function sendViaSendGrid(
         subject: options.subject,
         html: options.html,
         text: options.text || stripHtml(options.html),
+        ...(options.attachments?.length ? {
+          attachments: options.attachments.map((a) => ({
+            content: a.content,
+            filename: a.filename,
+            type: a.type,
+            disposition: "attachment" as const,
+          })),
+        } : {}),
       });
     }
 
@@ -315,7 +330,7 @@ async function sendViaMailchimp(
   try {
     const recipients = Array.isArray(options.to) ? options.to : [options.to];
 
-    const message = {
+    const message: Record<string, unknown> = {
       html: options.html,
       text: options.text || stripHtml(options.html),
       subject: options.subject,
@@ -323,6 +338,14 @@ async function sendViaMailchimp(
       from_name: provider.fromName,
       to: recipients.map((email) => ({ email, type: "to" as const })),
     };
+
+    if (options.attachments?.length) {
+      message.attachments = options.attachments.map((a) => ({
+        type: a.type,
+        name: a.filename,
+        content: a.content,
+      }));
+    }
 
     const res = await fetch("https://mandrillapp.com/api/1.0/messages/send", {
       method: "POST",

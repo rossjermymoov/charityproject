@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Target, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Target, CheckCircle2, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,17 +62,30 @@ export default async function EventFinancePage({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const event = await prisma.event.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      status: true,
-      incomeLines: { orderBy: { sortOrder: "asc" } },
-      costLines: { orderBy: { sortOrder: "asc" } },
-      finance: true,
-    },
-  });
+  const [event, contacts] = await Promise.all([
+    prisma.event.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        incomeLines: {
+          orderBy: { sortOrder: "asc" },
+          include: { contact: { select: { id: true, firstName: true, lastName: true, phone: true, email: true, organisation: { select: { name: true } } } } },
+        },
+        costLines: {
+          orderBy: { sortOrder: "asc" },
+          include: { contact: { select: { id: true, firstName: true, lastName: true, phone: true, email: true, organisation: { select: { name: true } } } } },
+        },
+        finance: true,
+      },
+    }),
+    prisma.contact.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { lastName: "asc" },
+      select: { id: true, firstName: true, lastName: true, organisation: { select: { name: true } } },
+    }),
+  ]);
 
   if (!event) notFound();
 
@@ -99,10 +112,15 @@ export default async function EventFinancePage({
           <Link href={`/events/${id}`} className="text-gray-400 hover:text-gray-600">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">Profit &amp; Loss</h1>
             <p className="text-gray-500 mt-1">{event.name}</p>
           </div>
+          <Link href={`/events/${id}/finance/suppliers`}>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Mail className="h-4 w-4" /> Email Supplier List
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -187,6 +205,17 @@ export default async function EventFinancePage({
                 <Input label="Label" name="label" required placeholder="e.g. Early Bird Tickets" />
                 <Input label="Amount (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Contact / Supplier (optional)</label>
+                <select name="contactId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  <option value="">— None —</option>
+                  {contacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}{c.organisation ? ` (${c.organisation.name})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" size="sm" className="gap-1">
                 <Plus className="h-3 w-3" /> Add Income
               </Button>
@@ -203,6 +232,9 @@ export default async function EventFinancePage({
                       <p className="text-sm font-medium text-gray-900">{line.label}</p>
                       <p className="text-xs text-gray-500">
                         {INCOME_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
+                        {line.contact && (
+                          <> · <Link href={`/crm/contacts/${line.contact.id}`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.contact.firstName} {line.contact.lastName}{line.contact.organisation ? ` (${line.contact.organisation.name})` : ""}</Link></>
+                        )}
                       </p>
                     </div>
                     <form action={updateIncomeLine} className="flex items-center gap-2 flex-shrink-0">
@@ -260,6 +292,17 @@ export default async function EventFinancePage({
                 <Input label="Estimated (£)" name="estimated" type="number" step="0.01" placeholder="0.00" />
                 <Input label="Actual (£)" name="actual" type="number" step="0.01" placeholder="0.00" />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Contact / Supplier (optional)</label>
+                <select name="contactId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  <option value="">— None —</option>
+                  {contacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}{c.organisation ? ` (${c.organisation.name})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" size="sm" className="gap-1">
                 <Plus className="h-3 w-3" /> Add Cost
               </Button>
@@ -276,7 +319,10 @@ export default async function EventFinancePage({
                       <p className="text-sm font-medium text-gray-900">{line.label}</p>
                       <p className="text-xs text-gray-500">
                         {COST_CATEGORIES.find((c) => c.value === line.category)?.label || line.category}
-                        {line.estimated > 0 && ` • Est: £${line.estimated.toFixed(2)}`}
+                        {line.estimated > 0 && ` · Est: £${line.estimated.toFixed(2)}`}
+                        {line.contact && (
+                          <> · <Link href={`/crm/contacts/${line.contact.id}`} className="text-indigo-600 hover:text-indigo-700 font-medium">{line.contact.firstName} {line.contact.lastName}{line.contact.organisation ? ` (${line.contact.organisation.name})` : ""}</Link></>
+                        )}
                       </p>
                     </div>
                     <form action={updateCostLine} className="flex items-center gap-2 flex-shrink-0">

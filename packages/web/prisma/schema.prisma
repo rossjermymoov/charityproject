@@ -199,6 +199,8 @@ model Contact {
   memberships    Membership[]
   legacies       Legacy[]
   cases          CaseRecord[]
+  eventIncomeLines EventIncomeLine[] @relation("IncomeLineContact")
+  eventCostLines   EventCostLine[]   @relation("CostLineContact")
 }
 
 model Organisation {
@@ -681,6 +683,7 @@ model EventFinance {
 model EventIncomeLine {
   id          String   @id @default(cuid())
   eventId     String
+  contactId   String?  // Optional link to supplier/contact
   category    String   // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
   label       String   // Display label e.g. "Early Bird Tickets"
   description String?
@@ -690,14 +693,17 @@ model EventIncomeLine {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact Contact? @relation("IncomeLineContact", fields: [contactId], references: [id], onDelete: SetNull)
 
   @@index([eventId])
+  @@index([contactId])
 }
 
 model EventCostLine {
   id          String   @id @default(cuid())
   eventId     String
+  contactId   String?  // Optional link to supplier/contact
   category    String   // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
   label       String   // Display label e.g. "Main Hall Hire"
   description String?
@@ -707,9 +713,11 @@ model EventCostLine {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact Contact? @relation("CostLineContact", fields: [contactId], references: [id], onDelete: SetNull)
 
   @@index([eventId])
+  @@index([contactId])
 }
 
 // ============================================
