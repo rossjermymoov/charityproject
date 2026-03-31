@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, FileText, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, FileText, ExternalLink, PoundSterling } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,6 +183,12 @@ export default async function EventDetailPage({
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
         <div className="ml-auto flex items-center gap-2">
+          <Link href={`/events/${id}/finance`}>
+            <Button variant="outline" size="sm">
+              <PoundSterling className="h-4 w-4 mr-2" />
+              P&amp;L
+            </Button>
+          </Link>
           <Link href={`/events/${id}/registration`}>
             <Button variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />

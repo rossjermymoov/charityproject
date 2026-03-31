@@ -654,6 +654,62 @@ model Event {
   registrationForm EventRegistrationForm?
   orders           EventOrder[]
   fundraisingPages FundraisingPage[]
+  incomeLines      EventIncomeLine[]
+  costLines        EventCostLine[]
+  finance          EventFinance?
+}
+
+// ============================================
+// EVENT P&L / FINANCE
+// ============================================
+
+model EventFinance {
+  id              String   @id @default(cuid())
+  eventId         String   @unique
+  incomeTarget    Float    @default(0) // Target total income (£)
+  costTarget      Float    @default(0) // Target total costs (£)
+  profitTarget    Float    @default(0) // Target profit (£)
+  finalTakings    Float?   // Final total after event completion
+  completedAt     DateTime?
+  notes           String?  // Completion notes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventIncomeLine {
+  id          String   @id @default(cuid())
+  eventId     String
+  category    String   // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
+  label       String   // Display label e.g. "Early Bird Tickets"
+  description String?
+  estimated   Float    @default(0) // Budgeted / estimated amount
+  actual      Float    @default(0) // Actual amount received
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventCostLine {
+  id          String   @id @default(cuid())
+  eventId     String
+  category    String   // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
+  label       String   // Display label e.g. "Main Hall Hire"
+  description String?
+  estimated   Float    @default(0) // Budgeted / estimated amount
+  actual      Float    @default(0) // Actual amount paid
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
 
 // ============================================
