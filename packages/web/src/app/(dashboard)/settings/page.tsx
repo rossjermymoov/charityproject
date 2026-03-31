@@ -9,6 +9,7 @@ import {
   Users,
   Calendar,
   Store,
+  Palette,
   ChevronRight,
 } from "lucide-react";
 
@@ -27,6 +28,12 @@ export default async function SettingsPage() {
       title: "Shops & Locations",
       description: "Manage shop locations and generate QR codes for Retail Gift Aid",
       href: "/settings/shops",
+    },
+    {
+      icon: Palette,
+      title: "Branding",
+      description: "White-label the system with your logo, colours, and organisation name",
+      href: "/settings/branding",
     },
     {
       icon: Shield,

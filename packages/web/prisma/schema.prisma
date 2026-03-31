@@ -15,6 +15,14 @@ model SystemSettings {
   id                    String   @id @default("default")
   financialYearEndMonth Int      @default(3)  // 1=Jan … 12=Dec, default March (UK charity standard)
   financialYearEndDay   Int      @default(31) // day of month
+
+  // ── White-label branding ──
+  orgName               String?  // Display name (replaces "CharityOS" in sidebar)
+  logoUrl               String?  // URL or /uploads/logo.png path for the logo
+  primaryColour         String   @default("#4f46e5") // Brand colour (hex) — buttons, links, accents
+  sidebarColour         String   @default("#111827") // Sidebar background colour (hex)
+  sidebarTextColour     String   @default("#d1d5db") // Sidebar text colour (hex)
+
   updatedAt             DateTime @updatedAt
 }
 

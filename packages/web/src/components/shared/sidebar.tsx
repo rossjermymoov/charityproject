@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useBranding } from "@/components/shared/branding-provider";
 import {
   Users,
   Building2,
@@ -180,6 +181,7 @@ function isSectionActive(section: NavSection, pathname: string) {
 
 export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
   const pathname = usePathname();
+  const branding = useBranding();
 
   const filteredSections = sections.filter((section) =>
     section.roles.includes(userRole)
@@ -197,15 +199,31 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
     setOpen((prev) => ({ ...prev, [label]: !prev[label] }));
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900">
+    <div
+      className="flex h-full w-64 flex-col"
+      style={{ backgroundColor: branding.sidebarColour }}
+    >
       {/* Logo */}
       <div className="flex h-16 items-center px-6">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CO</span>
-          </div>
-          <span className="text-white font-semibold text-lg">CharityOS</span>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          {branding.logoUrl ? (
+            <img
+              src={branding.logoUrl}
+              alt={branding.orgName}
+              className="h-8 w-8 rounded-lg object-contain"
+            />
+          ) : (
+            <div
+              className="h-8 w-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: branding.primaryColour }}
+            >
+              <span className="text-white font-bold text-sm">
+                {branding.orgName.substring(0, 2).toUpperCase()}
+              </span>
+            </div>
+          )}
+          <span className="text-white font-semibold text-lg">{branding.orgName}</span>
+        </Link>
       </div>
 
       {/* Collapsible sections */}
@@ -218,12 +236,16 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
             <div key={section.label}>
               <button
                 onClick={() => toggle(section.label)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "text-white"
-                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                )}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                style={{
+                  color: active ? "#ffffff" : branding.sidebarTextColour,
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.opacity = "0.85";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
               >
                 <section.icon className="h-4 w-4 flex-shrink-0" />
                 <span className="flex-1 text-left text-xs font-semibold uppercase tracking-wider">
@@ -238,19 +260,33 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
               </button>
 
               {isOpen && (
-                <div className="ml-2 mt-0.5 space-y-0.5 border-l border-gray-700 pl-2 mb-1">
+                <div
+                  className="ml-2 mt-0.5 space-y-0.5 pl-2 mb-1"
+                  style={{ borderLeft: `1px solid ${branding.sidebarTextColour}40` }}
+                >
                   {section.items.map((item) => {
                     const itemActive = isItemActive(item.href, pathname);
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                          itemActive
-                            ? "bg-gray-800 text-white"
-                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                        )}
+                        className="flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+                        style={{
+                          backgroundColor: itemActive ? `${branding.primaryColour}30` : "transparent",
+                          color: itemActive ? "#ffffff" : branding.sidebarTextColour,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!itemActive) {
+                            e.currentTarget.style.backgroundColor = `${branding.primaryColour}20`;
+                            e.currentTarget.style.color = "#ffffff";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!itemActive) {
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.color = branding.sidebarTextColour;
+                          }
+                        }}
                       >
                         <item.icon className="h-4 w-4 flex-shrink-0" />
                         {item.name}
@@ -265,11 +301,12 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-700 p-3 space-y-1">
+      <div className="p-3 space-y-1" style={{ borderTop: `1px solid ${branding.sidebarTextColour}30` }}>
         {userRole === "ADMIN" && (
           <Link
             href="/settings/users"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+            style={{ color: branding.sidebarTextColour }}
           >
             <UserCog className="h-5 w-5" />
             User Management
@@ -278,7 +315,8 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
         {["ADMIN", "STAFF"].includes(userRole) && (
           <Link
             href="/settings"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+            style={{ color: branding.sidebarTextColour }}
           >
             <Settings className="h-5 w-5" />
             Settings
@@ -287,7 +325,8 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+            style={{ color: branding.sidebarTextColour }}
           >
             <LogOut className="h-5 w-5" />
             Sign Out
