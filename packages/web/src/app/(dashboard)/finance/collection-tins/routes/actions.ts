@@ -209,6 +209,7 @@ export async function processReturn(formData: FormData) {
   const tinNumber = (formData.get("tinNumber") as string)?.trim();
   const amount = parseFloat(formData.get("amount") as string) || 0;
   const notes = (formData.get("notes") as string) || null;
+  const explicitRouteId = (formData.get("routeId") as string) || null;
 
   if (!tinNumber) return;
 
@@ -231,11 +232,13 @@ export async function processReturn(formData: FormData) {
 
   const now = new Date();
 
+  const resolvedRouteId = explicitRouteId || routeStop?.routeId || null;
+
   // Create TinReturn record
   await prisma.tinReturn.create({
     data: {
       tinId: tin.id,
-      routeId: routeStop?.routeId || null,
+      routeId: resolvedRouteId,
       amount,
       countedById: session.id,
       returnedAt: now,
@@ -270,7 +273,10 @@ export async function processReturn(formData: FormData) {
     details: { action: "RETURN_PROCESS", amount, tinNumber },
   });
 
-  revalidatePath("/finance/collection-tins/routes/returns");
+  revalidatePath("/finance/collection-tins/routes/count");
+  if (resolvedRouteId) {
+    revalidatePath(`/finance/collection-tins/routes/count/${resolvedRouteId}`);
+  }
   revalidatePath("/finance/collection-tins");
 }
 

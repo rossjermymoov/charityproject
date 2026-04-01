@@ -113,6 +113,14 @@ export default async function RouteDetailPage({
               </Button>
             </Link>
           )}
+          {route.status === "COMPLETED" && (
+            <Link href={`/finance/collection-tins/routes/count/${route.id}`}>
+              <Button>
+                <Package className="h-4 w-4 mr-2" />
+                Count Tins
+              </Button>
+            </Link>
+          )}
           {route.status === "IN_PROGRESS" && (
             <form action={completeRoute}>
               <input type="hidden" name="routeId" value={route.id} />
@@ -122,7 +130,7 @@ export default async function RouteDetailPage({
               </Button>
             </form>
           )}
-          {route.status === "DRAFT" && (
+          {(route.status === "DRAFT" || route.status === "READY" || route.status === "COMPLETED" || route.status === "ARCHIVED") && (
             <form action={deleteRoute}>
               <input type="hidden" name="routeId" value={route.id} />
               <ConfirmButton
