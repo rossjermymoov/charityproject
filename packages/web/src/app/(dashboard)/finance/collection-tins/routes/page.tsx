@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, Route, MapPin, Calendar, User, ArrowRight } from "lucide-react";
+import { Plus, Search, Route, MapPin, Calendar, User, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -55,6 +55,12 @@ export default async function RoutesPage({
             <Button variant="outline">
               <ArrowRight className="h-4 w-4 mr-2" />
               Process Returns
+            </Button>
+          </Link>
+          <Link href="/finance/collection-tins/routes/suggest">
+            <Button variant="outline">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Suggest Route
             </Button>
           </Link>
           <Link href="/finance/collection-tins/routes/new">
