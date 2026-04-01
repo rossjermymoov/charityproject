@@ -7,14 +7,14 @@ import { geocodeAddress } from "@/lib/geocode";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-// Haversine distance in km
+// Haversine distance in miles
 function haversine(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371; // Earth's radius in km
+  const R = 3959; // Earth's radius in miles
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -33,8 +33,8 @@ export type SuggestedStop = {
   type: string;
   lat: number;
   lng: number;
-  distanceFromPrev: number; // km from previous stop
-  totalDistance: number; // cumulative km
+  distanceFromPrev: number; // miles from previous stop
+  totalDistance: number; // cumulative miles
   avgCollected: number; // avg £ per collection
   daysSinceLastCollection: number;
   deployedTins: number;
@@ -45,7 +45,7 @@ export type SuggestedStop = {
 
 export type SuggestedRoute = {
   stops: SuggestedStop[];
-  totalDistanceKm: number;
+  totalDistanceMiles: number;
   estimatedTimeMinutes: number;
   estimatedTotalCollection: number;
   startLat: number;
@@ -149,7 +149,7 @@ export async function suggestRoute(formData: FormData): Promise<SuggestedRoute |
   // 4. Nearest-neighbour route building with time budget
   const availableMinutes = availableHours * 60;
   const MINUTES_PER_STOP = 5; // time to swap a tin
-  const MINUTES_PER_KM = 2; // rough driving estimate (30 km/h avg in town)
+  const MINUTES_PER_MILE = 3; // rough driving estimate (~20 mph avg in town)
 
   const unvisited = [...locationData];
   const route: SuggestedStop[] = [];
@@ -180,7 +180,7 @@ export async function suggestRoute(formData: FormData): Promise<SuggestedRoute |
 
     // Check if adding this stop would exceed time budget
     const timeForThisStop =
-      MINUTES_PER_STOP + nearestDist * MINUTES_PER_KM;
+      MINUTES_PER_STOP + nearestDist * MINUTES_PER_MILE;
     // Also need to account for return journey
     const returnDistance = haversine(
       unvisited[nearestIdx].lat,
@@ -188,7 +188,7 @@ export async function suggestRoute(formData: FormData): Promise<SuggestedRoute |
       startCoords.lat,
       startCoords.lng
     );
-    const returnTime = returnDistance * MINUTES_PER_KM;
+    const returnTime = returnDistance * MINUTES_PER_MILE;
 
     if (
       totalTime + timeForThisStop + returnTime > availableMinutes &&
@@ -233,12 +233,12 @@ export async function suggestRoute(formData: FormData): Promise<SuggestedRoute |
       startCoords.lng
     );
     totalDistance += returnDist;
-    totalTime += returnDist * MINUTES_PER_KM;
+    totalTime += returnDist * MINUTES_PER_MILE;
   }
 
   return {
     stops: route,
-    totalDistanceKm: Math.round(totalDistance * 10) / 10,
+    totalDistanceMiles: Math.round(totalDistance * 10) / 10,
     estimatedTimeMinutes: Math.round(totalTime),
     estimatedTotalCollection: route.reduce((sum, s) => sum + s.avgCollected, 0),
     startLat: startCoords.lat,

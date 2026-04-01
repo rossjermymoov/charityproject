@@ -69,7 +69,7 @@ export function SuggestRouteClient({
       formData.set("name", routeName);
       formData.set(
         "description",
-        `Auto-suggested from ${suggestion.startPostcode}. ${suggestion.stops.length} stops, ~${suggestion.totalDistanceKm}km, ~${Math.round((suggestion.estimatedTimeMinutes / 60) * 10) / 10}hrs`
+        `Auto-suggested from ${suggestion.startPostcode}. ${suggestion.stops.length} stops, ~${suggestion.totalDistanceMiles} miles, ~${Math.round((suggestion.estimatedTimeMinutes / 60) * 10) / 10}hrs`
       );
       formData.set("tinCount", suggestion.stops.length.toString());
       formData.set("scheduledDate", scheduledDate);
@@ -109,7 +109,7 @@ export function SuggestRouteClient({
           info: [
             stop.address,
             stop.postcode,
-            `${stop.distanceFromPrev.toFixed(1)}km from prev`,
+            `${stop.distanceFromPrev.toFixed(1)} mi from prev`,
             stop.avgCollected > 0
               ? `Avg: £${stop.avgCollected.toFixed(2)}`
               : null,
@@ -240,7 +240,7 @@ export function SuggestRouteClient({
                 <Route className="h-4 w-4" />
                 <span className="text-sm">Distance</span>
               </div>
-              <p className="text-2xl font-bold">{suggestion.totalDistanceKm} km</p>
+              <p className="text-2xl font-bold">{suggestion.totalDistanceMiles} mi</p>
               <p className="text-xs text-gray-400">including return</p>
             </div>
             <div className="bg-white rounded-xl border p-4">
@@ -305,7 +305,7 @@ export function SuggestRouteClient({
                   </div>
                   <div className="text-right text-sm flex-shrink-0 space-y-0.5">
                     <p className="text-gray-500">
-                      {stop.distanceFromPrev.toFixed(1)} km
+                      {stop.distanceFromPrev.toFixed(1)} mi
                     </p>
                     {stop.avgCollected > 0 && (
                       <p className="text-green-600 font-medium">
