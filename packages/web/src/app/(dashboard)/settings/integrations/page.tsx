@@ -71,6 +71,26 @@ function JustGivingLogo({ className }: { className?: string }) {
   );
 }
 
+function HMRCLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#003078" />
+      <path d="M24 10l-2 6h-6l5 3.5-2 6 5-3.5 5 3.5-2-6 5-3.5h-6z" fill="#fff" />
+      <text x="24" y="38" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#fff">HMRC</text>
+    </svg>
+  );
+}
+
+function SageIntacctLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#00DC82" />
+      <text x="24" y="28" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#fff">sage</text>
+      <text x="24" y="38" textAnchor="middle" fontSize="7" fill="#fff">intacct</text>
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default async function IntegrationsPage() {
@@ -161,6 +181,22 @@ export default async function IntegrationsPage() {
       href: "/settings/integrations/justgiving",
       status: "not configured",
       category: "Fundraising",
+    },
+    {
+      logo: HMRCLogo,
+      title: "HMRC Gift Aid",
+      description: "Submit Gift Aid claims directly to HMRC Charities Online and track status",
+      href: "/settings/integrations/hmrc",
+      status: "not configured",
+      category: "Tax & Compliance",
+    },
+    {
+      logo: SageIntacctLogo,
+      title: "Sage Intacct",
+      description: "Cloud accounting integration for syncing donations to GL and managing finances",
+      href: "/settings/integrations/sage-intacct",
+      status: "not configured",
+      category: "Accounting & Finance",
     },
   ];
 

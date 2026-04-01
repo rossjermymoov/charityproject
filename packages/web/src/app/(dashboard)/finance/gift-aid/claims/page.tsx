@@ -1,55 +1,39 @@
+import { requireAuth } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { Plus, FileCheck, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import Link from "next/link";
+import { Plus, FileText } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
-export default async function GiftAidClaimsPage() {
+export default async function GiftAidClaimsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  await requireAuth();
+  const params = await searchParams;
+  const statusFilter = params.status || "";
+
   const claims = await prisma.giftAidClaim.findMany({
+    where: statusFilter ? { status: statusFilter } : {},
     include: {
       items: true,
-      createdBy: true,
+      createdBy: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Calculate stats
-  const stats = {
-    totalClaimed: claims.reduce((sum, claim) => sum + claim.totalClaimable, 0),
-    pendingClaims: claims.filter((c) => c.status === "SUBMITTED").length,
-    acceptedValue: claims
-      .filter((c) => c.status === "ACCEPTED" || c.status === "PARTIAL")
-      .reduce((sum, claim) => {
-        if (claim.status === "ACCEPTED") {
-          return sum + claim.totalClaimable;
-        } else if (claim.status === "PARTIAL" && claim.amountReceived) {
-          return sum + claim.amountReceived;
-        }
-        return sum;
-      }, 0),
-    successRate:
-      claims.length > 0
-        ? ((claims.filter((c) => c.status === "ACCEPTED" || c.status === "PARTIAL").length / claims.length) * 100).toFixed(1)
-        : 0,
-  };
-
   const statusColors: Record<string, string> = {
     DRAFT: "bg-gray-100 text-gray-800",
-    SUBMITTED: "bg-blue-100 text-blue-800",
+    READY: "bg-blue-100 text-blue-800",
+    SUBMITTED: "bg-yellow-100 text-yellow-800",
     ACCEPTED: "bg-green-100 text-green-800",
     REJECTED: "bg-red-100 text-red-800",
-    PARTIAL: "bg-yellow-100 text-yellow-800",
-  };
-
-  const statusIcons: Record<string, React.ComponentType<{ className: string }>> = {
-    DRAFT: AlertCircle,
-    SUBMITTED: FileCheck,
-    ACCEPTED: CheckCircle,
-    REJECTED: XCircle,
-    PARTIAL: AlertCircle,
+    PARTIAL: "bg-orange-100 text-orange-800",
   };
 
   return (
@@ -57,59 +41,67 @@ export default async function GiftAidClaimsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+            <Link href="/finance" className="hover:text-gray-700">
+              Finance
+            </Link>
+            <span>/</span>
+            <Link href="/finance/gift-aid" className="hover:text-gray-700">
+              Gift Aid
+            </Link>
+            <span>/</span>
+            <span>Claims</span>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">Gift Aid Claims</h1>
-          <p className="text-gray-500 mt-1">Manage and track Gift Aid claims to HMRC</p>
+          <p className="text-gray-500 mt-1">
+            Create and manage Gift Aid claims to submit to HMRC
+          </p>
         </div>
         <Link href="/finance/gift-aid/claims/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Claim
+          <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1">
+            <Plus className="h-4 w-4" /> New Claim
           </Button>
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500 mb-2">Total Claimed</div>
-            <div className="text-2xl font-bold text-gray-900">£{stats.totalClaimed.toFixed(2)}</div>
-            <div className="text-xs text-gray-500 mt-2">{claims.length} claims</div>
-          </CardContent>
+      {/* Status Filter */}
+      {claims.length > 0 && (
+        <Card className="p-4">
+          <form className="flex gap-2 flex-wrap">
+            <Button
+              type="submit"
+              name="status"
+              value=""
+              variant={!statusFilter ? "default" : "outline"}
+              size="sm"
+            >
+              All Claims
+            </Button>
+            {(["DRAFT", "READY", "SUBMITTED", "ACCEPTED", "REJECTED", "PARTIAL"] as const).map(
+              (status) => (
+                <Button
+                  key={status}
+                  type="submit"
+                  name="status"
+                  value={status}
+                  variant={statusFilter === status ? "default" : "outline"}
+                  size="sm"
+                >
+                  {status}
+                </Button>
+              )
+            )}
+          </form>
         </Card>
+      )}
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500 mb-2">Pending Claims</div>
-            <div className="text-2xl font-bold text-blue-600">{stats.pendingClaims}</div>
-            <div className="text-xs text-gray-500 mt-2">Awaiting HMRC response</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500 mb-2">Accepted Value</div>
-            <div className="text-2xl font-bold text-green-600">£{stats.acceptedValue.toFixed(2)}</div>
-            <div className="text-xs text-gray-500 mt-2">Received or partial</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500 mb-2">Success Rate</div>
-            <div className="text-2xl font-bold text-indigo-600">{stats.successRate}%</div>
-            <div className="text-xs text-gray-500 mt-2">Accepted claims</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Claims Table */}
+      {/* Claims List */}
       {claims.length === 0 ? (
         <EmptyState
-          icon={FileCheck}
+          icon={FileText}
           title="No Gift Aid claims"
-          description="Get started by creating your first Gift Aid claim to HMRC."
-          actionLabel="Create Claim"
+          description="Get started by creating your first Gift Aid claim to submit to HMRC."
+          actionLabel="New Claim"
           actionHref="/finance/gift-aid/claims/new"
         />
       ) : (
@@ -122,72 +114,53 @@ export default async function GiftAidClaimsPage() {
                     Reference
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Period
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Donations
+                    Donations
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Claim Amount (25%)
+                    Claimable Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Submitted Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    HMRC Ref
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    Created
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {claims.map((claim) => {
-                  const StatusIcon = statusIcons[claim.status] || AlertCircle;
-                  return (
-                    <tr key={claim.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <Link
-                          href={`/finance/gift-aid/claims/${claim.id}`}
-                          className="font-medium text-indigo-600 hover:text-indigo-700"
-                        >
-                          {claim.claimReference}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <StatusIcon className="h-4 w-4" />
-                          <Badge className={statusColors[claim.status]}>{claim.status}</Badge>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        £{claim.totalDonations.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        £{claim.totalClaimable.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {claim.submittedAt ? formatDate(claim.submittedAt) : "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {claim.hmrcReference ? (
-                          <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                            {claim.hmrcReference}
-                          </code>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Link href={`/finance/gift-aid/claims/${claim.id}`}>
-                          <Button variant="outline" size="sm">
-                            View
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {claims.map((claim) => (
+                  <tr key={claim.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/finance/gift-aid/claims/${claim.id}`}
+                        className="font-mono font-semibold text-indigo-600 hover:text-indigo-700"
+                      >
+                        {claim.claimReference}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDate(claim.periodStart)} to {formatDate(claim.periodEnd)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge className={statusColors[claim.status]}>
+                        {claim.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <span className="font-medium">{claim.donationCount}</span>
+                      <span className="text-gray-500"> donations</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {formatCurrency(claim.totalClaimable)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDate(claim.createdAt)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -28,6 +28,21 @@ model SystemSettings {
   sidebarColour         String   @default("#111827") // Sidebar background colour (hex)
   sidebarTextColour     String   @default("#d1d5db") // Sidebar text colour (hex)
 
+  // ── HMRC Gift Aid Integration ──
+  hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)
+  hmrcGatewayUser       String?  // Government Gateway User ID
+  hmrcGatewayPassword   String?  // Government Gateway Password
+  hmrcSenderId          String?  // Software Vendor Sender ID
+  hmrcEnabled           Boolean  @default(false)
+
+  // ── Sage Intacct Integration ──
+  sageCompanyId         String?  // Sage Intacct Company ID
+  sageSenderId          String?  // Web Services Sender ID
+  sageSenderPassword    String?  // Sender Password (encrypted)
+  sageUserId            String?  // User ID for API auth
+  sageUserPassword      String?  // User Password (encrypted)
+  sageEnabled           Boolean  @default(false)
+
   updatedAt             DateTime @updatedAt
 }
 
@@ -603,9 +618,10 @@ model LedgerCode {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  donations  Donation[]
-  events     Event[]
-  campaigns  Campaign[]
+  donations            Donation[]
+  events              Event[]
+  campaigns           Campaign[]
+  sageAccountMappings SageAccountMapping[]
 }
 
 model Donation {
@@ -1582,6 +1598,10 @@ model GiftAidClaim {
   rejectionReason String?
   amountReceived  Float?
   receivedAt      DateTime?
+  correlationId   String?   // HMRC submission correlation ID for polling
+  submissionXml   String?   // Stored XML for audit
+  responseXml     String?   // HMRC response XML
+  gasdsAmount     Float?    // Small Donations Scheme amount if applicable
   notes           String?
   createdById     String
   createdAt       DateTime  @default(now())
@@ -1816,4 +1836,41 @@ model CaseActivity {
   caseRecord CaseRecord @relation(fields: [caseId], references: [id], onDelete: Cascade)
 
   @@index([caseId])
+}
+
+// ============================================
+// SAGE INTACCT INTEGRATION
+// ============================================
+
+model SageAccountMapping {
+  id              String   @id @default(cuid())
+  ledgerCodeId    String?  // Link to internal LedgerCode
+  donationType    String?  // e.g. DONATION, EVENT_FEE, SPONSORSHIP, etc
+  sageAccountNo   String   // Sage Intacct GL Account Number
+  sageAccountName String?  // Sage account description
+  sageDepartment  String?  // Sage dimension: department
+  sageLocation    String?  // Sage dimension: location
+  sageProject     String?  // Sage dimension: project/campaign
+  direction       String   @default("DEBIT") // DEBIT or CREDIT
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  ledgerCode LedgerCode? @relation(fields: [ledgerCodeId], references: [id])
+}
+
+model SageSyncLog {
+  id            String   @id @default(cuid())
+  entityType    String   // DONATION, COST, CONTACT, VENDOR
+  entityId      String   // ID of the record synced
+  sageRef       String?  // Sage Intacct reference/key returned
+  status        String   @default("PENDING") // PENDING | SYNCED | ERROR | SKIPPED
+  errorMessage  String?
+  requestData   String?  // JSON of data sent
+  responseData  String?  // JSON of response
+  syncedAt      DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([status])
 }
