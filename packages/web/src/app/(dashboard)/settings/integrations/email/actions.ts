@@ -37,6 +37,10 @@ export async function addEmailProvider(formData: FormData) {
     data.region = formData.get("mgRegion") as string || "US";
   } else if (provider === "MAILCHIMP") {
     data.apiKey = formData.get("apiKey") as string;
+  } else if (provider === "DOTDIGITAL") {
+    data.apiKey = formData.get("apiKey") as string; // API user email
+    data.domain = formData.get("domain") as string; // API password
+    data.region = formData.get("region") as string || "r1";
   }
 
   // If no other providers exist, make this the default

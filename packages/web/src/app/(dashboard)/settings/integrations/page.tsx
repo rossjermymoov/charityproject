@@ -81,6 +81,17 @@ function HMRCLogo({ className }: { className?: string }) {
   );
 }
 
+function DotdigitalLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#7C3AED" />
+      <circle cx="24" cy="22" r="8" fill="#fff" />
+      <circle cx="24" cy="22" r="4" fill="#7C3AED" />
+      <text x="24" y="42" textAnchor="middle" fontSize="6" fontWeight="bold" fill="#fff">dotdigital</text>
+    </svg>
+  );
+}
+
 function SageIntacctLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -116,6 +127,7 @@ export default async function IntegrationsPage() {
   const ses = providerStatus("SES");
   const sendgrid = providerStatus("SENDGRID");
   const mailgun = providerStatus("MAILGUN");
+  const dotdigital = providerStatus("DOTDIGITAL");
 
   const integrations = [
     {
@@ -156,6 +168,16 @@ export default async function IntegrationsPage() {
         : "Powerful email API for sending, receiving, and tracking emails",
       href: "/settings/integrations/mailgun",
       status: mailgun.status,
+      category: "Email & Marketing",
+    },
+    {
+      logo: DotdigitalLogo,
+      title: "Dotdigital",
+      description: dotdigital.status === "connected"
+        ? dotdigital.description
+        : "Omnichannel marketing automation with email, SMS, and audience management",
+      href: "/settings/integrations/dotdigital",
+      status: dotdigital.status,
       category: "Email & Marketing",
     },
     {

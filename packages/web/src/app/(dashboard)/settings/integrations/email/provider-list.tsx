@@ -21,6 +21,7 @@ const providerColors: Record<string, { bg: string; text: string }> = {
   SES: { bg: "bg-orange-100", text: "text-orange-600" },
   MAILGUN: { bg: "bg-red-100", text: "text-red-600" },
   MAILCHIMP: { bg: "bg-yellow-100", text: "text-yellow-600" },
+  DOTDIGITAL: { bg: "bg-purple-100", text: "text-purple-600" },
 };
 
 export function ProviderList({
