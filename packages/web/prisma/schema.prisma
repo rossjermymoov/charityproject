@@ -119,6 +119,7 @@ model User {
   giftAidClaimsCreated    GiftAidClaim[]   @relation("GiftAidClaimCreatedBy")
   shopsCreated            Shop[]           @relation("ShopCreatedBy")
   routesCreated          CollectionRoute[]    @relation("RouteCreatedBy")
+  runsCreated            CollectionRun[]      @relation("RunCreatedBy")
   tinReturnsProcessed    TinReturn[]          @relation("TinReturnCountedBy")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
@@ -326,6 +327,7 @@ model VolunteerProfile {
   assignmentReminders   AssignmentReminder[]
   trainings             VolunteerTraining[]
   routesAssigned         CollectionRoute[]    @relation("RouteAssignedTo")
+  runsAssigned           CollectionRun[]      @relation("RunAssignedTo")
   dbsChecks             DBSCheck[]
   drivingLicence        DrivingLicence?
   onboardingSteps       OnboardingStep[]
@@ -1096,8 +1098,8 @@ model CollectionTin {
   createdBy User              @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
   movements CollectionTinMovement[]
   tinReturns     TinReturn[]
-  deployedStops  RouteStop[] @relation("StopDeployedTin")
-  collectedStops RouteStop[] @relation("StopCollectedTin")
+  deployedRunStops  RunStop[] @relation("RunStopDeployedTin")
+  collectedRunStops RunStop[] @relation("RunStopCollectedTin")
 }
 
 model CollectionTinMovement {
@@ -1114,37 +1116,75 @@ model CollectionTinMovement {
   tin CollectionTin @relation(fields: [tinId], references: [id], onDelete: Cascade)
 }
 
+// Route = reusable template (a "round"), like a courier route with fixed stops
 model CollectionRoute {
   id            String    @id @default(cuid())
   name          String
   description   String?
-  status        String    @default("DRAFT") // DRAFT | READY | IN_PROGRESS | COMPLETED | ARCHIVED
-  scheduledDate DateTime?
-  startedAt     DateTime?
-  completedAt   DateTime?
   tinCount      Int       @default(0) // how many fresh tins to take out
-  assignedToId  String?   // FK to VolunteerProfile
+  assignedToId  String?   // default volunteer for this route
   createdById   String
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   assignedTo VolunteerProfile? @relation("RouteAssignedTo", fields: [assignedToId], references: [id])
   createdBy  User              @relation("RouteCreatedBy", fields: [createdById], references: [id])
   stops      RouteStop[]
-  tinReturns TinReturn[]
+  runs       CollectionRun[]
 
-  @@index([status])
-  @@index([scheduledDate])
+  @@index([isActive])
 }
 
+// RouteStop = a fixed stop on the route template (reused across runs)
 model RouteStop {
   id             String    @id @default(cuid())
   routeId        String
   locationId     String
   sortOrder      Int       @default(0)
-  status         String    @default("PENDING") // PENDING | COMPLETED | SKIPPED
   parkingNotes   String?
   accessNotes    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  route        CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  location     TinLocation     @relation(fields: [locationId], references: [id])
+  runStops     RunStop[]
+
+  @@index([routeId])
+}
+
+// CollectionRun = a specific instance of running a route on a date
+model CollectionRun {
+  id            String    @id @default(cuid())
+  routeId       String
+  status        String    @default("SCHEDULED") // SCHEDULED | IN_PROGRESS | COMPLETED | CANCELLED
+  scheduledDate DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  assignedToId  String?   // can override route default volunteer
+  createdById   String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  route      CollectionRoute   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  assignedTo VolunteerProfile? @relation("RunAssignedTo", fields: [assignedToId], references: [id])
+  createdBy  User              @relation("RunCreatedBy", fields: [createdById], references: [id])
+  runStops   RunStop[]
+  tinReturns TinReturn[]
+
+  @@index([routeId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+// RunStop = per-run tracking of each stop (what was swapped, GPS, status)
+model RunStop {
+  id             String    @id @default(cuid())
+  runId          String
+  routeStopId    String
+  status         String    @default("PENDING") // PENDING | COMPLETED | SKIPPED
   skipReason     String?
   deployedTinId  String?
   collectedTinId String?
@@ -1154,30 +1194,31 @@ model RouteStop {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  route        CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  location     TinLocation     @relation(fields: [locationId], references: [id])
-  deployedTin  CollectionTin?  @relation("StopDeployedTin", fields: [deployedTinId], references: [id])
-  collectedTin CollectionTin?  @relation("StopCollectedTin", fields: [collectedTinId], references: [id])
+  run          CollectionRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  routeStop    RouteStop      @relation(fields: [routeStopId], references: [id], onDelete: Cascade)
+  deployedTin  CollectionTin? @relation("RunStopDeployedTin", fields: [deployedTinId], references: [id])
+  collectedTin CollectionTin? @relation("RunStopCollectedTin", fields: [collectedTinId], references: [id])
 
-  @@index([routeId])
+  @@index([runId])
+  @@index([routeStopId])
 }
 
 model TinReturn {
   id          String   @id @default(cuid())
   tinId       String
-  routeId     String?
+  runId       String?
   amount      Float
   countedById String
   returnedAt  DateTime @default(now())
   notes       String?
   createdAt   DateTime @default(now())
 
-  tin       CollectionTin    @relation(fields: [tinId], references: [id])
-  route     CollectionRoute? @relation(fields: [routeId], references: [id])
-  countedBy User             @relation("TinReturnCountedBy", fields: [countedById], references: [id])
+  tin       CollectionTin   @relation(fields: [tinId], references: [id])
+  run       CollectionRun?  @relation(fields: [runId], references: [id])
+  countedBy User            @relation("TinReturnCountedBy", fields: [countedById], references: [id])
 
   @@index([tinId])
-  @@index([routeId])
+  @@index([runId])
 }
 
 // ============================================

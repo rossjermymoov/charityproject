@@ -4,49 +4,49 @@ import Link from "next/link";
 import { ArrowLeft, Coins, ScanBarcode, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { processReturn } from "../../actions";
 
-export default async function CountRouteSessionPage({
+export default async function CountRunSessionPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  const route = await prisma.collectionRoute.findUnique({
+  const run = await prisma.collectionRun.findUnique({
     where: { id },
     include: {
-      stops: {
+      route: true,
+      runStops: {
         include: {
-          location: true,
+          routeStop: { include: { location: true } },
           collectedTin: true,
         },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { routeStop: { sortOrder: "asc" } },
       },
       tinReturns: {
-        include: { tin: true, countedBy: true },
+        include: { tin: true },
         orderBy: { returnedAt: "desc" },
       },
       assignedTo: { include: { contact: true } },
     },
   });
 
-  if (!route || route.status !== "COMPLETED") notFound();
+  if (!run || run.status !== "COMPLETED") notFound();
 
-  const collectedTins = route.stops
+  const collectedTins = run.runStops
     .filter((s) => s.status === "COMPLETED" && s.collectedTin)
     .map((s) => ({
       tin: s.collectedTin!,
-      location: s.location,
+      location: s.routeStop.location,
     }));
 
-  const countedTinIds = new Set(route.tinReturns.map((r) => r.tinId));
+  const countedTinIds = new Set(run.tinReturns.map((r) => r.tinId));
   const uncounted = collectedTins.filter((t) => !countedTinIds.has(t.tin.id));
   const counted = collectedTins.filter((t) => countedTinIds.has(t.tin.id));
-  const totalCounted = route.tinReturns.reduce((sum, r) => sum + r.amount, 0);
+  const totalCounted = run.tinReturns.reduce((sum, r) => sum + r.amount, 0);
 
   const allDone = uncounted.length === 0 && collectedTins.length > 0;
 
@@ -64,7 +64,7 @@ export default async function CountRouteSessionPage({
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Coins className="h-6 w-6 text-amber-600" />
-              Counting: {route.name}
+              Counting: {run.route.name}
             </h1>
             <p className="text-gray-500 mt-1">
               {uncounted.length} remaining · {counted.length} counted · £
@@ -73,7 +73,7 @@ export default async function CountRouteSessionPage({
           </div>
         </div>
         {allDone && (
-          <Link href={`/finance/collection-tins/routes/count/${route.id}/report`}>
+          <Link href={`/finance/collection-tins/routes/count/${run.id}/report`}>
             <Button>
               <CheckCircle className="h-4 w-4 mr-2" />
               View Report
@@ -104,10 +104,10 @@ export default async function CountRouteSessionPage({
           </div>
           <p className="text-sm text-gray-500 mb-4">
             Scan a barcode or type the tin number. The amount will be linked to
-            this route automatically.
+            this run automatically.
           </p>
           <form action={processReturn} className="space-y-4">
-            <input type="hidden" name="routeId" value={route.id} />
+            <input type="hidden" name="runId" value={run.id} />
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Input
@@ -163,8 +163,8 @@ export default async function CountRouteSessionPage({
               ? (totalCounted / counted.length).toFixed(2)
               : "0.00"}
           </p>
-          <Link href={`/finance/collection-tins/routes/count/${route.id}/report`}>
-            <Button size="lg">View Route Report</Button>
+          <Link href={`/finance/collection-tins/routes/count/${run.id}/report`}>
+            <Button size="lg">View Run Report</Button>
           </Link>
         </Card>
       )}
@@ -195,28 +195,26 @@ export default async function CountRouteSessionPage({
       )}
 
       {/* Already counted */}
-      {route.tinReturns.length > 0 && (
+      {run.tinReturns.length > 0 && (
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Counted ({route.tinReturns.length})
+            Counted ({run.tinReturns.length})
           </h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-gray-500">
                 <th className="pb-2">Tin</th>
                 <th className="pb-2">Amount</th>
-                <th className="pb-2">Counted By</th>
                 <th className="pb-2">Time</th>
               </tr>
             </thead>
             <tbody>
-              {route.tinReturns.map((ret) => (
+              {run.tinReturns.map((ret) => (
                 <tr key={ret.id} className="border-b last:border-0">
                   <td className="py-2 font-mono">{ret.tin.tinNumber}</td>
                   <td className="py-2 font-medium text-green-600">
                     £{ret.amount.toFixed(2)}
                   </td>
-                  <td className="py-2">{ret.countedBy.name}</td>
                   <td className="py-2 text-gray-500">
                     {formatDate(ret.returnedAt)}
                   </td>

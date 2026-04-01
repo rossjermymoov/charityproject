@@ -24,7 +24,7 @@ export default async function NewRoutePage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">New Collection Route</h1>
-          <p className="text-gray-500 mt-1">Plan a new tin collection route</p>
+          <p className="text-gray-500 mt-1">Create a reusable route template</p>
         </div>
       </div>
 
@@ -39,23 +39,22 @@ export default async function NewRoutePage() {
               name="description"
               rows={3}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Parking notes, road closures, areas to avoid..."
+              placeholder="Route description, special instructions, warnings..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Number of Tins" name="tinCount" type="number" min="0" defaultValue="50" />
-            <Input label="Scheduled Date" name="scheduledDate" type="date" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Volunteer</label>
-            <select name="assignedToId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-              <option value="">Unassigned</option>
-              {volunteers.map(v => (
-                <option key={v.id} value={v.id}>
-                  {v.contact.firstName} {v.contact.lastName}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Volunteer</label>
+              <select name="assignedToId" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">Unassigned</option>
+                {volunteers.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.contact.firstName} {v.contact.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <Link href="/finance/collection-tins/routes">

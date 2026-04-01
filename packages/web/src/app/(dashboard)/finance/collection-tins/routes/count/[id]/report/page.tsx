@@ -5,69 +5,69 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RouteInfographic } from "./infographic";
 
-export default async function RouteReportPage({
+export default async function RunReportPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  const route = await prisma.collectionRoute.findUnique({
+  const run = await prisma.collectionRun.findUnique({
     where: { id },
     include: {
-      stops: {
+      route: true,
+      runStops: {
         include: {
-          location: true,
+          routeStop: { include: { location: true } },
           collectedTin: true,
-          deployedTin: true,
         },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { routeStop: { sortOrder: "asc" } },
       },
       assignedTo: { include: { contact: true } },
       createdBy: true,
       tinReturns: {
-        include: { tin: true, countedBy: true },
+        include: { tin: true },
         orderBy: { returnedAt: "asc" },
       },
     },
   });
 
-  if (!route) notFound();
+  if (!run) notFound();
 
   // Compute stats
-  const completedStops = route.stops.filter((s) => s.status === "COMPLETED");
-  const skippedStops = route.stops.filter((s) => s.status === "SKIPPED");
-  const amounts = route.tinReturns.map((r) => r.amount);
+  const completedRunStops = run.runStops.filter((s) => s.status === "COMPLETED");
+  const skippedRunStops = run.runStops.filter((s) => s.status === "SKIPPED");
+  const amounts = run.tinReturns.map((r) => r.amount);
   const totalCollected = amounts.reduce((a, b) => a + b, 0);
   const avgPerTin = amounts.length > 0 ? totalCollected / amounts.length : 0;
-  const highestTin = route.tinReturns.reduce(
+  const highestTin = run.tinReturns.reduce(
     (best, r) =>
       r.amount > (best?.amount || 0) ? r : best,
-    null as (typeof route.tinReturns)[0] | null
+    null as (typeof run.tinReturns)[0] | null
   );
   const lowestTin =
     amounts.length > 0
-      ? route.tinReturns.reduce(
+      ? run.tinReturns.reduce(
           (worst, r) => (r.amount < worst.amount ? r : worst),
-          route.tinReturns[0]
+          run.tinReturns[0]
         )
       : null;
 
   // Time stats
   const durationMs =
-    route.startedAt && route.completedAt
-      ? route.completedAt.getTime() - route.startedAt.getTime()
+    run.startedAt && run.completedAt
+      ? run.completedAt.getTime() - run.startedAt.getTime()
       : null;
   const durationHours = durationMs ? durationMs / (1000 * 60 * 60) : null;
 
   // Location type breakdown
   const typeBreakdown: Record<string, { count: number; total: number }> = {};
-  for (const stop of completedStops) {
-    const locType = stop.location.type || "OTHER";
+  for (const runStop of completedRunStops) {
+    const locType = runStop.routeStop.location.type || "OTHER";
     if (!typeBreakdown[locType]) typeBreakdown[locType] = { count: 0, total: 0 };
     typeBreakdown[locType].count++;
-    const tinReturn = route.tinReturns.find(
-      (r) => r.tinId === stop.collectedTin?.id
+    const tinReturn = run.tinReturns.find(
+      (r) => r.tinId === runStop.collectedTin?.id
     );
     if (tinReturn) typeBreakdown[locType].total += tinReturn.amount;
   }
@@ -76,38 +76,38 @@ export default async function RouteReportPage({
   const distribution = amounts.map((a, i) => ({
     stopNumber: i + 1,
     amount: a,
-    tinNumber: route.tinReturns[i]?.tin.tinNumber || "",
+    tinNumber: run.tinReturns[i]?.tin.tinNumber || "",
     location:
-      completedStops[i]?.location.name ||
-      route.tinReturns[i]?.tin.locationName ||
+      completedRunStops[i]?.routeStop.location.name ||
+      run.tinReturns[i]?.tin.locationName ||
       "",
   }));
 
   // Top 5 earners
-  const topEarners = [...route.tinReturns]
+  const topEarners = [...run.tinReturns]
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5)
     .map((r) => {
-      const stop = completedStops.find((s) => s.collectedTin?.id === r.tinId);
+      const runStop = completedRunStops.find((s) => s.collectedTin?.id === r.tinId);
       return {
         tinNumber: r.tin.tinNumber,
         amount: r.amount,
-        location: stop?.location.name || r.tin.locationName,
-        type: stop?.location.type || "OTHER",
+        location: runStop?.routeStop.location.name || r.tin.locationName,
+        type: runStop?.routeStop.location.type || "OTHER",
       };
     });
 
   const stats = {
-    routeName: route.name,
-    routeDescription: route.description,
-    completedDate: route.completedAt?.toISOString() || null,
-    startedDate: route.startedAt?.toISOString() || null,
-    volunteer: route.assignedTo
-      ? `${route.assignedTo.contact.firstName} ${route.assignedTo.contact.lastName}`
+    routeName: run.route.name,
+    routeDescription: run.route.description,
+    completedDate: run.completedAt?.toISOString() || null,
+    startedDate: run.startedAt?.toISOString() || null,
+    volunteer: run.assignedTo
+      ? `${run.assignedTo.contact.firstName} ${run.assignedTo.contact.lastName}`
       : null,
-    totalStops: route.stops.length,
-    completedStops: completedStops.length,
-    skippedStops: skippedStops.length,
+    totalStops: run.runStops.length,
+    completedStops: completedRunStops.length,
+    skippedStops: skippedRunStops.length,
     totalTinsCounted: amounts.length,
     totalCollected,
     avgPerTin: Math.round(avgPerTin * 100) / 100,
@@ -130,15 +130,15 @@ export default async function RouteReportPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={`/finance/collection-tins/routes/count/${route.id}`}>
+          <Link href={`/finance/collection-tins/routes/count/${run.id}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Count
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Route Report</h1>
-            <p className="text-gray-500 mt-1">{route.name}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Run Report</h1>
+            <p className="text-gray-500 mt-1">{run.route.name}</p>
           </div>
         </div>
       </div>

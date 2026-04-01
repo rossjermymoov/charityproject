@@ -254,7 +254,6 @@ export async function createRouteFromSuggestion(formData: FormData) {
   const name = formData.get("name") as string;
   const description = (formData.get("description") as string) || null;
   const tinCount = parseInt(formData.get("tinCount") as string) || 0;
-  const scheduledDate = formData.get("scheduledDate") as string;
   const assignedToId = (formData.get("assignedToId") as string) || null;
   const stopsJson = formData.get("stops") as string;
 
@@ -266,9 +265,7 @@ export async function createRouteFromSuggestion(formData: FormData) {
       name,
       description,
       tinCount,
-      scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
       assignedToId: assignedToId || null,
-      status: "READY",
       createdById: session.id,
       stops: {
         create: stops.map((stop, index) => ({

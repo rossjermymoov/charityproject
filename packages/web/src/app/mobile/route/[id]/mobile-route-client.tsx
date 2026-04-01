@@ -1,38 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { completeStop, skipStop } from "@/app/(dashboard)/finance/collection-tins/routes/actions";
+import { completeRunStop, skipRunStop } from "@/app/(dashboard)/finance/collection-tins/routes/actions";
 
-type Stop = {
+type RunStop = {
   id: string;
-  sortOrder: number;
   status: string;
-  parkingNotes: string | null;
-  accessNotes: string | null;
   skipReason: string | null;
   deployedTinId: string | null;
   collectedTinId: string | null;
   completedAt: string | null;
-  location: {
+  routeStop: {
     id: string;
-    name: string;
-    address: string | null;
-    city: string | null;
-    postcode: string | null;
-    latitude: number | null;
-    longitude: number | null;
+    sortOrder: number;
+    parkingNotes: string | null;
+    accessNotes: string | null;
+    location: {
+      id: string;
+      name: string;
+      address: string | null;
+      city: string | null;
+      postcode: string | null;
+      latitude: number | null;
+      longitude: number | null;
+    };
   };
   deployedTin: { tinNumber: string } | null;
   collectedTin: { tinNumber: string } | null;
 };
 
-type Route = {
+type Run = {
   id: string;
-  name: string;
-  description: string | null;
   status: string;
-  tinCount: number;
-  stops: Stop[];
+  route: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
+  runStops: RunStop[];
   assignedTo: { contact: { firstName: string; lastName: string } } | null;
 };
 
@@ -42,10 +47,10 @@ type Tin = {
 };
 
 export function MobileRouteClient({
-  route,
+  run,
   availableTins,
 }: {
-  route: Route;
+  run: Run;
   availableTins: Tin[];
 }) {
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
@@ -62,9 +67,9 @@ export function MobileRouteClient({
 
   // Find first pending stop on mount
   useEffect(() => {
-    const firstPending = route.stops.findIndex((s) => s.status === "PENDING");
+    const firstPending = run.runStops.findIndex((s) => s.status === "PENDING");
     if (firstPending >= 0) setCurrentStopIndex(firstPending);
-  }, [route.stops]);
+  }, [run.runStops]);
 
   // Online/offline detection
   useEffect(() => {
@@ -91,22 +96,22 @@ export function MobileRouteClient({
     }
   }, []);
 
-  const pendingStops = route.stops.filter((s) => s.status === "PENDING");
-  const completedStops = route.stops.filter((s) => s.status === "COMPLETED");
-  const currentStop = route.stops[currentStopIndex];
+  const pendingStops = run.runStops.filter((s) => s.status === "PENDING");
+  const completedStops = run.runStops.filter((s) => s.status === "COMPLETED");
+  const currentStop = run.runStops[currentStopIndex];
 
   if (!currentStop || pendingStops.length === 0) {
     return (
       <div className="p-4 text-center">
         <div className="bg-green-50 rounded-2xl p-8 mt-8">
           <div className="text-5xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold text-green-900">Route Complete!</h1>
-          <p className="text-green-700 mt-2">{route.name}</p>
+          <h1 className="text-2xl font-bold text-green-900">Run Complete!</h1>
+          <p className="text-green-700 mt-2">{run.route.name}</p>
           <p className="text-green-600 mt-1">
-            {completedStops.length} of {route.stops.length} stops completed
+            {completedStops.length} of {run.runStops.length} stops completed
           </p>
           <p className="text-sm text-green-600 mt-4">
-            Head back to base to process the collected tins.
+            Head back to base to count the collected tins.
           </p>
         </div>
       </div>
@@ -117,14 +122,13 @@ export function MobileRouteClient({
     setError(null);
     setSubmitting(true);
     try {
-      // Find tin IDs from numbers
       const deployedTin = availableTins.find(
         (t) => t.tinNumber === deployedTinNumber.trim()
       );
       const collectedTinId = collectedTinNumber.trim() || null;
 
       const formData = new FormData();
-      formData.set("stopId", currentStop.id);
+      formData.set("runStopId", currentStop.id);
       if (deployedTin) formData.set("deployedTinId", deployedTin.id);
       if (collectedTinId) formData.set("collectedTinId", collectedTinId);
       if (position) {
@@ -132,24 +136,22 @@ export function MobileRouteClient({
         formData.set("longitude", position.lng.toString());
       }
 
-      await completeStop(formData);
+      await completeRunStop(formData);
 
       setDeployedTinNumber("");
       setCollectedTinNumber("");
-      // Move to next pending
-      const next = route.stops.findIndex(
+      const next = run.runStops.findIndex(
         (s, i) => i > currentStopIndex && s.status === "PENDING"
       );
       if (next >= 0) setCurrentStopIndex(next);
     } catch (err) {
-      // Handle offline - store locally
       if (!isOnline) {
         const queue = JSON.parse(
           localStorage.getItem("offlineQueue") || "[]"
         );
         queue.push({
-          type: "completeStop",
-          stopId: currentStop.id,
+          type: "completeRunStop",
+          runStopId: currentStop.id,
           deployedTinNumber: deployedTinNumber.trim(),
           collectedTinNumber: collectedTinNumber.trim(),
           latitude: position?.lat,
@@ -172,13 +174,12 @@ export function MobileRouteClient({
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.set("stopId", currentStop.id);
+      formData.set("runStopId", currentStop.id);
       formData.set("skipReason", skipReason || "Not accessible");
-      await skipStop(formData);
+      await skipRunStop(formData);
       setSkipReason("");
       setShowSkip(false);
-      // Move to next pending
-      const next = route.stops.findIndex(
+      const next = run.runStops.findIndex(
         (s, i) => i > currentStopIndex && s.status === "PENDING"
       );
       if (next >= 0) setCurrentStopIndex(next);
@@ -189,7 +190,7 @@ export function MobileRouteClient({
   };
 
   const progress =
-    ((route.stops.length - pendingStops.length) / route.stops.length) * 100;
+    ((run.runStops.length - pendingStops.length) / run.runStops.length) * 100;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -197,9 +198,9 @@ export function MobileRouteClient({
       <div className="bg-indigo-600 text-white p-4 sticky top-0 z-10 shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-bold text-lg">{route.name}</h1>
+            <h1 className="font-bold text-lg">{run.route.name}</h1>
             <p className="text-indigo-200 text-sm">
-              Stop {currentStopIndex + 1} of {route.stops.length}
+              Stop {currentStopIndex + 1} of {run.runStops.length}
             </p>
           </div>
           <div className="text-right">
@@ -217,7 +218,6 @@ export function MobileRouteClient({
             </div>
           </div>
         </div>
-        {/* Progress bar */}
         <div className="mt-3 bg-indigo-800 rounded-full h-2">
           <div
             className="bg-white rounded-full h-2 transition-all"
@@ -244,13 +244,13 @@ export function MobileRouteClient({
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                {currentStop.location.name}
+                {currentStop.routeStop.location.name}
               </h2>
               <p className="text-gray-500 mt-1">
                 {[
-                  currentStop.location.address,
-                  currentStop.location.city,
-                  currentStop.location.postcode,
+                  currentStop.routeStop.location.address,
+                  currentStop.routeStop.location.city,
+                  currentStop.routeStop.location.postcode,
                 ]
                   .filter(Boolean)
                   .join(", ")}
@@ -261,29 +261,28 @@ export function MobileRouteClient({
             </span>
           </div>
 
-          {currentStop.parkingNotes && (
+          {currentStop.routeStop.parkingNotes && (
             <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-sm font-medium text-orange-800">🅿️ Parking</p>
-              <p className="text-sm text-orange-700">{currentStop.parkingNotes}</p>
+              <p className="text-sm font-medium text-orange-800">Parking</p>
+              <p className="text-sm text-orange-700">{currentStop.routeStop.parkingNotes}</p>
             </div>
           )}
 
-          {currentStop.accessNotes && (
+          {currentStop.routeStop.accessNotes && (
             <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-800">ℹ️ Access</p>
-              <p className="text-sm text-blue-700">{currentStop.accessNotes}</p>
+              <p className="text-sm font-medium text-blue-800">Access</p>
+              <p className="text-sm text-blue-700">{currentStop.routeStop.accessNotes}</p>
             </div>
           )}
 
-          {/* Navigation link */}
-          {currentStop.location.latitude && currentStop.location.longitude && (
+          {currentStop.routeStop.location.latitude && currentStop.routeStop.location.longitude && (
             <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${currentStop.location.latitude},${currentStop.location.longitude}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${currentStop.routeStop.location.latitude},${currentStop.routeStop.location.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 block w-full text-center bg-blue-50 text-blue-700 font-medium py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
             >
-              📍 Open in Google Maps
+              Open in Google Maps
             </a>
           )}
         </div>
@@ -322,7 +321,7 @@ export function MobileRouteClient({
 
           {position && (
             <p className="text-xs text-gray-400">
-              📍 GPS: {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
+              GPS: {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
             </p>
           )}
 
@@ -334,7 +333,6 @@ export function MobileRouteClient({
             {submitting ? "Processing..." : "✅ Complete Stop"}
           </button>
 
-          {/* Skip */}
           {!showSkip ? (
             <button
               onClick={() => setShowSkip(true)}
@@ -374,49 +372,49 @@ export function MobileRouteClient({
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <h3 className="font-semibold text-gray-900 mb-3">All Stops</h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {route.stops.map((stop, i) => (
+            {run.runStops.map((runStop, i) => (
               <button
-                key={stop.id}
-                onClick={() => stop.status === "PENDING" && setCurrentStopIndex(i)}
+                key={runStop.id}
+                onClick={() => runStop.status === "PENDING" && setCurrentStopIndex(i)}
                 className={`w-full text-left p-2 rounded-lg flex items-center gap-3 transition-colors ${
                   i === currentStopIndex
                     ? "bg-indigo-50 border border-indigo-200"
-                    : stop.status === "COMPLETED"
+                    : runStop.status === "COMPLETED"
                       ? "bg-green-50 hover:bg-green-100"
-                      : stop.status === "SKIPPED"
+                      : runStop.status === "SKIPPED"
                         ? "bg-orange-50 hover:bg-orange-100"
                         : "bg-gray-50 hover:bg-gray-100"
                 }`}
               >
                 <span
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    stop.status === "COMPLETED"
+                    runStop.status === "COMPLETED"
                       ? "bg-green-600 text-white"
-                      : stop.status === "SKIPPED"
+                      : runStop.status === "SKIPPED"
                         ? "bg-orange-500 text-white"
                         : i === currentStopIndex
                           ? "bg-indigo-600 text-white"
                           : "bg-gray-300 text-gray-600"
                   }`}
                 >
-                  {stop.status === "COMPLETED"
+                  {runStop.status === "COMPLETED"
                     ? "✓"
-                    : stop.status === "SKIPPED"
+                    : runStop.status === "SKIPPED"
                       ? "—"
                       : i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-sm font-medium truncate ${
-                      stop.status !== "PENDING"
+                      runStop.status !== "PENDING"
                         ? "text-gray-500"
                         : "text-gray-900"
                     }`}
                   >
-                    {stop.location.name}
+                    {runStop.routeStop.location.name}
                   </p>
                   <p className="text-xs text-gray-400 truncate">
-                    {stop.location.postcode}
+                    {runStop.routeStop.location.postcode}
                   </p>
                 </div>
               </button>

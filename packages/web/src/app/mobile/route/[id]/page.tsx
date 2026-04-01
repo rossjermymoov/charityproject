@@ -2,29 +2,30 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { MobileRouteClient } from "./mobile-route-client";
 
-export default async function MobileRoutePage({
+export default async function MobileRunPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  const route = await prisma.collectionRoute.findUnique({
+  const run = await prisma.collectionRun.findUnique({
     where: { id },
     include: {
-      stops: {
+      route: true,
+      runStops: {
         include: {
-          location: true,
+          routeStop: { include: { location: true } },
           deployedTin: true,
           collectedTin: true,
         },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { routeStop: { sortOrder: "asc" } },
       },
       assignedTo: { include: { contact: true } },
     },
   });
 
-  if (!route) notFound();
+  if (!run) notFound();
 
   // Get available IN_STOCK tins for deployment
   const availableTins = await prisma.collectionTin.findMany({
@@ -36,7 +37,7 @@ export default async function MobileRoutePage({
   return (
     <div className="min-h-screen bg-gray-50">
       <MobileRouteClient
-        route={JSON.parse(JSON.stringify(route))}
+        run={JSON.parse(JSON.stringify(run))}
         availableTins={JSON.parse(JSON.stringify(availableTins))}
       />
     </div>
