@@ -1,0 +1,1802 @@
+[
+  {
+    "name": "The Old School House",
+    "address": "Church Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2TE",
+    "type": "RESTAURANT",
+    "lat": 52.8693,
+    "lng": -3.0555
+  },
+  {
+    "name": "The Coach House Bar & Restaurant",
+    "address": "Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "RESTAURANT",
+    "lat": 52.8687,
+    "lng": -3.0548
+  },
+  {
+    "name": "The Bailey Head",
+    "address": "47 Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "PUB",
+    "lat": 52.8685,
+    "lng": -3.0543
+  },
+  {
+    "name": "Oswestry Takeaway",
+    "address": "1 Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "RESTAURANT",
+    "lat": 52.8683,
+    "lng": -3.0540
+  },
+  {
+    "name": "The Royal Lion",
+    "address": "45 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "PUB",
+    "lat": 52.8678,
+    "lng": -3.0555
+  },
+  {
+    "name": "St. Oswald's Parish Church",
+    "address": "Church Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2SH",
+    "type": "CHURCH",
+    "lat": 52.8695,
+    "lng": -3.0560
+  },
+  {
+    "name": "All Saints Church",
+    "address": "Chirk Road, Gobowen",
+    "city": "Oswestry",
+    "postcode": "SY11 3LL",
+    "type": "CHURCH",
+    "lat": 52.8834,
+    "lng": -3.0780
+  },
+  {
+    "name": "Holy Trinity Parish Church",
+    "address": "Roft Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2ES",
+    "type": "CHURCH",
+    "lat": 52.8650,
+    "lng": -3.0520
+  },
+  {
+    "name": "Our Lady and St Oswald's Catholic Church",
+    "address": "Upper Brook Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2TG",
+    "type": "CHURCH",
+    "lat": 52.8660,
+    "lng": -3.0545
+  },
+  {
+    "name": "CJ's Hair Salon",
+    "address": "Unit 3 The Parade",
+    "city": "Oswestry",
+    "postcode": "SY11 2DW",
+    "type": "SHOP",
+    "lat": 52.8670,
+    "lng": -3.0530
+  },
+  {
+    "name": "The Barber Shop",
+    "address": "16 York Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LX",
+    "type": "SHOP",
+    "lat": 52.8640,
+    "lng": -3.0580
+  },
+  {
+    "name": "Oakley Shop",
+    "address": "St. Martins",
+    "city": "Oswestry",
+    "postcode": "SY11 3DF",
+    "type": "SHOP",
+    "lat": 52.8589,
+    "lng": -3.0425
+  },
+  {
+    "name": "Dee Valley Pharmacy",
+    "address": "22 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "SHOP",
+    "lat": 52.8676,
+    "lng": -3.0560
+  },
+  {
+    "name": "The Daily News Newsagent",
+    "address": "15 Cross Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2NF",
+    "type": "SHOP",
+    "lat": 52.8686,
+    "lng": -3.0565
+  },
+  {
+    "name": "Sunset Bakery",
+    "address": "34 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "SHOP",
+    "lat": 52.8680,
+    "lng": -3.0553
+  },
+  {
+    "name": "The Forge Restaurant",
+    "address": "8 Park Avenue",
+    "city": "Oswestry",
+    "postcode": "SY11 1SG",
+    "type": "RESTAURANT",
+    "lat": 52.8710,
+    "lng": -3.0495
+  },
+  {
+    "name": "Dragon's Den Chinese",
+    "address": "2 Salop Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2NR",
+    "type": "RESTAURANT",
+    "lat": 52.8620,
+    "lng": -3.0570
+  },
+  {
+    "name": "The Taj Mahal",
+    "address": "19 Love Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1ND",
+    "type": "RESTAURANT",
+    "lat": 52.8648,
+    "lng": -3.0505
+  },
+  {
+    "name": "King's Fish & Chips",
+    "address": "7 Cross Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2NF",
+    "type": "RESTAURANT",
+    "lat": 52.8688,
+    "lng": -3.0568
+  },
+  {
+    "name": "The Copper Kettle Cafe",
+    "address": "12 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "RESTAURANT",
+    "lat": 52.8674,
+    "lng": -3.0558
+  },
+  {
+    "name": "The Crown Inn",
+    "address": "33 Castle Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1NX",
+    "type": "PUB",
+    "lat": 52.8650,
+    "lng": -3.0490
+  },
+  {
+    "name": "The White Lion",
+    "address": "28 Market Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1NP",
+    "type": "PUB",
+    "lat": 52.8695,
+    "lng": -3.0535
+  },
+  {
+    "name": "The Mereside Hotel",
+    "address": "5 Church Terrace",
+    "city": "Oswestry",
+    "postcode": "SY11 2TB",
+    "type": "RESTAURANT",
+    "lat": 52.8700,
+    "lng": -3.0565
+  },
+  {
+    "name": "Oswestry Post Office",
+    "address": "39 Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "SHOP",
+    "lat": 52.8688,
+    "lng": -3.0545
+  },
+  {
+    "name": "The Wayfarer's Rest",
+    "address": "47 Willow Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LF",
+    "type": "PUB",
+    "lat": 52.8630,
+    "lng": -3.0510
+  },
+  {
+    "name": "Silverwood Hairdressing",
+    "address": "25 Oswald Road",
+    "city": "Oswestry",
+    "postcode": "SY11 1RB",
+    "type": "SHOP",
+    "lat": 52.8640,
+    "lng": -3.0420
+  },
+  {
+    "name": "The Garden Bistro",
+    "address": "11 Albion Hill",
+    "city": "Oswestry",
+    "postcode": "SY11 1QA",
+    "type": "RESTAURANT",
+    "lat": 52.8615,
+    "lng": -3.0475
+  },
+  {
+    "name": "Woodman's Arms",
+    "address": "52 Salop Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2NR",
+    "type": "PUB",
+    "lat": 52.8625,
+    "lng": -3.0575
+  },
+  {
+    "name": "The Maltings Centre",
+    "address": "6 The Maltings",
+    "city": "Oswestry",
+    "postcode": "SY11 1BA",
+    "type": "OFFICE",
+    "lat": 52.8685,
+    "lng": -3.0520
+  },
+  {
+    "name": "Hope Church",
+    "address": "Market Gate, Salop Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2NR",
+    "type": "CHURCH",
+    "lat": 52.8620,
+    "lng": -3.0565
+  },
+  {
+    "name": "Oswestry Methodist Church",
+    "address": "Chapel Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LF",
+    "type": "CHURCH",
+    "lat": 52.8635,
+    "lng": -3.0515
+  },
+  {
+    "name": "Christ Church URC",
+    "address": "Arthur Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1JN",
+    "type": "CHURCH",
+    "lat": 52.8670,
+    "lng": -3.0590
+  },
+  {
+    "name": "Cornerstone Baptist Church",
+    "address": "Lower Brook Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2HJ",
+    "type": "CHURCH",
+    "lat": 52.8665,
+    "lng": -3.0510
+  },
+  {
+    "name": "The Anchor Tavern",
+    "address": "18 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "PUB",
+    "lat": 52.8675,
+    "lng": -3.0555
+  },
+  {
+    "name": "Woodcraft Brewery",
+    "address": "4 Industrial Estate",
+    "city": "Oswestry",
+    "postcode": "SY11 1AT",
+    "type": "RESTAURANT",
+    "lat": 52.8730,
+    "lng": -3.0620
+  },
+  {
+    "name": "Beauty & Wellness Spa",
+    "address": "9 Cross Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2NF",
+    "type": "SHOP",
+    "lat": 52.8687,
+    "lng": -3.0567
+  },
+  {
+    "name": "The Rising Sun",
+    "address": "31 Willow Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LF",
+    "type": "PUB",
+    "lat": 52.8632,
+    "lng": -3.0508
+  },
+  {
+    "name": "Gourmet Kitchen",
+    "address": "14 Market Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1NP",
+    "type": "SHOP",
+    "lat": 52.8696,
+    "lng": -3.0540
+  },
+  {
+    "name": "The Red Dragon Inn",
+    "address": "26 Salop Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2NR",
+    "type": "PUB",
+    "lat": 52.8618,
+    "lng": -3.0568
+  },
+  {
+    "name": "Community Centre Oswestry",
+    "address": "The Racecourse",
+    "city": "Oswestry",
+    "postcode": "SY11 4HT",
+    "type": "OTHER",
+    "lat": 52.8745,
+    "lng": -3.0385
+  },
+  {
+    "name": "Oswestry Library",
+    "address": "Oswald Road",
+    "city": "Oswestry",
+    "postcode": "SY11 1QN",
+    "type": "OTHER",
+    "lat": 52.8645,
+    "lng": -3.0425
+  },
+  {
+    "name": "Elena's Italian Cafe",
+    "address": "20 High Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2JA",
+    "type": "RESTAURANT",
+    "lat": 52.8676,
+    "lng": -3.0557
+  },
+  {
+    "name": "The Craftsman's Bar",
+    "address": "35 Willow Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LF",
+    "type": "PUB",
+    "lat": 52.8633,
+    "lng": -3.0510
+  },
+  {
+    "name": "Oswestry Tourist Information",
+    "address": "Heritage Shropshire",
+    "city": "Oswestry",
+    "postcode": "SY11 1JL",
+    "type": "OFFICE",
+    "lat": 52.8698,
+    "lng": -3.0550
+  },
+  {
+    "name": "The Flyer's Rest",
+    "address": "51 Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "PUB",
+    "lat": 52.8685,
+    "lng": -3.0541
+  },
+  {
+    "name": "St Giles Church",
+    "address": "Church Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8LS",
+    "type": "CHURCH",
+    "lat": 53.0425,
+    "lng": -2.9935
+  },
+  {
+    "name": "Henry's Barbers",
+    "address": "32 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "SHOP",
+    "lat": 53.0418,
+    "lng": -2.9943
+  },
+  {
+    "name": "TRNSFRM Barber",
+    "address": "8 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "SHOP",
+    "lat": 53.0420,
+    "lng": -2.9938
+  },
+  {
+    "name": "Geek's Premium Barbers",
+    "address": "Eagles Meadow Shopping Centre",
+    "city": "Wrexham",
+    "postcode": "LL13 8DQ",
+    "type": "SHOP",
+    "lat": 53.0428,
+    "lng": -2.9928
+  },
+  {
+    "name": "New Wave Hair Salon",
+    "address": "25 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "SHOP",
+    "lat": 53.0421,
+    "lng": -2.9940
+  },
+  {
+    "name": "Mr B's Barber Shop",
+    "address": "33 Henblas Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AD",
+    "type": "SHOP",
+    "lat": 53.0413,
+    "lng": -2.9920
+  },
+  {
+    "name": "The Acton Park",
+    "address": "Chester Road",
+    "city": "Wrexham",
+    "postcode": "LL11 2SN",
+    "type": "PUB",
+    "lat": 53.0285,
+    "lng": -2.9862
+  },
+  {
+    "name": "The Alyn Hotel",
+    "address": "Station Road",
+    "city": "Wrexham",
+    "postcode": "LL12 0HE",
+    "type": "RESTAURANT",
+    "lat": 53.0165,
+    "lng": -2.9995
+  },
+  {
+    "name": "Arnold's Bar & Grill",
+    "address": "Egerton Street",
+    "city": "Wrexham",
+    "postcode": "LL11 1NA",
+    "type": "RESTAURANT",
+    "lat": 53.0342,
+    "lng": -2.9825
+  },
+  {
+    "name": "The Bank JD Wetherspoon",
+    "address": "High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0435,
+    "lng": -2.9945
+  },
+  {
+    "name": "The Nags Head",
+    "address": "30 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0433,
+    "lng": -2.9940
+  },
+  {
+    "name": "Rollers Arms",
+    "address": "High Street, Southsea",
+    "city": "Wrexham",
+    "postcode": "LL11 5PB",
+    "type": "PUB",
+    "lat": 53.0295,
+    "lng": -2.9850
+  },
+  {
+    "name": "Spar Convenience Store",
+    "address": "Park Wall Service Station",
+    "city": "Wrexham",
+    "postcode": "LL11 4AH",
+    "type": "SHOP",
+    "lat": 53.0195,
+    "lng": -2.9975
+  },
+  {
+    "name": "High Street Convenience Store",
+    "address": "2 High Street",
+    "city": "Wrexham",
+    "postcode": "LL12 9ET",
+    "type": "SHOP",
+    "lat": 53.0318,
+    "lng": -3.0035
+  },
+  {
+    "name": "Gresford Road Store",
+    "address": "Gresford Road",
+    "city": "Wrexham",
+    "postcode": "LL12 0NW",
+    "type": "SHOP",
+    "lat": 53.0245,
+    "lng": -3.0125
+  },
+  {
+    "name": "All Saints Church",
+    "address": "Poyser Street",
+    "city": "Wrexham",
+    "postcode": "LL13 7RT",
+    "type": "CHURCH",
+    "lat": 53.0452,
+    "lng": -2.9905
+  },
+  {
+    "name": "St Margaret Church",
+    "address": "Chester Road Garden Village",
+    "city": "Wrexham",
+    "postcode": "LL12 8LY",
+    "type": "CHURCH",
+    "lat": 53.0275,
+    "lng": -2.9940
+  },
+  {
+    "name": "St John Church",
+    "address": "Borsa Road, Rhosnesni",
+    "city": "Wrexham",
+    "postcode": "LL12 7YF",
+    "type": "CHURCH",
+    "lat": 53.0155,
+    "lng": -3.0045
+  },
+  {
+    "name": "Holy Trinity Church",
+    "address": "Esclusham",
+    "city": "Wrexham",
+    "postcode": "LL14 4EH",
+    "type": "CHURCH",
+    "lat": 53.0595,
+    "lng": -3.0125
+  },
+  {
+    "name": "The Coracle Restaurant",
+    "address": "14 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "RESTAURANT",
+    "lat": 53.0416,
+    "lng": -2.9945
+  },
+  {
+    "name": "The Green Dragon",
+    "address": "45 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0437,
+    "lng": -2.9942
+  },
+  {
+    "name": "The Kings Arms",
+    "address": "28 Egerton Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8NU",
+    "type": "PUB",
+    "lat": 53.0424,
+    "lng": -2.9920
+  },
+  {
+    "name": "Thai Palace",
+    "address": "19 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "RESTAURANT",
+    "lat": 53.0419,
+    "lng": -2.9938
+  },
+  {
+    "name": "Milano Pizza",
+    "address": "22 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "RESTAURANT",
+    "lat": 53.0417,
+    "lng": -2.9943
+  },
+  {
+    "name": "The Castle Inn",
+    "address": "35 Egerton Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8NU",
+    "type": "PUB",
+    "lat": 53.0425,
+    "lng": -2.9918
+  },
+  {
+    "name": "Wrexham Post Office",
+    "address": "11 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "SHOP",
+    "lat": 53.0431,
+    "lng": -2.9948
+  },
+  {
+    "name": "Boots Pharmacy",
+    "address": "Eagles Meadow Shopping Centre",
+    "city": "Wrexham",
+    "postcode": "LL13 8DQ",
+    "type": "SHOP",
+    "lat": 53.0428,
+    "lng": -2.9928
+  },
+  {
+    "name": "Lloyds Pharmacy",
+    "address": "24 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "SHOP",
+    "lat": 53.0433,
+    "lng": -2.9941
+  },
+  {
+    "name": "The Golden Dragon",
+    "address": "16 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "RESTAURANT",
+    "lat": 53.0420,
+    "lng": -2.9939
+  },
+  {
+    "name": "Wrexham Library",
+    "address": "Rhosddu",
+    "city": "Wrexham",
+    "postcode": "LL11 2HA",
+    "type": "OFFICE",
+    "lat": 53.0340,
+    "lng": -2.9808
+  },
+  {
+    "name": "The Bull Inn",
+    "address": "26 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0433,
+    "lng": -2.9940
+  },
+  {
+    "name": "Chinese City Takeaway",
+    "address": "13 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "RESTAURANT",
+    "lat": 53.0415,
+    "lng": -2.9944
+  },
+  {
+    "name": "The Swan Hotel",
+    "address": "40 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "RESTAURANT",
+    "lat": 53.0435,
+    "lng": -2.9940
+  },
+  {
+    "name": "Wrexham Coffee House",
+    "address": "35 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "RESTAURANT",
+    "lat": 53.0418,
+    "lng": -2.9941
+  },
+  {
+    "name": "The Crooked Oak",
+    "address": "52 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0437,
+    "lng": -2.9938
+  },
+  {
+    "name": "Sunshine Bakery",
+    "address": "8 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "SHOP",
+    "lat": 53.0429,
+    "lng": -2.9950
+  },
+  {
+    "name": "The Garden Bistro",
+    "address": "18 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "RESTAURANT",
+    "lat": 53.0420,
+    "lng": -2.9939
+  },
+  {
+    "name": "Raj Balti",
+    "address": "27 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "RESTAURANT",
+    "lat": 53.0421,
+    "lng": -2.9937
+  },
+  {
+    "name": "The Wheatsheaf",
+    "address": "30 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "PUB",
+    "lat": 53.0418,
+    "lng": -2.9942
+  },
+  {
+    "name": "Newsworld",
+    "address": "15 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "SHOP",
+    "lat": 53.0430,
+    "lng": -2.9946
+  },
+  {
+    "name": "St John the Baptist Church",
+    "address": "Vicar's Lane",
+    "city": "Chester",
+    "postcode": "CH1 1SN",
+    "type": "CHURCH",
+    "lat": 53.1922,
+    "lng": -2.8950
+  },
+  {
+    "name": "Chester Cathedral",
+    "address": "St Werburgh Street",
+    "city": "Chester",
+    "postcode": "CH1 2DY",
+    "type": "CHURCH",
+    "lat": 53.1918,
+    "lng": -2.8925
+  },
+  {
+    "name": "Ian Littler Pharmacy",
+    "address": "Frodsham Street",
+    "city": "Chester",
+    "postcode": "CH1 3DF",
+    "type": "SHOP",
+    "lat": 53.1885,
+    "lng": -2.8945
+  },
+  {
+    "name": "Tesco Pharmacy",
+    "address": "Frodsham Square",
+    "city": "Chester",
+    "postcode": "CH1 2DA",
+    "type": "SHOP",
+    "lat": 53.1880,
+    "lng": -2.8940
+  },
+  {
+    "name": "Mad Hatters Tearoom & Bakery",
+    "address": "49 Bridge Street East",
+    "city": "Chester",
+    "postcode": "CH1 1NW",
+    "type": "RESTAURANT",
+    "lat": 53.1938,
+    "lng": -2.8952
+  },
+  {
+    "name": "Joseph Benjamin",
+    "address": "134-138 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HT",
+    "type": "RESTAURANT",
+    "lat": 53.1965,
+    "lng": -2.8928
+  },
+  {
+    "name": "Porta Tapas",
+    "address": "140 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HT",
+    "type": "RESTAURANT",
+    "lat": 53.1968,
+    "lng": -2.8926
+  },
+  {
+    "name": "Moules a go-go",
+    "address": "6-12 Cuppin Street",
+    "city": "Chester",
+    "postcode": "CH1 2BN",
+    "type": "RESTAURANT",
+    "lat": 53.1915,
+    "lng": -2.8915
+  },
+  {
+    "name": "Pitcher and Piano",
+    "address": "10 St John Street",
+    "city": "Chester",
+    "postcode": "CH1 1DA",
+    "type": "PUB",
+    "lat": 53.1908,
+    "lng": -2.8965
+  },
+  {
+    "name": "The Cellar",
+    "address": "19-21 City Road",
+    "city": "Chester",
+    "postcode": "CH1 3AE",
+    "type": "PUB",
+    "lat": 53.1848,
+    "lng": -2.8895
+  },
+  {
+    "name": "Brewhouse & Kitchen",
+    "address": "Love Street",
+    "city": "Chester",
+    "postcode": "CH1 3AZ",
+    "type": "RESTAURANT",
+    "lat": 53.1858,
+    "lng": -2.8920
+  },
+  {
+    "name": "The Archer",
+    "address": "67 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "PUB",
+    "lat": 53.1925,
+    "lng": -2.8905
+  },
+  {
+    "name": "Chester Market Hall",
+    "address": "Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NW",
+    "type": "OFFICE",
+    "lat": 53.1935,
+    "lng": -2.8955
+  },
+  {
+    "name": "Grosvenor Shopping Centre",
+    "address": "Grosvenor Street",
+    "city": "Chester",
+    "postcode": "CH1 2RE",
+    "type": "OFFICE",
+    "lat": 53.1905,
+    "lng": -2.8988
+  },
+  {
+    "name": "The Old Harkers Arms",
+    "address": "1 Russell Street",
+    "city": "Chester",
+    "postcode": "CH3 5AL",
+    "type": "PUB",
+    "lat": 53.1805,
+    "lng": -2.8918
+  },
+  {
+    "name": "Revolution Bar",
+    "address": "Chester City Centre",
+    "city": "Chester",
+    "postcode": "CH1 1QE",
+    "type": "PUB",
+    "lat": 53.1920,
+    "lng": -2.8940
+  },
+  {
+    "name": "The Queen's Head",
+    "address": "9 King Street",
+    "city": "Chester",
+    "postcode": "CH1 2AE",
+    "type": "PUB",
+    "lat": 53.1945,
+    "lng": -2.8935
+  },
+  {
+    "name": "Chester Rows Vintage Shops",
+    "address": "Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "SHOP",
+    "lat": 53.1925,
+    "lng": -2.8905
+  },
+  {
+    "name": "Faldo's Newsagent",
+    "address": "18 Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NN",
+    "type": "SHOP",
+    "lat": 53.1932,
+    "lng": -2.8948
+  },
+  {
+    "name": "The Chester Coffee Emporium",
+    "address": "32 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "RESTAURANT",
+    "lat": 53.1950,
+    "lng": -2.8925
+  },
+  {
+    "name": "Pierre's Restaurant",
+    "address": "11 Abbey Square",
+    "city": "Chester",
+    "postcode": "CH1 2HU",
+    "type": "RESTAURANT",
+    "lat": 53.1970,
+    "lng": -2.8920
+  },
+  {
+    "name": "The Watergate Tea Rooms",
+    "address": "22 Watergate Street",
+    "city": "Chester",
+    "postcode": "CH1 2LA",
+    "type": "RESTAURANT",
+    "lat": 53.1948,
+    "lng": -2.8908
+  },
+  {
+    "name": "The Wishing Well",
+    "address": "25 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "PUB",
+    "lat": 53.1923,
+    "lng": -2.8908
+  },
+  {
+    "name": "Ye Olde King's Head",
+    "address": "48 Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NN",
+    "type": "PUB",
+    "lat": 53.1935,
+    "lng": -2.8945
+  },
+  {
+    "name": "The Stone Villa",
+    "address": "33 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "RESTAURANT",
+    "lat": 53.1952,
+    "lng": -2.8924
+  },
+  {
+    "name": "Chester Barbers",
+    "address": "15 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "SHOP",
+    "lat": 53.1920,
+    "lng": -2.8910
+  },
+  {
+    "name": "Taylor & Daughters Hair Salon",
+    "address": "39 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "SHOP",
+    "lat": 53.1957,
+    "lng": -2.8922
+  },
+  {
+    "name": "Chester Post Office",
+    "address": "24 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "SHOP",
+    "lat": 53.1948,
+    "lng": -2.8927
+  },
+  {
+    "name": "The Golden Cross",
+    "address": "45 High Street",
+    "city": "Chester",
+    "postcode": "CH1 1QF",
+    "type": "PUB",
+    "lat": 53.1918,
+    "lng": -2.8958
+  },
+  {
+    "name": "Cheshire Lines Restaurant",
+    "address": "24 Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NN",
+    "type": "RESTAURANT",
+    "lat": 53.1933,
+    "lng": -2.8950
+  },
+  {
+    "name": "The Eagle & Child",
+    "address": "3 City Road",
+    "city": "Chester",
+    "postcode": "CH1 3AE",
+    "type": "PUB",
+    "lat": 53.1843,
+    "lng": -2.8892
+  },
+  {
+    "name": "The Three Harriers",
+    "address": "26 Low Petergate",
+    "city": "Chester",
+    "postcode": "CH1 1DE",
+    "type": "PUB",
+    "lat": 53.1915,
+    "lng": -2.8945
+  },
+  {
+    "name": "Chester Deli",
+    "address": "7 Abbey Square",
+    "city": "Chester",
+    "postcode": "CH1 2HU",
+    "type": "SHOP",
+    "lat": 53.1968,
+    "lng": -2.8922
+  },
+  {
+    "name": "The Grosvenor Restaurant",
+    "address": "Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LT",
+    "type": "RESTAURANT",
+    "lat": 53.1920,
+    "lng": -2.8905
+  },
+  {
+    "name": "The Anchor",
+    "address": "12 Watergate Street",
+    "city": "Chester",
+    "postcode": "CH1 2LA",
+    "type": "PUB",
+    "lat": 53.1944,
+    "lng": -2.8912
+  },
+  {
+    "name": "Chester Visitor Centre",
+    "address": "Vicars Lane",
+    "city": "Chester",
+    "postcode": "CH1 1QX",
+    "type": "OFFICE",
+    "lat": 53.1930,
+    "lng": -2.8945
+  },
+  {
+    "name": "Formosa Jade Restaurant",
+    "address": "16 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "RESTAURANT",
+    "lat": 53.1943,
+    "lng": -2.8930
+  },
+  {
+    "name": "Chester Library",
+    "address": "Cheynes Street",
+    "city": "Chester",
+    "postcode": "CH1 2DE",
+    "type": "OFFICE",
+    "lat": 53.1898,
+    "lng": -2.8903
+  },
+  {
+    "name": "The Booth Hall",
+    "address": "Castle Street",
+    "city": "Chester",
+    "postcode": "CH1 2DS",
+    "type": "OFFICE",
+    "lat": 53.1875,
+    "lng": -2.8950
+  },
+  {
+    "name": "The Rows Shopping",
+    "address": "Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NN",
+    "type": "SHOP",
+    "lat": 53.1932,
+    "lng": -2.8948
+  },
+  {
+    "name": "St Mary and St David Church",
+    "address": "Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "CHURCH",
+    "lat": 53.2460,
+    "lng": -3.1305
+  },
+  {
+    "name": "St Mary's Catholic Church",
+    "address": "17 Coleshill Street",
+    "city": "Flint",
+    "postcode": "CH6 5BQ",
+    "type": "CHURCH",
+    "lat": 53.2475,
+    "lng": -3.1295
+  },
+  {
+    "name": "Sue & Shantelle Hairdressers",
+    "address": "Victoria Road",
+    "city": "Flint",
+    "postcode": "CH6 5DJ",
+    "type": "SHOP",
+    "lat": 53.2445,
+    "lng": -3.1280
+  },
+  {
+    "name": "Raj Balti Takeaway",
+    "address": "Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5DH",
+    "type": "RESTAURANT",
+    "lat": 53.2465,
+    "lng": -3.1310
+  },
+  {
+    "name": "The Royal Hotel",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "RESTAURANT",
+    "lat": 53.2470,
+    "lng": -3.1300
+  },
+  {
+    "name": "The White Lion",
+    "address": "Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "PUB",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "The Ring O'Bells",
+    "address": "Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "PUB",
+    "lat": 53.2472,
+    "lng": -3.1315
+  },
+  {
+    "name": "Flint Post Office",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "SHOP",
+    "lat": 53.2470,
+    "lng": -3.1300
+  },
+  {
+    "name": "Flint Pharmacy",
+    "address": "Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "SHOP",
+    "lat": 53.2460,
+    "lng": -3.1305
+  },
+  {
+    "name": "The Daily News Newsagent",
+    "address": "Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "SHOP",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "Flint Bakery",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "SHOP",
+    "lat": 53.2470,
+    "lng": -3.1298
+  },
+  {
+    "name": "The Castle Inn",
+    "address": "16 Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "PUB",
+    "lat": 53.2462,
+    "lng": -3.1308
+  },
+  {
+    "name": "Dragon's Garden Chinese",
+    "address": "12 Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "RESTAURANT",
+    "lat": 53.2473,
+    "lng": -3.1318
+  },
+  {
+    "name": "The Flint Bistro",
+    "address": "Victoria Road",
+    "city": "Flint",
+    "postcode": "CH6 5DJ",
+    "type": "RESTAURANT",
+    "lat": 53.2445,
+    "lng": -3.1280
+  },
+  {
+    "name": "Flint Community Centre",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "OTHER",
+    "lat": 53.2470,
+    "lng": -3.1300
+  },
+  {
+    "name": "Flint Library",
+    "address": "Church Avenue",
+    "city": "Flint",
+    "postcode": "CH6 5AP",
+    "type": "OFFICE",
+    "lat": 53.2465,
+    "lng": -3.1320
+  },
+  {
+    "name": "The Crown Pub",
+    "address": "22 High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "PUB",
+    "lat": 53.2470,
+    "lng": -3.1298
+  },
+  {
+    "name": "The Kings Arms",
+    "address": "28 Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "PUB",
+    "lat": 53.2468,
+    "lng": -3.1308
+  },
+  {
+    "name": "Flint Barber Shop",
+    "address": "Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "SHOP",
+    "lat": 53.2472,
+    "lng": -3.1318
+  },
+  {
+    "name": "The Rising Sun",
+    "address": "Victoria Road",
+    "city": "Flint",
+    "postcode": "CH6 5DJ",
+    "type": "PUB",
+    "lat": 53.2445,
+    "lng": -3.1280
+  },
+  {
+    "name": "Flint Fish & Chips",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "RESTAURANT",
+    "lat": 53.2470,
+    "lng": -3.1300
+  },
+  {
+    "name": "The Anchor Bar",
+    "address": "Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "PUB",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "Thai Kitchen Flint",
+    "address": "Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "RESTAURANT",
+    "lat": 53.2465,
+    "lng": -3.1310
+  },
+  {
+    "name": "The Grapes",
+    "address": "30 Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "PUB",
+    "lat": 53.2475,
+    "lng": -3.1318
+  },
+  {
+    "name": "Flint Coffee House",
+    "address": "14 Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "RESTAURANT",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "Beauty & Care Salon",
+    "address": "Victoria Road",
+    "city": "Flint",
+    "postcode": "CH6 5DJ",
+    "type": "SHOP",
+    "lat": 53.2445,
+    "lng": -3.1280
+  },
+  {
+    "name": "The Red Lion",
+    "address": "35 High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "PUB",
+    "lat": 53.2470,
+    "lng": -3.1298
+  },
+  {
+    "name": "Flint Golf Club",
+    "address": "Pontblyddyn Road",
+    "city": "Flint",
+    "postcode": "CH6 5FS",
+    "type": "OTHER",
+    "lat": 53.2395,
+    "lng": -3.1250
+  },
+  {
+    "name": "The Drovers Inn",
+    "address": "38 Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "PUB",
+    "lat": 53.2470,
+    "lng": -3.1308
+  },
+  {
+    "name": "Flint Chinese Takeaway",
+    "address": "20 Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "RESTAURANT",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "The Windmill",
+    "address": "24 Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "PUB",
+    "lat": 53.2473,
+    "lng": -3.1318
+  },
+  {
+    "name": "Flint Convenience Store",
+    "address": "High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "SHOP",
+    "lat": 53.2470,
+    "lng": -3.1298
+  },
+  {
+    "name": "The Plough",
+    "address": "42 Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "PUB",
+    "lat": 53.2475,
+    "lng": -3.1320
+  },
+  {
+    "name": "Flint Sports Bar",
+    "address": "11 Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "PUB",
+    "lat": 53.2468,
+    "lng": -3.1308
+  },
+  {
+    "name": "Flint Garden Centre",
+    "address": "Pontblyddyn Road",
+    "city": "Flint",
+    "postcode": "CH6 5FS",
+    "type": "SHOP",
+    "lat": 53.2395,
+    "lng": -3.1250
+  },
+  {
+    "name": "The Station Restaurant",
+    "address": "Station Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2EJ",
+    "type": "RESTAURANT",
+    "lat": 52.8530,
+    "lng": -3.0625
+  },
+  {
+    "name": "Oswestry Sports Club",
+    "address": "Smithfield Road",
+    "city": "Oswestry",
+    "postcode": "SY11 2TJ",
+    "type": "RESTAURANT",
+    "lat": 52.8710,
+    "lng": -3.0500
+  },
+  {
+    "name": "The Paddock",
+    "address": "9 Willow Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1LF",
+    "type": "PUB",
+    "lat": 52.8625,
+    "lng": -3.0505
+  },
+  {
+    "name": "Oswestry Thai Restaurant",
+    "address": "21 Bailey Head",
+    "city": "Oswestry",
+    "postcode": "SY11 1PZ",
+    "type": "RESTAURANT",
+    "lat": 52.8684,
+    "lng": -3.0542
+  },
+  {
+    "name": "The Beacon",
+    "address": "15 Albion Hill",
+    "city": "Oswestry",
+    "postcode": "SY11 1QA",
+    "type": "PUB",
+    "lat": 52.8618,
+    "lng": -3.0472
+  },
+  {
+    "name": "Oswestry Independent Bookshop",
+    "address": "10 Cross Street",
+    "city": "Oswestry",
+    "postcode": "SY11 2NF",
+    "type": "SHOP",
+    "lat": 52.8688,
+    "lng": -3.0569
+  },
+  {
+    "name": "Wrexham Central Hotel",
+    "address": "50 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "RESTAURANT",
+    "lat": 53.0437,
+    "lng": -2.9938
+  },
+  {
+    "name": "Wrexham Brewery Bar",
+    "address": "12 Charles Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8BT",
+    "type": "RESTAURANT",
+    "lat": 53.0420,
+    "lng": -2.9939
+  },
+  {
+    "name": "The Phoenix Bar",
+    "address": "22 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "PUB",
+    "lat": 53.0417,
+    "lng": -3.0050
+  },
+  {
+    "name": "The Ivy Restaurant",
+    "address": "9 Egerton Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8NU",
+    "type": "RESTAURANT",
+    "lat": 53.0420,
+    "lng": -2.9915
+  },
+  {
+    "name": "Wrexham Florist",
+    "address": "17 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "SHOP",
+    "lat": 53.0431,
+    "lng": -2.9945
+  },
+  {
+    "name": "The Sportsman's Inn",
+    "address": "55 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0437,
+    "lng": -2.9936
+  },
+  {
+    "name": "Wrexham Fish & Chips",
+    "address": "14 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "RESTAURANT",
+    "lat": 53.0430,
+    "lng": -2.9948
+  },
+  {
+    "name": "The Travellers Rest",
+    "address": "44 Chester Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8AP",
+    "type": "PUB",
+    "lat": 53.0419,
+    "lng": -2.9940
+  },
+  {
+    "name": "Wrexham Garden Centre",
+    "address": "Gresford Road",
+    "city": "Wrexham",
+    "postcode": "LL12 0NW",
+    "type": "SHOP",
+    "lat": 53.0245,
+    "lng": -3.0125
+  },
+  {
+    "name": "The Market Tavern",
+    "address": "5 High Street",
+    "city": "Wrexham",
+    "postcode": "LL13 8HP",
+    "type": "PUB",
+    "lat": 53.0428,
+    "lng": -2.9953
+  },
+  {
+    "name": "Chester City Diner",
+    "address": "28 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "RESTAURANT",
+    "lat": 53.1924,
+    "lng": -2.8907
+  },
+  {
+    "name": "The Tudor House Cafe",
+    "address": "8 Bridge Street East",
+    "city": "Chester",
+    "postcode": "CH1 1NW",
+    "type": "RESTAURANT",
+    "lat": 53.1928,
+    "lng": -2.8952
+  },
+  {
+    "name": "Chester Fish & Chips",
+    "address": "35 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "RESTAURANT",
+    "lat": 53.1927,
+    "lng": -2.8903
+  },
+  {
+    "name": "The Lion Hotel Chester",
+    "address": "27 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "RESTAURANT",
+    "lat": 53.1948,
+    "lng": -2.8927
+  },
+  {
+    "name": "Chester Music Shop",
+    "address": "6 Abbey Square",
+    "city": "Chester",
+    "postcode": "CH1 2HU",
+    "type": "SHOP",
+    "lat": 53.1967,
+    "lng": -2.8923
+  },
+  {
+    "name": "The Boot Inn",
+    "address": "5 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "PUB",
+    "lat": 53.1913,
+    "lng": -2.8918
+  },
+  {
+    "name": "Chester Bookshop",
+    "address": "14 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "SHOP",
+    "lat": 53.1919,
+    "lng": -2.8912
+  },
+  {
+    "name": "The Bear & Ragged Staff",
+    "address": "130 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HT",
+    "type": "PUB",
+    "lat": 53.1963,
+    "lng": -2.8929
+  },
+  {
+    "name": "Chester Community Cafe",
+    "address": "St Johns Lane",
+    "city": "Chester",
+    "postcode": "CH1 1DA",
+    "type": "RESTAURANT",
+    "lat": 53.1910,
+    "lng": -2.8960
+  },
+  {
+    "name": "The Horse Shoe",
+    "address": "42 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "PUB",
+    "lat": 53.1953,
+    "lng": -2.8923
+  },
+  {
+    "name": "Chester Antique Market",
+    "address": "52 Watergate Street",
+    "city": "Chester",
+    "postcode": "CH1 2LA",
+    "type": "SHOP",
+    "lat": 53.1950,
+    "lng": -2.8908
+  },
+  {
+    "name": "The Green Man",
+    "address": "21 Abbey Square",
+    "city": "Chester",
+    "postcode": "CH1 2HU",
+    "type": "PUB",
+    "lat": 53.1972,
+    "lng": -2.8918
+  },
+  {
+    "name": "Italian Trattoria Chester",
+    "address": "18 Watergate Street",
+    "city": "Chester",
+    "postcode": "CH1 2LA",
+    "type": "RESTAURANT",
+    "lat": 53.1943,
+    "lng": -2.8915
+  },
+  {
+    "name": "The Star Inn",
+    "address": "17 Low Petergate",
+    "city": "Chester",
+    "postcode": "CH1 1DE",
+    "type": "PUB",
+    "lat": 53.1912,
+    "lng": -2.8952
+  },
+  {
+    "name": "Chester Toy Shop",
+    "address": "11 Eastgate Street",
+    "city": "Chester",
+    "postcode": "CH1 1LE",
+    "type": "SHOP",
+    "lat": 53.1916,
+    "lng": -2.8914
+  },
+  {
+    "name": "The Raven",
+    "address": "36 Bridge Street",
+    "city": "Chester",
+    "postcode": "CH1 1NN",
+    "type": "PUB",
+    "lat": 53.1934,
+    "lng": -2.8946
+  },
+  {
+    "name": "Thai Corner Chester",
+    "address": "26 Northgate Street",
+    "city": "Chester",
+    "postcode": "CH1 2HG",
+    "type": "RESTAURANT",
+    "lat": 53.1948,
+    "lng": -2.8928
+  },
+  {
+    "name": "Flint Independent Books",
+    "address": "26 High Street",
+    "city": "Flint",
+    "postcode": "CH6 5BG",
+    "type": "SHOP",
+    "lat": 53.2470,
+    "lng": -3.1298
+  },
+  {
+    "name": "The Riverside Inn",
+    "address": "Riverside Lane",
+    "city": "Flint",
+    "postcode": "CH6 5FD",
+    "type": "PUB",
+    "lat": 53.2380,
+    "lng": -3.1340
+  },
+  {
+    "name": "Flint Vintage Market",
+    "address": "18 Church Street",
+    "city": "Flint",
+    "postcode": "CH6 5AE",
+    "type": "SHOP",
+    "lat": 53.2462,
+    "lng": -3.1308
+  },
+  {
+    "name": "The New Inn",
+    "address": "15 Victoria Road",
+    "city": "Flint",
+    "postcode": "CH6 5DJ",
+    "type": "PUB",
+    "lat": 53.2443,
+    "lng": -3.1285
+  },
+  {
+    "name": "Flint Italian Cafe",
+    "address": "9 Park Street",
+    "city": "Flint",
+    "postcode": "CH6 5BL",
+    "type": "RESTAURANT",
+    "lat": 53.2471,
+    "lng": -3.1316
+  },
+  {
+    "name": "The Shepherds Arms",
+    "address": "33 Market Street",
+    "city": "Flint",
+    "postcode": "CH6 5BH",
+    "type": "PUB",
+    "lat": 53.2468,
+    "lng": -3.1305
+  },
+  {
+    "name": "The Old Rectory Cafe",
+    "address": "7 Market Street",
+    "city": "Oswestry",
+    "postcode": "SY11 1NP",
+    "type": "RESTAURANT",
+    "lat": 52.8694,
+    "lng": -3.0538
+  }
+]
