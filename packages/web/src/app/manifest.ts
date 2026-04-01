@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "CharityOS",
     short_name: "CharityOS",
     description: "Modular operating system for charities",
-    start_url: "/",
+    start_url: "/mobile",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#4f46e5",
