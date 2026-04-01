@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { MobileHome } from "./mobile-home";
 
 export default async function MobilePage() {
@@ -15,7 +14,7 @@ export default async function MobilePage() {
   const user = await prisma.user.findUnique({
     where: { id: session.id },
     include: {
-      contact: true,
+      linkedContact: true,
       volunteerProfile: true,
     },
   });
@@ -33,10 +32,7 @@ export default async function MobilePage() {
       assignedTo: { include: { contact: true } },
       runStops: true,
     },
-    orderBy: [
-      { status: "asc" }, // IN_PROGRESS first
-      { scheduledDate: "asc" },
-    ],
+    orderBy: { scheduledDate: "asc" },
   });
 
   const completedRuns = await prisma.collectionRun.findMany({
