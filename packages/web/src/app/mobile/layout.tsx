@@ -1,8 +1,30 @@
-export const metadata = {
-  title: "CharityOS Mobile",
-  description: "Mobile tin collection routes",
+import type { Metadata, Viewport } from "next";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
+export const metadata: Metadata = {
+  title: "CharityOS",
+  description: "Mobile tin collection app",
 };
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <div className="mobile-app">
+      {children}
+      <style>{`
+        .mobile-app {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          overscroll-behavior: none;
+          min-height: 100dvh;
+        }
+      `}</style>
+    </div>
+  );
 }

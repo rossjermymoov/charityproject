@@ -37,21 +37,21 @@ export function MobileLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center px-6">
+    <div className="min-h-[100dvh] bg-indigo-600 flex flex-col items-center justify-center px-8">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl mb-4">
-            <span className="text-2xl font-bold text-indigo-600">CO</span>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl mb-5 shadow-lg">
+            <span className="text-3xl font-bold text-indigo-600">CO</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">CharityOS</h1>
-          <p className="text-indigo-200 mt-1">Sign in to continue</p>
+          <h1 className="text-3xl font-bold text-white">CharityOS</h1>
+          <p className="text-indigo-200 mt-2 text-lg">Sign in to continue</p>
         </div>
 
         {/* Login form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="bg-red-500/20 border border-red-400/30 text-white text-sm rounded-xl px-4 py-3">
+            <div className="bg-red-500/20 border border-red-400/30 text-white text-base rounded-xl px-5 py-4">
               {error}
             </div>
           )}
@@ -63,7 +63,7 @@ export function MobileLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent text-base"
+              className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-xl text-white text-lg placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
             />
           </div>
 
@@ -74,20 +74,21 @@ export function MobileLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent text-base"
+              className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-xl text-white text-lg placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-indigo-50 active:bg-indigo-100 disabled:opacity-50 transition-colors text-base"
+            className="w-full py-4.5 bg-white text-indigo-600 font-bold rounded-xl active:bg-indigo-50 disabled:opacity-50 transition-colors text-xl shadow-lg"
+            style={{ paddingTop: "1.125rem", paddingBottom: "1.125rem" }}
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <p className="text-indigo-200 text-center text-sm mt-6">
+        <p className="text-indigo-200 text-center text-base mt-8">
           Demo: admin@charity.org / password
         </p>
       </div>
