@@ -38,18 +38,28 @@ export default async function CollectionTinsPage({
         where: { type: "COUNTED", amount: { not: null } },
       },
     },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+    orderBy: { tinNumber: "asc" },
+    take: 100,
   });
 
-  // Summary stats
-  const totalTins = tins.length;
-  const deployed = tins.filter((t) => t.status === "DEPLOYED").length;
-  const inStock = tins.filter((t) => t.status === "IN_STOCK").length;
-  const totalCollected = tins.reduce(
-    (sum, t) => sum + t.movements.reduce((s, m) => s + (m.amount || 0), 0),
-    0
-  );
+  // Summary stats from full DB (not limited by take)
+  const [totalTins, deployed, inStock, collectedAgg] = await Promise.all([
+    prisma.collectionTin.count({
+      where: {
+        AND: [
+          search ? { OR: [{ tinNumber: { contains: search, mode: "insensitive" } }, { locationName: { contains: search, mode: "insensitive" } }] } : {},
+          statusFilter ? { status: statusFilter } : {},
+        ],
+      },
+    }),
+    prisma.collectionTin.count({ where: { status: "DEPLOYED" } }),
+    prisma.collectionTin.count({ where: { status: "IN_STOCK" } }),
+    prisma.collectionTinMovement.aggregate({
+      where: { type: "COUNTED", amount: { not: null } },
+      _sum: { amount: true },
+    }),
+  ]);
+  const totalCollected = collectedAgg._sum.amount || 0;
 
   const statusColors: Record<string, string> = {
     IN_STOCK: "bg-blue-100 text-blue-800",
@@ -148,6 +158,13 @@ export default async function CollectionTinsPage({
           </Button>
         </form>
       </Card>
+
+      {/* Showing count */}
+      {totalTins > tins.length && (
+        <p className="text-sm text-gray-500">
+          Showing {tins.length} of {totalTins} tins. Use the search or status filter to narrow results.
+        </p>
+      )}
 
       {/* Tin list */}
       {tins.length === 0 ? (
