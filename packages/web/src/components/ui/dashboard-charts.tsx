@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -8,12 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   Legend,
-  AreaChart,
-  Area,
+  Cell,
 } from "recharts";
 
 interface MonthlyDonation {
@@ -33,9 +30,37 @@ interface VolunteerHoursMonthly {
   hours: number;
 }
 
-const COLORS = ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
+/**
+ * Read the brand primary colour from the CSS custom property set by BrandingProvider.
+ * Falls back to the default indigo-600 if not available.
+ */
+function useBrandColor(): string {
+  const [color, setColor] = useState("#4f46e5");
+  useEffect(() => {
+    const el = document.querySelector("[style*='--brand-primary']") as HTMLElement | null;
+    if (el) {
+      const val = getComputedStyle(el).getPropertyValue("--brand-primary").trim();
+      if (val) setColor(val);
+    }
+  }, []);
+  return color;
+}
+
+/**
+ * Mix a hex colour with white at a given ratio (0-1 where 1 = full colour).
+ */
+function mixWithWhite(hex: string, ratio: number): string {
+  const h = hex.replace("#", "");
+  const r = Math.round(parseInt(h.substring(0, 2), 16) * ratio + 255 * (1 - ratio));
+  const g = Math.round(parseInt(h.substring(2, 4), 16) * ratio + 255 * (1 - ratio));
+  const b = Math.round(parseInt(h.substring(4, 6), 16) * ratio + 255 * (1 - ratio));
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
 
 export function DonationsChart({ data }: { data: MonthlyDonation[] }) {
+  const brand = useBrandColor();
+  const secondary = "#d1d5db"; // gray-300 neutral
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -49,14 +74,21 @@ export function DonationsChart({ data }: { data: MonthlyDonation[] }) {
           ]}
           labelStyle={{ fontWeight: 600 }}
         />
-        <Bar dataKey="total" name="Donations" fill="#6366F1" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="giftAid" name="Gift Aid" fill="#22C55E" radius={[4, 4, 0, 0]} />
+        <Legend
+          verticalAlign="bottom"
+          height={36}
+          formatter={(value: any) => <span className="text-xs text-gray-600">{value}</span>}
+        />
+        <Bar dataKey="total" name="Donations" fill={brand} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="giftAid" name="Gift Aid" fill={secondary} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
 export function DonationTypePie({ data }: { data: DonationTypeBreakdown[] }) {
+  const brand = useBrandColor();
+
   if (data.every((d) => d.value === 0)) {
     return (
       <div className="flex items-center justify-center h-[250px] text-sm text-gray-500">
@@ -65,52 +97,49 @@ export function DonationTypePie({ data }: { data: DonationTypeBreakdown[] }) {
     );
   }
 
+  // Sort descending so largest value gets the primary colour
+  const sorted = [...data].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+
+  // Assign colours: primary for largest, progressively lighter/neutral for the rest
+  const getBarColor = (index: number) => {
+    if (index === 0) return brand;
+    if (index === 1) return mixWithWhite(brand, 0.5);
+    return "#d1d5db"; // neutral gray for tertiary+
+  };
+
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <PieChart>
-        <Pie
-          data={data.filter((d) => d.value > 0)}
-          cx="50%"
-          cy="50%"
-          innerRadius={50}
-          outerRadius={90}
-          paddingAngle={3}
-          dataKey="value"
-        >
-          {data
-            .filter((d) => d.value > 0)
-            .map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-        </Pie>
+      <BarChart
+        data={sorted}
+        layout="vertical"
+        margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `£${v}`} />
+        <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
         <Tooltip formatter={(value: any) => `£${Number(value).toFixed(2)}`} />
-        <Legend
-          verticalAlign="bottom"
-          height={36}
-          formatter={(value: any) => <span className="text-xs text-gray-600">{value}</span>}
-        />
-      </PieChart>
+        <Bar dataKey="value" name="Amount" radius={[0, 4, 4, 0]}>
+          {sorted.map((_, index) => (
+            <Cell key={`cell-${index}`} fill={getBarColor(index)} />
+          ))}
+        </Bar>
+      </BarChart>
     </ResponsiveContainer>
   );
 }
 
 export function VolunteerHoursChart({ data }: { data: VolunteerHoursMonthly[] }) {
+  const brand = useBrandColor();
+
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <AreaChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+      <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} />
         <Tooltip formatter={(value: any) => [`${Number(value).toFixed(1)} hrs`, "Hours"]} />
-        <Area
-          type="monotone"
-          dataKey="hours"
-          stroke="#8B5CF6"
-          fill="#8B5CF6"
-          fillOpacity={0.15}
-          strokeWidth={2}
-        />
-      </AreaChart>
+        <Bar dataKey="hours" name="Hours" fill={brand} radius={[4, 4, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }
