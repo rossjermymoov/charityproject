@@ -118,6 +118,8 @@ model User {
   casesAssigned           CaseRecord[]     @relation("CaseAssignedTo")
   giftAidClaimsCreated    GiftAidClaim[]   @relation("GiftAidClaimCreatedBy")
   shopsCreated            Shop[]           @relation("ShopCreatedBy")
+  routesCreated          CollectionRoute[]    @relation("RouteCreatedBy")
+  tinReturnsProcessed    TinReturn[]          @relation("TinReturnCountedBy")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
 
@@ -135,6 +137,7 @@ model Department {
   activityRecords      ActivityRecord[]
   assignments          Assignment[]
   broadcasts           Broadcast[]
+  requiredTraining     DepartmentTraining[]
 }
 
 model Skill {
@@ -245,6 +248,7 @@ model Organisation {
   grants         Grant[]
   eventIncomeLines EventIncomeLine[] @relation("IncomeLineOrg")
   eventCostLines   EventCostLine[]   @relation("CostLineOrg")
+  eventSponsors    EventSponsor[] @relation("SponsorOrg")
 }
 
 model Tag {
@@ -321,6 +325,10 @@ model VolunteerProfile {
   broadcastResponses    BroadcastResponse[]
   assignmentReminders   AssignmentReminder[]
   trainings             VolunteerTraining[]
+  routesAssigned         CollectionRoute[]    @relation("RouteAssignedTo")
+  dbsChecks             DBSCheck[]
+  drivingLicence        DrivingLicence?
+  onboardingSteps       OnboardingStep[]
 }
 
 model VolunteerDepartment {
@@ -600,9 +608,32 @@ model GiftAid {
   createdById   String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  // Backdating
+  backdateFrom      DateTime?  // earliest date this declaration covers
+  // Cessation
+  cessationReason   String?    // DONOR_REQUEST | DECEASED | HMRC_INSTRUCTION | OTHER
+  cessationDate     DateTime?
+  cessationNotes    String?
 
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdBy User    @relation("GiftAidCreatedBy", fields: [createdById], references: [id])
+  pauses            GiftAidPause[]
+}
+
+model GiftAidPause {
+  id          String    @id @default(cuid())
+  giftAidId   String
+  pauseFrom   DateTime
+  pauseUntil  DateTime? // null = indefinite
+  reason      String?
+  resumedAt   DateTime?
+  resumedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  giftAid GiftAid @relation(fields: [giftAidId], references: [id], onDelete: Cascade)
+
+  @@index([giftAidId])
 }
 
 // ============================================
@@ -683,6 +714,7 @@ model Event {
   incomeLines      EventIncomeLine[]
   costLines        EventCostLine[]
   finance          EventFinance?
+  sponsors         EventSponsor[]
 }
 
 // ============================================
@@ -825,6 +857,34 @@ model EventMerchandise {
   updatedAt   DateTime @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventSponsor {
+  id               String   @id @default(cuid())
+  eventId          String
+  organisationId   String?
+  name             String   // sponsor name (if no org link)
+  logoUrl          String?
+  sponsorshipLevel String   @default("MINOR") // HEADLINE | MAJOR | MINOR | IN_KIND
+  amount           Float?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organisation Organisation? @relation("SponsorOrg", fields: [organisationId], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+}
+
+model FinancialTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  incomeLines String?  // JSON array of {category, label, estimated}
+  costLines   String?  // JSON array of {category, label, estimated}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ============================================
@@ -1012,6 +1072,7 @@ model TinLocation {
   updatedAt    DateTime @updatedAt
 
   tins CollectionTin[]
+  routeStops RouteStop[]
 
   @@index([postcodeArea])
 }
@@ -1034,6 +1095,9 @@ model CollectionTin {
   location  TinLocation?       @relation(fields: [locationId], references: [id])
   createdBy User              @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
   movements CollectionTinMovement[]
+  tinReturns     TinReturn[]
+  deployedStops  RouteStop[] @relation("StopDeployedTin")
+  collectedStops RouteStop[] @relation("StopCollectedTin")
 }
 
 model CollectionTinMovement {
@@ -1043,9 +1107,77 @@ model CollectionTinMovement {
   date      DateTime
   amount    Float?   // amount collected (if counted)
   notes     String?
+  routeId   String?
+  stopId    String?
   createdAt DateTime @default(now())
 
   tin CollectionTin @relation(fields: [tinId], references: [id], onDelete: Cascade)
+}
+
+model CollectionRoute {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  status        String    @default("DRAFT") // DRAFT | READY | IN_PROGRESS | COMPLETED | ARCHIVED
+  scheduledDate DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  tinCount      Int       @default(0) // how many fresh tins to take out
+  assignedToId  String?   // FK to VolunteerProfile
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignedTo VolunteerProfile? @relation("RouteAssignedTo", fields: [assignedToId], references: [id])
+  createdBy  User              @relation("RouteCreatedBy", fields: [createdById], references: [id])
+  stops      RouteStop[]
+  tinReturns TinReturn[]
+
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model RouteStop {
+  id             String    @id @default(cuid())
+  routeId        String
+  locationId     String
+  sortOrder      Int       @default(0)
+  status         String    @default("PENDING") // PENDING | COMPLETED | SKIPPED
+  parkingNotes   String?
+  accessNotes    String?
+  skipReason     String?
+  deployedTinId  String?
+  collectedTinId String?
+  completedAt    DateTime?
+  latitude       Float?
+  longitude      Float?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  route        CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  location     TinLocation     @relation(fields: [locationId], references: [id])
+  deployedTin  CollectionTin?  @relation("StopDeployedTin", fields: [deployedTinId], references: [id])
+  collectedTin CollectionTin?  @relation("StopCollectedTin", fields: [collectedTinId], references: [id])
+
+  @@index([routeId])
+}
+
+model TinReturn {
+  id          String   @id @default(cuid())
+  tinId       String
+  routeId     String?
+  amount      Float
+  countedById String
+  returnedAt  DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  tin       CollectionTin    @relation(fields: [tinId], references: [id])
+  route     CollectionRoute? @relation(fields: [routeId], references: [id])
+  countedBy User             @relation("TinReturnCountedBy", fields: [countedById], references: [id])
+
+  @@index([tinId])
+  @@index([routeId])
 }
 
 // ============================================
@@ -1107,6 +1239,7 @@ model TrainingCourse {
   updatedAt   DateTime @updatedAt
 
   volunteerTrainings VolunteerTraining[]
+  departmentTrainings DepartmentTraining[]
 }
 
 model VolunteerTraining {
@@ -1127,6 +1260,68 @@ model VolunteerTraining {
   verifiedBy User?            @relation("TrainingVerifiedBy", fields: [verifiedById], references: [id])
 
   @@unique([volunteerId, courseId])
+}
+
+model DBSCheck {
+  id                String    @id @default(cuid())
+  volunteerId       String
+  checkDate         DateTime
+  expiryDate        DateTime
+  certificateNumber String?
+  level             String    @default("BASIC") // BASIC | STANDARD | ENHANCED
+  status            String    @default("PENDING") // PENDING | CLEARED | ISSUES_FOUND | EXPIRED
+  cost              Float?
+  documentUrl       String?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId])
+  @@index([expiryDate])
+}
+
+model DrivingLicence {
+  id              String    @id @default(cuid())
+  volunteerId     String    @unique
+  licenceNumber   String?
+  expiryDate      DateTime?
+  categories      String?   // comma-separated: B, C1, etc.
+  verifiedAt      DateTime?
+  verifiedById    String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+}
+
+model OnboardingStep {
+  id           String    @id @default(cuid())
+  volunteerId  String
+  stepName     String    // APPLICATION_RECEIVED | DBS_SUBMITTED | DBS_CLEARED | INDUCTION | TRAINING_ASSIGNED | TRAINING_COMPLETED | FULLY_ONBOARDED
+  completedAt  DateTime?
+  completedById String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([volunteerId, stepName])
+}
+
+model DepartmentTraining {
+  id            String @id @default(cuid())
+  departmentId  String
+  courseId       String
+  createdAt     DateTime @default(now())
+
+  department Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  course     TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, courseId])
 }
 
 // ============================================

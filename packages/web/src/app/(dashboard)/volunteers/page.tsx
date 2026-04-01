@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { UserCheck, Plus, Search } from "lucide-react";
+import { UserCheck, Plus, Search, Shield, Car, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -55,6 +55,28 @@ export default async function VolunteersPage({
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Volunteer
+          </Button>
+        </Link>
+      </div>
+
+      {/* Navigation links */}
+      <div className="flex gap-2 flex-wrap">
+        <Link href="/volunteers/dbs">
+          <Button variant="outline">
+            <Shield className="h-4 w-4 mr-2" />
+            DBS Checks
+          </Button>
+        </Link>
+        <Link href="/volunteers/licences">
+          <Button variant="outline">
+            <Car className="h-4 w-4 mr-2" />
+            Licences
+          </Button>
+        </Link>
+        <Link href="/volunteers/onboarding">
+          <Button variant="outline">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Onboarding
           </Button>
         </Link>
       </div>

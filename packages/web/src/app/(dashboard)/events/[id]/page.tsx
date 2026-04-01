@@ -2,14 +2,16 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Trash2, FileText, ExternalLink, PoundSterling, Users, Heart } from "lucide-react";
+import { ArrowLeft, Trash2, FileText, ExternalLink, PoundSterling, Users, Heart, Copy, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { PLDashboard } from "./finance/pl-dashboard";
+import { duplicateEvent, addSponsor, removeSponsor } from "../actions";
 
 export default async function EventDetailPage({
   params,
@@ -26,6 +28,7 @@ export default async function EventDetailPage({
       incomeLines: { orderBy: { sortOrder: "asc" } },
       costLines: { orderBy: { sortOrder: "asc" } },
       finance: true,
+      sponsors: { orderBy: { createdAt: "desc" } },
       donations: {
         include: { contact: true },
         orderBy: { date: "desc" },
@@ -277,6 +280,96 @@ export default async function EventDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/* Sponsors */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Sponsors</h3>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {event.sponsors && event.sponsors.length > 0 ? (
+            <div className="space-y-2 mb-4">
+              {event.sponsors.map((sponsor: any) => (
+                <div key={sponsor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 flex-1">
+                    {sponsor.logoUrl && (
+                      <img src={sponsor.logoUrl} alt={sponsor.name} className="h-8 w-8 object-contain" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">{sponsor.name}</p>
+                      <p className="text-xs text-gray-500">{sponsor.sponsorshipLevel}</p>
+                      {sponsor.notes && <p className="text-xs text-gray-500 mt-1">{sponsor.notes}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {sponsor.amount && <span className="font-medium text-green-600">£{sponsor.amount.toFixed(2)}</span>}
+                    <form action={removeSponsor}>
+                      <input type="hidden" name="sponsorId" value={sponsor.id} />
+                      <input type="hidden" name="eventId" value={event.id} />
+                      <button type="submit" className="text-gray-400 hover:text-red-600 p-1">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm mb-4">No sponsors added yet.</p>
+          )}
+
+          <form action={addSponsor} className="p-4 bg-gray-50 rounded-lg space-y-3">
+            <h3 className="text-sm font-medium text-gray-900">Add Sponsor</h3>
+            <input type="hidden" name="eventId" value={event.id} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Sponsor Name" name="name" required placeholder="e.g. SSE" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                <select name="sponsorshipLevel" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  <option value="HEADLINE">Headline</option>
+                  <option value="MAJOR">Major</option>
+                  <option value="MINOR">Minor</option>
+                  <option value="IN_KIND">In Kind</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Amount (£)" name="amount" type="number" step="0.01" placeholder="0.00" />
+              <Input label="Logo URL" name="logoUrl" type="url" placeholder="https://..." />
+            </div>
+            <Input label="Notes" name="notes" placeholder="Optional notes about sponsorship" />
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" className="gap-1">
+                <Plus className="h-4 w-4" /> Add Sponsor
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Duplicate Event */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">Duplicate Event</h3>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Create a copy of this event with all financial structure, sponsors, and settings. Actual amounts, attendees, and dates are not copied.
+          </p>
+          <form action={duplicateEvent} className="space-y-3">
+            <input type="hidden" name="eventId" value={event.id} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="New Event Name" name="newName" defaultValue={`${event.name} (Copy)`} required />
+              <Input label="Start Date" name="newStartDate" type="date" required />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" className="gap-1">
+                <Copy className="h-4 w-4" /> Duplicate Event
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Donations */}
       <Card>

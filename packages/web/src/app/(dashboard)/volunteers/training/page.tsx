@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { GraduationCap, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { GraduationCap, Plus, Trash2, Building } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,11 +91,19 @@ export default async function TrainingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Training Courses</h1>
-        <p className="text-gray-500 mt-1">
-          Manage volunteer training courses and certifications
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Training Courses</h1>
+          <p className="text-gray-500 mt-1">
+            Manage volunteer training courses and certifications
+          </p>
+        </div>
+        <Link href="/volunteers/training/dept-training">
+          <Button variant="outline" className="gap-1">
+            <Building className="h-4 w-4" />
+            Department Requirements
+          </Button>
+        </Link>
       </div>
 
       {/* Create form */}

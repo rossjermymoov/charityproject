@@ -194,6 +194,33 @@ export function GiftAidForm({ contacts: initialContacts, action }: GiftAidFormPr
         placeholder="Leave blank if ongoing"
       />
 
+      <div className="border-t pt-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="isBackdated"
+            onChange={(e) => {
+              const form = e.currentTarget.form;
+              const backdateField = form?.querySelector('input[name="backdateFrom"]');
+              if (backdateField) {
+                backdateField.parentElement!.style.display = e.currentTarget.checked ? "block" : "none";
+              }
+            }}
+            className="rounded border-gray-300"
+          />
+          <span className="text-sm font-medium text-gray-700">Can this be backdated?</span>
+        </label>
+      </div>
+
+      <div style={{ display: "none" }}>
+        <Input
+          label="Backdate From"
+          name="backdateFrom"
+          type="date"
+          placeholder="Select the earliest date for this declaration"
+        />
+      </div>
+
       <Input label="Notes" name="notes" placeholder="Additional notes..." />
     </div>
   );

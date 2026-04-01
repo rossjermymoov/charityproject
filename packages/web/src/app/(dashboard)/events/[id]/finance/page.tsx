@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Target, CheckCircle2, Mail } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Target, CheckCircle2, Mail, Save } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   saveTargets,
   completeEvent,
 } from "./actions";
+import { saveEventAsTemplate } from "@/app/(dashboard)/settings/events/templates/actions";
 
 const INCOME_CATEGORIES = [
   { value: "REGISTRATION_FEES", label: "Registration Fees" },
@@ -423,6 +424,36 @@ export default async function EventFinancePage({
           </CardContent>
         </Card>
       )}
+
+      {/* Save as Template */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Save className="h-5 w-5" /> Save as Template
+          </h2>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Save this event's financial structure as a reusable template for future events.
+          </p>
+          <form action={saveEventAsTemplate} className="space-y-3">
+            <input type="hidden" name="eventId" value={id} />
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Input
+                  label="Template Name"
+                  name="templateName"
+                  required
+                  placeholder="e.g. Annual Fun Run Template"
+                />
+              </div>
+              <Button type="submit" className="gap-1">
+                <Save className="h-4 w-4" /> Save Template
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

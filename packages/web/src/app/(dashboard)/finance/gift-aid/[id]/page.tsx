@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Edit2, Link2, Copy, CheckCircle } from "lucide-react";
+import { ArrowLeft, Trash2, Edit2, Link2, Copy, CheckCircle, Pause, Play } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { ConfirmButton } from "@/components/ui/confirm-button";
 import { ImageUpload } from "./image-upload";
 import { CopyLinkButton } from "./copy-link-button";
 import crypto from "crypto";
+import { ceaseGiftAid, pauseGiftAid, resumeGiftAid } from "../actions";
 
 export default async function GiftAidDetailPage({
   params,
@@ -26,6 +27,7 @@ export default async function GiftAidDetailPage({
     include: {
       contact: true,
       createdBy: true,
+      pauses: true,
     },
   });
 
@@ -102,6 +104,15 @@ export default async function GiftAidDetailPage({
     PAPER: "Paper declaration",
   };
 
+  const cessationReasons = [
+    { value: "DONOR_REQUEST", label: "Donor Request" },
+    { value: "DECEASED", label: "Donor Deceased" },
+    { value: "HMRC_INSTRUCTION", label: "HMRC Instruction" },
+    { value: "OTHER", label: "Other" },
+  ];
+
+  const activePauses = giftAid.pauses.filter(p => !p.resumedAt);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -146,6 +157,14 @@ export default async function GiftAidDetailPage({
                 </p>
                 <p className="text-sm text-gray-900 mt-1">{formatDate(giftAid.startDate)}</p>
               </div>
+              {giftAid.backdateFrom && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Backdated From
+                  </p>
+                  <p className="text-sm text-gray-900 mt-1">{formatDate(giftAid.backdateFrom)}</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -176,6 +195,25 @@ export default async function GiftAidDetailPage({
             <div className="mt-8 pt-8 border-t border-gray-100">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</p>
               <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{giftAid.notes}</p>
+            </div>
+          )}
+
+          {giftAid.cessationReason && (
+            <div className="mt-8 pt-8 border-t border-red-100 bg-red-50 rounded-lg p-4">
+              <p className="text-xs font-medium text-red-700 uppercase tracking-wider">Cessation Details</p>
+              <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                <div>
+                  <p className="text-red-600 font-medium">Reason</p>
+                  <p className="text-red-900">{giftAid.cessationReason}</p>
+                </div>
+                <div>
+                  <p className="text-red-600 font-medium">Date</p>
+                  <p className="text-red-900">{formatDate(giftAid.cessationDate!)}</p>
+                </div>
+              </div>
+              {giftAid.cessationNotes && (
+                <p className="text-red-800 mt-3 text-sm">{giftAid.cessationNotes}</p>
+              )}
             </div>
           )}
         </CardContent>
@@ -303,6 +341,115 @@ export default async function GiftAidDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Pause/Resume Section */}
+      {activePauses.length > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Pause className="h-5 w-5 text-yellow-600" />
+              <h3 className="text-lg font-semibold text-yellow-900">Active Pauses</h3>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activePauses.map(pause => (
+                <div key={pause.id} className="border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <p className="text-yellow-900 font-medium">
+                        Paused from {formatDate(pause.pauseFrom)}
+                        {pause.pauseUntil && ` until ${formatDate(pause.pauseUntil)}`}
+                      </p>
+                      {pause.reason && (
+                        <p className="text-yellow-700 text-xs mt-1">{pause.reason}</p>
+                      )}
+                    </div>
+                    <form action={resumeGiftAid}>
+                      <input type="hidden" name="pauseId" value={pause.id} />
+                      <input type="hidden" name="giftAidId" value={id} />
+                      <Button type="submit" size="sm" variant="outline">
+                        <Play className="h-4 w-4 mr-1" />
+                        Resume
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pause Form */}
+      {giftAid.status === "ACTIVE" && activePauses.length === 0 && (
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Pause Declaration</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={pauseGiftAid} className="space-y-4">
+              <input type="hidden" name="giftAidId" value={id} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Pause From"
+                  name="pauseFrom"
+                  type="date"
+                  required
+                />
+                <Input
+                  label="Resume On (optional)"
+                  name="pauseUntil"
+                  type="date"
+                />
+              </div>
+              <Input
+                label="Reason"
+                name="reason"
+                placeholder="e.g., Donor on holiday, address under review"
+              />
+              <Button type="submit">
+                <Pause className="h-4 w-4 mr-2" />
+                Pause Declaration
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cessation Form */}
+      {giftAid.status === "ACTIVE" && !giftAid.cessationReason && (
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">Cease Declaration</h3>
+          </CardHeader>
+          <CardContent>
+            <form action={ceaseGiftAid} className="space-y-4">
+              <input type="hidden" name="giftAidId" value={id} />
+              <Select
+                label="Cessation Reason"
+                name="cessationReason"
+                required
+                options={cessationReasons}
+              />
+              <Input
+                label="Cessation Date"
+                name="cessationDate"
+                type="date"
+                required
+              />
+              <Input
+                label="Notes"
+                name="cessationNotes"
+                placeholder="Additional details about the cessation"
+              />
+              <Button type="submit" variant="destructive">
+                Cease Declaration
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Declaration Details */}
       <Card>
