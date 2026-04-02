@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 // POST /api/mobile/runs/stop — complete or skip a run stop
 export async function POST(request: NextRequest) {
   try {
@@ -8,12 +18,12 @@ export async function POST(request: NextRequest) {
     const { token, runStopId, action, deployedTinNumber, collectedTinNumber, skipReason, notes, latitude, longitude } = body;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
     }
 
     const user = await prisma.user.findUnique({ where: { id: token } });
     if (!user) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid token" }, { status: 401, headers: corsHeaders });
     }
 
     if (action === "complete") {
@@ -26,12 +36,11 @@ export async function POST(request: NextRequest) {
       });
 
       if (!runStop) {
-        return NextResponse.json({ error: "RunStop not found" }, { status: 404 });
+        return NextResponse.json({ error: "RunStop not found" }, { status: 404, headers: corsHeaders });
       }
 
       const now = new Date();
 
-      // Look up tins by number (tinNumber field)
       let deployedTinId: string | null = null;
       let collectedTinId: string | null = null;
 
@@ -41,7 +50,6 @@ export async function POST(request: NextRequest) {
         });
         if (tin) {
           deployedTinId = tin.id;
-          // Update tin status
           await prisma.collectionTin.update({
             where: { id: tin.id },
             data: {
@@ -86,7 +94,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update RunStop
       await prisma.runStop.update({
         where: { id: runStopId },
         data: {
@@ -103,7 +110,7 @@ export async function POST(request: NextRequest) {
         ok: true,
         deployedTinFound: !!deployedTinId,
         collectedTinFound: !!collectedTinId,
-      });
+      }, { headers: corsHeaders });
     }
 
     if (action === "skip") {
@@ -116,12 +123,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }, { headers: corsHeaders });
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid action" }, { status: 400, headers: corsHeaders });
   } catch (error) {
     console.error("Mobile stop POST error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error" }, { status: 500, headers: corsHeaders });
   }
 }
