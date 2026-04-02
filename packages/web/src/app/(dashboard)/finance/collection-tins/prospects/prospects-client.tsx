@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { MapPin, Search, Plus, X, AlertTriangle, Loader2, FileText, Key, Check, Download, Building2, Settings } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Search, Plus, X, AlertTriangle, Loader2, FileText, Key, Check, Download, Building2, Globe, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,13 @@ type ProspectResult = {
   lng: number;
   rating?: number;
   alreadyExists: boolean;
+};
+
+type LetterData = {
+  prospectName: string;
+  prospectAddress: string;
+  category: string;
+  letterBody: string;
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -36,6 +43,8 @@ export default function ProspectsClient({
   orgName,
   charityDescription,
   categories,
+  initialWebsite,
+  initialWebsiteSummary,
 }: {
   catchment: string[];
   hasApiKey: boolean;
@@ -43,7 +52,10 @@ export default function ProspectsClient({
   orgName: string | null;
   charityDescription: string | null;
   categories: string[];
+  initialWebsite: string | null;
+  initialWebsiteSummary: string | null;
 }) {
+  // Settings state
   const [catchment, setCatchment] = useState<string[]>(initialCatchment);
   const [newPostcode, setNewPostcode] = useState("");
   const [savingCatchment, setSavingCatchment] = useState(false);
@@ -56,15 +68,26 @@ export default function ProspectsClient({
   const [savingDesc, setSavingDesc] = useState(false);
   const [descSaved, setDescSaved] = useState(false);
 
+  const [websiteUrl, setWebsiteUrl] = useState(initialWebsite || "");
+  const [websiteSummary, setWebsiteSummary] = useState(initialWebsiteSummary || "");
+  const [scanningWebsite, setScanningWebsite] = useState(false);
+  const [websiteError, setWebsiteError] = useState("");
+
+  // Search state
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPostcode, setSelectedPostcode] = useState("");
   const [results, setResults] = useState<ProspectResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
 
-  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
+  // Letter state
+  const [selectedProspects, setSelectedProspects] = useState<Set<string>>(new Set());
+  const [letters, setLetters] = useState<LetterData[]>([]);
+  const [generatingLetters, setGeneratingLetters] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [previewLetter, setPreviewLetter] = useState<LetterData | null>(null);
 
-  // Catchment management
+  // --- Settings handlers ---
   const addPostcode = async () => {
     const pc = newPostcode.trim().toUpperCase();
     if (!pc || catchment.includes(pc)) return;
@@ -90,7 +113,6 @@ export default function ProspectsClient({
     setCatchment(updated);
   };
 
-  // Save API key
   const saveApiKey = async () => {
     if (!apiKeyInput.trim()) return;
     setSavingApiKey(true);
@@ -103,7 +125,6 @@ export default function ProspectsClient({
     setSavingApiKey(false);
   };
 
-  // Save description
   const saveDescription = async () => {
     setSavingDesc(true);
     await fetch("/api/settings/charity-description", {
@@ -116,12 +137,37 @@ export default function ProspectsClient({
     setTimeout(() => setDescSaved(false), 3000);
   };
 
-  // Search
+  const scanWebsite = async () => {
+    if (!websiteUrl.trim()) return;
+    setScanningWebsite(true);
+    setWebsiteError("");
+    try {
+      const res = await fetch("/api/settings/charity-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: websiteUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setWebsiteError(data.error);
+      } else {
+        setWebsiteSummary(data.summary);
+      }
+    } catch (e: any) {
+      setWebsiteError(e.message);
+    } finally {
+      setScanningWebsite(false);
+    }
+  };
+
+  // --- Search ---
   const handleSearch = async () => {
     if (!selectedCategory || !selectedPostcode) return;
     setSearching(true);
     setSearchError("");
     setResults([]);
+    setLetters([]);
+    setSelectedProspects(new Set());
     try {
       const res = await fetch("/api/prospects/search", {
         method: "POST",
@@ -133,6 +179,11 @@ export default function ProspectsClient({
         setSearchError(data.error);
       } else {
         setResults(data.results || []);
+        // Auto-select all new prospects
+        const newIds = new Set(
+          (data.results || []).filter((r: ProspectResult) => !r.alreadyExists).map((r: ProspectResult) => r.placeId)
+        );
+        setSelectedProspects(newIds);
       }
     } catch (e: any) {
       setSearchError(e.message);
@@ -141,11 +192,62 @@ export default function ProspectsClient({
     }
   };
 
-  // Download infographic PDF
-  const downloadInfographic = async (category: string) => {
-    setGeneratingPdf(category);
+  const toggleProspect = (placeId: string) => {
+    setSelectedProspects((prev) => {
+      const next = new Set(prev);
+      if (next.has(placeId)) next.delete(placeId);
+      else next.add(placeId);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedProspects(new Set(newResults.map((r) => r.placeId)));
+  };
+
+  const selectNone = () => {
+    setSelectedProspects(new Set());
+  };
+
+  // --- Letters ---
+  const generateLetters = async () => {
+    const selected = newResults.filter((r) => selectedProspects.has(r.placeId));
+    if (selected.length === 0) return;
+    setGeneratingLetters(true);
     try {
-      const res = await fetch(`/api/prospects/infographic/pdf?category=${category}`);
+      const res = await fetch("/api/prospects/letters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prospects: selected.map((r) => ({
+            name: r.name,
+            address: r.address,
+            category: r.type || selectedCategory,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+      } else {
+        setLetters(data.letters || []);
+      }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setGeneratingLetters(false);
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (letters.length === 0) return;
+    setDownloadingPdf(true);
+    try {
+      const res = await fetch("/api/prospects/letters/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ letters }),
+      });
       if (!res.ok) {
         const err = await res.json();
         alert(err.error || "Failed to generate PDF");
@@ -155,15 +257,15 @@ export default function ProspectsClient({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${CATEGORY_NAMES[category]?.replace(/\s+/g, "-") || category}-infographic.pdf`;
+      a.download = `prospect-letters-${letters.length}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      alert(e.message);
     } finally {
-      setGeneratingPdf(null);
+      setDownloadingPdf(false);
     }
   };
 
@@ -172,7 +274,7 @@ export default function ProspectsClient({
 
   return (
     <div className="space-y-6">
-      {/* Setup section - show if missing config */}
+      {/* Setup warning */}
       {(!hasApiKey || catchment.length === 0) && (
         <Card className="p-6 border-amber-300 bg-amber-50">
           <div className="flex items-start gap-3">
@@ -199,13 +301,8 @@ export default function ProspectsClient({
             Required to search for businesses. Get one from the Google Cloud Console under Places API.
           </p>
           <div className="flex gap-2">
-            <input
-              type="password"
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder="AIzaSy..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
+            <input type="password" value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder="AIzaSy..." className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
             <Button size="sm" onClick={saveApiKey} disabled={savingApiKey}>
               {savingApiKey ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Key"}
             </Button>
@@ -228,36 +325,54 @@ export default function ProspectsClient({
         <p className="text-sm text-gray-500 mb-3">
           Add postcode prefixes to define your operating area. E.g. "SY10", "SY11", or more specific like "SY10 1".
         </p>
-
         {catchment.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {catchment.map((pc) => (
               <Badge key={pc} className="bg-blue-100 text-blue-800 pl-2.5 pr-1 py-1.5 text-sm flex items-center gap-1">
                 {pc}
-                <button
-                  onClick={() => removePostcode(pc)}
-                  className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
-                >
+                <button onClick={() => removePostcode(pc)} className="ml-1 hover:bg-blue-200 rounded-full p-0.5">
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
             ))}
           </div>
         )}
-
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={newPostcode}
-            onChange={(e) => setNewPostcode(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addPostcode()}
-            placeholder="e.g. SY11"
-            className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          />
+          <input type="text" value={newPostcode} onChange={(e) => setNewPostcode(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addPostcode()} placeholder="e.g. SY11"
+            className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
           <Button size="sm" variant="outline" onClick={addPostcode} disabled={savingCatchment}>
             <Plus className="h-4 w-4 mr-1" /> Add
           </Button>
         </div>
+      </Card>
+
+      {/* Charity Website */}
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <Globe className="h-5 w-5 text-gray-400" />
+          <h3 className="font-semibold text-gray-900">Charity Website</h3>
+        </div>
+        <p className="text-sm text-gray-500 mb-3">
+          We'll scan your website to find key information about your charity — services, impact stats, and mission — then use it to write compelling letters to prospects.
+        </p>
+        <div className="flex gap-2">
+          <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="e.g. www.yourcharity.org.uk"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+          <Button size="sm" onClick={scanWebsite} disabled={scanningWebsite}>
+            {scanningWebsite ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Scanning...</> : "Scan Website"}
+          </Button>
+        </div>
+        {websiteError && (
+          <p className="text-sm text-red-600 mt-2">{websiteError}</p>
+        )}
+        {websiteSummary && (
+          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-xs font-semibold text-green-800 mb-1">Website analysed</p>
+            <p className="text-xs text-green-700 whitespace-pre-line">{websiteSummary}</p>
+          </div>
+        )}
       </Card>
 
       {/* Charity Description */}
@@ -267,15 +382,11 @@ export default function ProspectsClient({
           <h3 className="font-semibold text-gray-900">About Your Charity</h3>
         </div>
         <p className="text-sm text-gray-500 mb-3">
-          This description appears on infographics you send to prospective businesses.
+          This description is included in the letters sent to prospects. Write a short paragraph about what you do.
         </p>
-        <textarea
-          value={descInput}
-          onChange={(e) => setDescInput(e.target.value)}
-          rows={3}
+        <textarea value={descInput} onChange={(e) => setDescInput(e.target.value)} rows={3}
           placeholder="e.g. We are a local charity supporting families in need across Shropshire. Our collection tins help fund community programmes, food banks, and youth services."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-        />
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none" />
         <div className="flex items-center gap-2 mt-2">
           <Button size="sm" onClick={saveDescription} disabled={savingDesc}>
             {savingDesc ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Description"}
@@ -292,54 +403,41 @@ export default function ProspectsClient({
             <h3 className="font-semibold text-gray-900">Find New Prospects</h3>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Search for businesses in your catchment area that don't yet have a collection tin.
+            Search for businesses in your catchment area, then generate personalised letters to send them.
           </p>
 
           <div className="flex gap-3 items-end flex-wrap">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-              >
+              <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                 <option value="">Choose a category...</option>
                 {ALL_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {CATEGORY_ICONS[cat]} {CATEGORY_NAMES[cat]}
-                  </option>
+                  <option key={cat} value={cat}>{CATEGORY_ICONS[cat]} {CATEGORY_NAMES[cat]}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Postcode area</label>
-              <select
-                value={selectedPostcode}
-                onChange={(e) => setSelectedPostcode(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-              >
+              <select value={selectedPostcode} onChange={(e) => setSelectedPostcode(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                 <option value="">Choose a postcode...</option>
                 {catchment.map((pc) => (
                   <option key={pc} value={pc}>{pc}</option>
                 ))}
               </select>
             </div>
-            <Button
-              onClick={handleSearch}
-              disabled={!selectedCategory || !selectedPostcode || searching}
-            >
+            <Button onClick={handleSearch} disabled={!selectedCategory || !selectedPostcode || searching}>
               {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
               Search
             </Button>
           </div>
 
           {searchError && (
-            <div className="mt-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-              {searchError}
-            </div>
+            <div className="mt-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{searchError}</div>
           )}
 
-          {/* Results */}
+          {/* Results with checkboxes */}
           {results.length > 0 && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
@@ -347,70 +445,107 @@ export default function ProspectsClient({
                   {newResults.length} new prospects found
                   {existingResults.length > 0 && ` (${existingResults.length} already have tins)`}
                 </p>
+                <div className="flex gap-2">
+                  <button onClick={selectAll} className="text-xs text-blue-600 hover:underline">Select all</button>
+                  <span className="text-xs text-gray-300">|</span>
+                  <button onClick={selectNone} className="text-xs text-blue-600 hover:underline">Select none</button>
+                </div>
               </div>
 
               <div className="space-y-2">
                 {newResults.map((r) => (
-                  <div key={r.placeId} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div>
+                  <label key={r.placeId} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedProspects.has(r.placeId)
+                      ? "bg-green-50 border-green-300"
+                      : "bg-white border-gray-200 hover:border-gray-300"
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedProspects.has(r.placeId)}
+                      onChange={() => toggleProspect(r.placeId)}
+                      className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900">{r.name}</p>
-                      <p className="text-xs text-gray-500">{r.address}</p>
-                      {r.rating && (
-                        <p className="text-xs text-yellow-600 mt-0.5">★ {r.rating}</p>
-                      )}
+                      <p className="text-xs text-gray-500 truncate">{r.address}</p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">New prospect</Badge>
-                  </div>
+                    {r.rating && <span className="text-xs text-yellow-600">★ {r.rating}</span>}
+                    <Badge className="bg-green-100 text-green-800 text-xs">New</Badge>
+                  </label>
                 ))}
                 {existingResults.map((r) => (
-                  <div key={r.placeId} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg opacity-60">
-                    <div>
+                  <div key={r.placeId} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg opacity-50">
+                    <div className="w-4" />
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900">{r.name}</p>
-                      <p className="text-xs text-gray-500">{r.address}</p>
+                      <p className="text-xs text-gray-500 truncate">{r.address}</p>
                     </div>
-                    <Badge className="bg-gray-200 text-gray-600">Already exists</Badge>
+                    <Badge className="bg-gray-200 text-gray-600 text-xs">Already exists</Badge>
                   </div>
                 ))}
               </div>
+
+              {/* Generate letters button */}
+              {selectedProspects.size > 0 && (
+                <div className="pt-2">
+                  <Button onClick={generateLetters} disabled={generatingLetters}>
+                    {generatingLetters ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating letters...</>
+                    ) : (
+                      <><Mail className="h-4 w-4 mr-2" /> Generate {selectedProspects.size} Letter{selectedProspects.size > 1 ? "s" : ""}</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </Card>
       )}
 
-      {/* Infographic generation */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-3">
-          <FileText className="h-5 w-5 text-gray-400" />
-          <h3 className="font-semibold text-gray-900">Generate Infographics</h3>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">
-          Create a branded PDF one-pager for each business category showing collection stats,
-          how partnership works, and your charity's impact. Send these to prospective businesses.
-        </p>
+      {/* Generated letters */}
+      {letters.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-gray-400" />
+              <h3 className="font-semibold text-gray-900">{letters.length} Letters Generated</h3>
+            </div>
+            <Button onClick={downloadPdf} disabled={downloadingPdf}>
+              {downloadingPdf ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating PDF...</>
+              ) : (
+                <><Download className="h-4 w-4 mr-2" /> Download All as PDF</>
+              )}
+            </Button>
+          </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {ALL_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => downloadInfographic(cat)}
-              disabled={generatingPdf === cat}
-              className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-all text-left"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{CATEGORY_ICONS[cat]}</span>
-                <span className="text-sm font-semibold text-gray-900">{CATEGORY_NAMES[cat]}</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-indigo-600 mt-2">
-                {generatingPdf === cat ? (
-                  <><Loader2 className="h-3 w-3 animate-spin" /> Generating...</>
-                ) : (
-                  <><Download className="h-3 w-3" /> Download PDF</>
+          <div className="space-y-2">
+            {letters.map((letter, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setPreviewLetter(previewLetter?.prospectName === letter.prospectName ? null : letter)}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-50 text-left"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{letter.prospectName}</p>
+                    <p className="text-xs text-gray-500">{letter.prospectAddress}</p>
+                  </div>
+                  <Badge className="bg-indigo-100 text-indigo-800 text-xs">
+                    {previewLetter?.prospectName === letter.prospectName ? "Hide preview" : "Preview"}
+                  </Badge>
+                </button>
+                {previewLetter?.prospectName === letter.prospectName && (
+                  <div className="px-4 pb-4 border-t border-gray-100">
+                    <div className="mt-3 bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-800 leading-relaxed whitespace-pre-line font-serif max-h-96 overflow-y-auto">
+                      {letter.letterBody}
+                    </div>
+                  </div>
                 )}
               </div>
-            </button>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

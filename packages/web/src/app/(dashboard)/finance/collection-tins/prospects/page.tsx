@@ -14,6 +14,8 @@ export default async function ProspectsPage() {
       charityDescription: true,
       googlePlacesApiKey: true,
       orgName: true,
+      charityWebsite: true,
+      charityWebsiteSummary: true,
     },
   });
 
@@ -131,6 +133,8 @@ export default async function ProspectsPage() {
         orgName={settings?.orgName || null}
         charityDescription={settings?.charityDescription || null}
         categories={categories.map((c) => c.type)}
+        initialWebsite={settings?.charityWebsite || null}
+        initialWebsiteSummary={settings?.charityWebsiteSummary || null}
       />
     </div>
   );

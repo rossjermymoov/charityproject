@@ -40,7 +40,9 @@ model SystemSettings {
 
   // ── Catchment Area & Prospects ──
   catchmentPostcodes    String?  // JSON array of postcode prefixes e.g. ["SY10","SY11","SY10 1"]
-  charityDescription    String?  // Free-text paragraph about what the charity does (used in infographics)
+  charityDescription    String?  // Free-text paragraph about what the charity does (used in letters/infographics)
+  charityWebsite        String?  // Charity website URL for AI letter generation
+  charityWebsiteSummary String?  // AI-generated summary of charity website content (cached)
   googlePlacesApiKey    String?  // Google Places API key for prospect finding
 
   // ── HMRC Gift Aid Integration ──
