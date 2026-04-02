@@ -45,6 +45,7 @@ import {
   ChevronRight,
   Mail,
   Merge2,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -115,6 +116,7 @@ const sections: NavSection[] = [
     icon: PoundSterling,
     roles: ALL_STAFF,
     items: [
+      { name: "Major Gifts Pipeline", href: "/finance/pipeline", icon: Target },
       { name: "Donations", href: "/finance/donations", icon: PoundSterling },
       { name: "Payments", href: "/finance/payments", icon: CreditCard },
       { name: "Subscriptions", href: "/finance/subscriptions", icon: RefreshCw },

@@ -102,6 +102,15 @@ function SageIntacctLogo({ className }: { className?: string }) {
   );
 }
 
+function XeroLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#003A70" />
+      <text x="24" y="31" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#fff">X</text>
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default async function IntegrationsPage() {
@@ -217,6 +226,14 @@ export default async function IntegrationsPage() {
       title: "Sage Intacct",
       description: "Cloud accounting integration for syncing donations to GL and managing finances",
       href: "/settings/integrations/sage-intacct",
+      status: "not configured",
+      category: "Accounting & Finance",
+    },
+    {
+      logo: XeroLogo,
+      title: "Xero",
+      description: "Cloud accounting integration for syncing donations, contacts, and financial data",
+      href: "/settings/integrations/xero",
       status: "not configured",
       category: "Accounting & Finance",
     },

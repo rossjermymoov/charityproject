@@ -143,6 +143,8 @@ model User {
   emailTemplates         EmailTemplate[]      @relation("EmailTemplatesCreated")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
   savedReports           SavedReport[]        @relation("SavedReportCreatedBy")
+  donorOpportunitiesCreated DonorOpportunity[] @relation("DonorOpportunitiesCreatedBy")
+  donorOpportunitiesAssigned DonorOpportunity[] @relation("DonorOpportunitiesAssignedTo")
 }
 
 model Department {
@@ -244,6 +246,7 @@ model Contact {
   memberships    Membership[]
   legacies       Legacy[]
   cases          CaseRecord[]
+  donorOpportunities DonorOpportunity[]   @relation("DonorOpportunitiesContact")
 }
 
 model Organisation {
@@ -676,6 +679,7 @@ model LedgerCode {
   events              Event[]
   campaigns           Campaign[]
   sageAccountMappings SageAccountMapping[]
+  xeroAccountMappings XeroAccountMapping[]
 }
 
 model Donation {
@@ -1059,6 +1063,7 @@ model Campaign {
   events     Event[]
   donations  Donation[]
   segments   CampaignSegment[]
+  donorOpportunities DonorOpportunity[] @relation("DonorOpportunitiesCampaign")
 }
 
 model CampaignSegment {
@@ -2214,4 +2219,85 @@ model SavedReport {
   @@index([createdById])
   @@index([entity])
   @@index([isShared])
+}
+
+// ============================================
+// XERO ACCOUNTING INTEGRATION
+// ============================================
+
+model XeroConfig {
+  id                        String   @id @default("default")
+  clientId                  String?
+  clientSecret              String?
+  tenantId                  String?
+  accessToken               String?
+  refreshToken              String?
+  tokenExpiresAt            DateTime?
+  isConnected               Boolean  @default(false)
+  lastSyncAt                DateTime?
+  defaultRevenueAccountCode String?
+  defaultExpenseAccountCode String?
+  defaultBankAccountCode    String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model XeroSyncLog {
+  id         String   @id @default(cuid())
+  entityType String   // DONATION, EXPENSE, CONTACT, INVOICE
+  entityId   String
+  xeroId     String?  // Xero's ID for the synced entity
+  direction  String   @default("PUSH") // PUSH or PULL
+  status     String   @default("PENDING") // PENDING, SUCCESS, FAILED, SKIPPED
+  detail     String?
+  syncedAt   DateTime @default(now())
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([status])
+  @@index([syncedAt])
+}
+
+model XeroAccountMapping {
+  id               String   @id @default(cuid())
+  ledgerCodeId     String
+  xeroAccountCode  String
+  xeroAccountName  String?
+  createdAt        DateTime @default(now())
+
+  ledgerCode       LedgerCode @relation("XeroAccountMappings", fields: [ledgerCodeId], references: [id], onDelete: Cascade)
+
+  @@unique([ledgerCodeId])
+  @@index([xeroAccountCode])
+}
+
+model DonorOpportunity {
+  id                String    @id @default(cuid())
+  contactId         String
+  name              String
+  description       String?
+  stage             String    @default("IDENTIFICATION") // IDENTIFICATION | QUALIFICATION | CULTIVATION | SOLICITATION | NEGOTIATION | CLOSED_WON | CLOSED_LOST
+  amount            Float     @default(0)
+  probability       Int       @default(10) // 0-100
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+  campaignId        String?
+  assignedToId      String?
+  notes             String?
+  lostReason        String?
+  stageHistory      Json      @default("[]") // Array of { stage, timestamp, changedBy }
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  contact           Contact   @relation("DonorOpportunitiesContact", fields: [contactId], references: [id], onDelete: Cascade)
+  campaign          Campaign? @relation("DonorOpportunitiesCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
+  assignedTo        User?     @relation("DonorOpportunitiesAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy         User      @relation("DonorOpportunitiesCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([contactId])
+  @@index([stage])
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([campaignId])
 }
