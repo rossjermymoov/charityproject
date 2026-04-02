@@ -29,10 +29,11 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   // Check if user is admin
-  const user = await prisma.user.findUnique({ where: { id: session.id } });
-  if (!user || user.role !== "ADMIN") {
+  const maybeUser = await prisma.user.findUnique({ where: { id: session.id } });
+  if (!maybeUser || maybeUser.role !== "ADMIN") {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
+  const userId = maybeUser.id;
 
   const results: TestResult[] = [];
   const testPrefix = `__test_agent_${Date.now()}`;
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
         email: `${testPrefix}@test.example`,
         type: "INDIVIDUAL",
         status: "ACTIVE",
-        createdById: user.id,
+        createdById: userId,
       },
     });
     testContactId = contact.id;
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
         status: "ACTIVE",
         budgetTarget: 1000,
         startDate: new Date(),
-        createdById: user.id,
+        createdById: userId,
       },
     });
     testCampaignId = campaign.id;
@@ -168,7 +169,7 @@ export async function POST(request: Request) {
         type: "DONATION",
         date: new Date(),
         campaignId: testCampaignId,
-        createdById: user.id,
+        createdById: userId,
       },
     });
     // Increment campaign actualRaised (mimics the fixed flow)
@@ -223,7 +224,7 @@ export async function POST(request: Request) {
         currency: "GBP",
         type: "GIFT",
         date: new Date(),
-        createdById: user.id,
+        createdById: userId,
       },
     });
     cleanup.push(async () => { await prisma.donation.delete({ where: { id: d.id } }).catch(() => {}); });
@@ -253,7 +254,7 @@ export async function POST(request: Request) {
         startDate: new Date(),
         endDate: new Date(Date.now() + 86400000),
         status: "CONFIRMED",
-        createdById: user.id,
+        createdById: userId,
       },
     });
     testEventId = event.id;
@@ -325,7 +326,7 @@ export async function POST(request: Request) {
       data: {
         contactId: testContactId,
         content: `Test note from agent ${testPrefix}`,
-        createdById: user.id,
+        createdById: userId,
       },
     });
     cleanup.push(async () => { await prisma.note.delete({ where: { id: note.id } }).catch(() => {}); });
@@ -341,7 +342,7 @@ export async function POST(request: Request) {
         subject: "Test call",
         date: new Date(),
         description: `Test call from agent ${testPrefix}`,
-        createdById: user.id,
+        createdById: userId,
       },
     });
     cleanup.push(async () => { await prisma.interaction.delete({ where: { id: interaction.id } }).catch(() => {}); });
