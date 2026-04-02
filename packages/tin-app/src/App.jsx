@@ -2,6 +2,22 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 
+// ─── Bucket Icon (charity collection tin/bucket) ─────────────────
+function BucketIcon({ size = 32, color = "white" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {/* Bucket body */}
+      <path d="M5 9l1.5 11a1 1 0 0 0 1 .9h9a1 1 0 0 0 1-.9L19 9" />
+      {/* Bucket rim */}
+      <ellipse cx="12" cy="9" rx="8" ry="2.5" />
+      {/* Handle */}
+      <path d="M8.5 6.5C8.5 4 10 2.5 12 2.5s3.5 1.5 3.5 4" />
+      {/* Coin slot */}
+      <line x1="10" y1="9" x2="14" y2="9" strokeWidth="2.2" />
+    </svg>
+  );
+}
+
 // ─── Mock Data ───────────────────────────────────────────────────
 const MOCK_STOPS = [
   { id: "s1", name: "Premier Stores", address: "Whittington Rd, SY11 4AA", status: "PENDING", parking: "On street", access: null },
@@ -212,7 +228,7 @@ export default function TinCollectionsApp() {
     return (
       <div style={S.app}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, background: "#f8fafc" }}>
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, color: "#475569", marginBottom: 20 }}>TC</div>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}><BucketIcon size={38} color="#475569" /></div>
           <div style={{ fontSize: 26, fontWeight: 900, color: "#111", marginBottom: 6 }}>Welcome</div>
           <div style={{ fontSize: 16, color: "#666", marginBottom: 32, textAlign: "center" }}>Pick your charity&apos;s brand colour</div>
 
@@ -242,7 +258,7 @@ export default function TinCollectionsApp() {
     return (
       <div style={S.app}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: brand, padding: 32 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 24, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 900, color: "white", marginBottom: 20 }}>TC</div>
+          <div style={{ width: 80, height: 80, borderRadius: 24, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}><BucketIcon size={42} color="white" /></div>
           <div style={{ fontSize: 30, fontWeight: 900, color: "white", marginBottom: 4 }}>Tin Collections</div>
           <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 40 }}>CharityOS</div>
           <input style={{ ...S.loginInput, background: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.25)", color: "white" }} placeholder="Email" defaultValue="admin@charity.org" />
@@ -263,7 +279,7 @@ export default function TinCollectionsApp() {
         <div style={{ background: brand, color: "white", padding: "24px 24px 20px", flexShrink: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: 900 }}>TC</div>
+              <div style={{ width: 42, height: 42, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}><BucketIcon size={24} color="white" /></div>
               <div><div style={{ fontSize: 17, fontWeight: 800 }}>Tin Collections</div></div>
             </div>
             <button onClick={() => setScreen("login")} style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", background: "none", border: "none", cursor: "pointer" }}>Sign out</button>
