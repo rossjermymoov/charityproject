@@ -42,10 +42,10 @@ export function MobileLogin() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl mb-5 shadow-lg">
-            <span className="text-3xl font-bold text-indigo-600">CO</span>
+            <span className="text-3xl font-bold text-indigo-600">TC</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">CharityOS</h1>
-          <p className="text-indigo-200 mt-2 text-lg">Sign in to continue</p>
+          <h1 className="text-3xl font-bold text-white">Tin Collections</h1>
+          <p className="text-indigo-200 mt-2 text-lg">CharityOS</p>
         </div>
 
         {/* Login form */}

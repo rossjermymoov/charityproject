@@ -45,18 +45,21 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 pb-24">
-      {/* Header - big, bold, app-like */}
-      <div className="bg-indigo-600 text-white px-6 pt-14 pb-8">
-        <div className="flex items-center justify-between mb-2">
+    <div className="min-h-[100dvh] bg-gray-50 pb-28">
+      {/* Header */}
+      <div className="bg-indigo-600 text-white px-6" style={{ paddingTop: "calc(env(safe-area-inset-top, 16px) + 1.5rem)", paddingBottom: "2rem" }}>
+        <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-lg font-bold">CO</span>
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+              <span className="text-xl font-bold">TC</span>
             </div>
-            <span className="text-lg font-bold">CharityOS</span>
+            <div>
+              <span className="text-lg font-bold block leading-tight">Tin Collections</span>
+              <span className="text-indigo-200 text-sm">CharityOS</span>
+            </div>
           </div>
           <button
-            className="text-indigo-200 text-base px-3 py-2 rounded-lg active:bg-white/10"
+            className="text-indigo-200 text-lg px-4 py-2 rounded-xl active:bg-white/10"
             onClick={async () => {
               await fetch("/api/auth/logout", { method: "POST" });
               router.push("/mobile/login");
@@ -65,8 +68,8 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
             Sign out
           </button>
         </div>
-        <p className="text-indigo-100 text-2xl font-semibold mt-4">Hey {firstName}!</p>
-        <p className="text-indigo-200 text-base mt-1">
+        <p className="text-white text-3xl font-bold">Hey {firstName}!</p>
+        <p className="text-indigo-200 text-lg mt-1">
           {activeRuns.length > 0
             ? `You have ${activeRuns.length} active run${activeRuns.length > 1 ? "s" : ""}`
             : "No runs assigned right now"}
@@ -74,55 +77,37 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
       </div>
 
       <div className="px-5 py-6 space-y-8">
-        {/* In Progress - show prominently */}
+        {/* In Progress */}
         {inProgressRuns.length > 0 && (
           <div>
-            <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">
+            <h2 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-4">
               In Progress
             </h2>
             {inProgressRuns.map((run) => {
               const { done, total, pct } = getProgress(run);
               return (
-                <Link
-                  key={run.id}
-                  href={`/mobile/route/${run.id}`}
-                  className="block mb-4"
-                >
-                  <div className="bg-white rounded-2xl shadow-md border-2 border-indigo-500 p-6 active:scale-[0.98] transition-transform">
+                <Link key={run.id} href={`/mobile/route/${run.id}`} className="block mb-4">
+                  <div className="bg-white rounded-3xl shadow-lg border-2 border-indigo-500 p-6 active:scale-[0.98] transition-transform">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">
-                          {run.route.name}
-                        </h3>
+                        <h3 className="text-2xl font-bold text-gray-900">{run.route.name}</h3>
                         {run.startedAt && (
-                          <p className="text-base text-gray-500 mt-1">
-                            Started {formatDate(run.startedAt)}
-                          </p>
+                          <p className="text-lg text-gray-500 mt-1">Started {formatDate(run.startedAt)}</p>
                         )}
                       </div>
-                      <span className="bg-yellow-100 text-yellow-800 text-sm font-bold px-3 py-1.5 rounded-full">
-                        Active
-                      </span>
+                      <span className="bg-yellow-100 text-yellow-800 text-base font-bold px-4 py-2 rounded-full">Active</span>
                     </div>
-                    {/* Progress bar */}
                     <div className="mb-3">
-                      <div className="flex justify-between text-base text-gray-600 mb-2">
-                        <span className="font-medium">
-                          {done} of {total} stops
-                        </span>
+                      <div className="flex justify-between text-lg text-gray-600 mb-2">
+                        <span className="font-semibold">{done} of {total} stops</span>
                         <span className="font-bold">{pct}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-4">
-                        <div
-                          className="bg-indigo-500 h-4 rounded-full transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
+                      <div className="w-full bg-gray-200 rounded-full h-5">
+                        <div className="bg-indigo-500 h-5 rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
-                    <div className="bg-indigo-600 text-white text-center py-3.5 rounded-xl mt-4">
-                      <span className="font-bold text-lg">
-                        Continue Collection
-                      </span>
+                    <div className="bg-indigo-600 text-white text-center py-4 rounded-2xl mt-4">
+                      <span className="font-bold text-xl">Continue Collection →</span>
                     </div>
                   </div>
                 </Link>
@@ -131,47 +116,25 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
           </div>
         )}
 
-        {/* Scheduled runs */}
+        {/* Scheduled */}
         {scheduledRuns.length > 0 && (
           <div>
-            <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Upcoming Runs
-            </h2>
+            <h2 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-4">Upcoming Runs</h2>
             <div className="space-y-4">
               {scheduledRuns.map((run) => (
-                <Link
-                  key={run.id}
-                  href={`/mobile/route/${run.id}`}
-                  className="block"
-                >
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 active:scale-[0.98] transition-transform">
+                <Link key={run.id} href={`/mobile/route/${run.id}`} className="block">
+                  <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6 active:scale-[0.98] transition-transform">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {run.route.name}
-                        </h3>
-                        <p className="text-base text-gray-500 mt-1">
-                          {run.runStops.length} stops
-                          {run.scheduledDate &&
-                            ` · ${formatDate(run.scheduledDate)}`}
+                        <h3 className="text-xl font-bold text-gray-900">{run.route.name}</h3>
+                        <p className="text-lg text-gray-500 mt-1">
+                          {run.runStops.length} stops{run.scheduledDate && ` · ${formatDate(run.scheduledDate)}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1.5 rounded-full">
-                          Scheduled
-                        </span>
-                        <svg
-                          className="w-6 h-6 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M9 5l7 7-7 7"
-                          />
+                        <span className="bg-blue-100 text-blue-800 text-base font-bold px-4 py-2 rounded-full">Scheduled</span>
+                        <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                         </svg>
                       </div>
                     </div>
@@ -184,41 +147,30 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
 
         {/* Empty state */}
         {activeRuns.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-7xl mb-6">📦</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              No runs assigned
-            </h2>
-            <p className="text-lg text-gray-500 px-4">
-              You don&apos;t have any collection runs scheduled yet. Check back
-              soon or contact your coordinator.
+          <div className="text-center py-24">
+            <div className="text-8xl mb-6">📦</div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">No runs assigned</h2>
+            <p className="text-xl text-gray-500 px-4">
+              You don&apos;t have any collection runs scheduled yet. Check back soon or contact your coordinator.
             </p>
           </div>
         )}
 
-        {/* Recent completions */}
+        {/* Recent */}
         {completedRuns.length > 0 && (
           <div>
-            <h2 className="text-base font-bold text-gray-500 uppercase tracking-wider mb-4">
-              Recently Completed
-            </h2>
+            <h2 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-4">Recently Completed</h2>
             <div className="space-y-3">
               {completedRuns.map((run) => (
-                <div
-                  key={run.id}
-                  className="bg-white rounded-2xl border border-gray-200 p-5 opacity-70"
-                >
+                <div key={run.id} className="bg-white rounded-2xl border border-gray-200 p-5 opacity-70">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-700">
-                        {run.route.name}
-                      </h3>
+                      <h3 className="text-lg font-semibold text-gray-700">{run.route.name}</h3>
                       <p className="text-base text-gray-400 mt-1">
-                        {run.runStops.length} stops · Completed{" "}
-                        {formatDate(run.completedAt)}
+                        {run.runStops.length} stops · Completed {formatDate(run.completedAt)}
                       </p>
                     </div>
-                    <span className="text-green-500 text-2xl">✓</span>
+                    <span className="text-green-500 text-3xl">✓</span>
                   </div>
                 </div>
               ))}
@@ -228,22 +180,19 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
       </div>
 
       {/* Bottom nav */}
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 safe-area-pb" style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
-        <div className="flex justify-around py-3">
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200" style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
+        <div className="flex justify-around py-4">
           <div className="flex flex-col items-center text-indigo-600 px-6 py-1">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
-            <span className="text-sm font-semibold mt-1">Home</span>
+            <span className="text-sm font-bold mt-1">Home</span>
           </div>
-          <button
-            onClick={() => router.refresh()}
-            className="flex flex-col items-center text-gray-400 px-6 py-1 active:text-gray-600"
-          >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={() => router.refresh()} className="flex flex-col items-center text-gray-400 px-6 py-1 active:text-gray-600">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span className="text-sm mt-1">Refresh</span>
+            <span className="text-sm font-medium mt-1">Refresh</span>
           </button>
         </div>
       </div>

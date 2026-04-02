@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CharityOS",
-    short_name: "CharityOS",
-    description: "Modular operating system for charities",
+    name: "CharityOS Tin Collections",
+    short_name: "Tin Collections",
+    description: "Tin collection management for CharityOS",
     start_url: "/mobile",
     display: "standalone",
     background_color: "#ffffff",
