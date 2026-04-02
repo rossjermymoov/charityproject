@@ -97,7 +97,7 @@ export async function GET(request: Request) {
     collectionCount,
   });
 
-  return new NextResponse(pdf, {
+  return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${catName.replace(/\s+/g, "-")}-infographic.pdf"`,
