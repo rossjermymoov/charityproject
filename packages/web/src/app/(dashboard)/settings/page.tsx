@@ -13,7 +13,7 @@ import {
   Palette,
   ChevronRight,
   Target,
-  FlaskConical,
+  Activity,
   Coins,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
@@ -83,7 +83,7 @@ export default async function SettingsPage() {
       href: "/settings/users",
     },
     {
-      icon: FlaskConical,
+      icon: Activity,
       title: "System Test Agent",
       description: "Run automated tests on all data entry flows and monitor pass/fail",
       href: "/settings/test-agent",
