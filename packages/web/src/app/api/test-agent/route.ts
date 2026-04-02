@@ -309,7 +309,7 @@ export async function POST(request: Request) {
   let testLedgerCodeId = "";
   results.push(await runTest("Create ledger code", "Finance", async () => {
     const code = await prisma.ledgerCode.create({
-      data: { code: `${testPrefix.slice(0, 20)}`, name: `Test Code`, type: "INCOME", isActive: true },
+      data: { code: `${testPrefix.slice(0, 20)}`, name: `Test Code`, isActive: true },
     });
     testLedgerCodeId = code.id;
     cleanup.push(async () => { await prisma.ledgerCode.delete({ where: { id: code.id } }).catch(() => {}); });
