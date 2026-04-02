@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tin Collections</string>
+    <string name="title_activity_main">Tin Collections</string>
+    <string name="package_name">org.charityos.tincollections</string>
+    <string name="custom_url_scheme">org.charityos.tincollections</string>
+</resources>
