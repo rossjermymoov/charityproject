@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, AlertTriangle, Clock, Shield } from "lucide-react";
+import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, AlertTriangle, Clock, Shield, Wrench } from "lucide-react";
 
 type TestResult = {
   name: string;
@@ -26,6 +26,8 @@ export default function TestAgentClient() {
   const [report, setReport] = useState<TestReport | null>(null);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<TestReport[]>([]);
+  const [fixing, setFixing] = useState(false);
+  const [fixResults, setFixResults] = useState<Array<{ name: string; status: string; detail: string }>>([]);
 
   const runTests = async () => {
     setRunning(true);
@@ -43,6 +45,32 @@ export default function TestAgentClient() {
       setError(e.message);
     } finally {
       setRunning(false);
+    }
+  };
+
+  const failedTests = report ? report.results.filter((r) => r.status === "FAIL").map((r) => r.name) : [];
+
+  const runFixes = async () => {
+    setFixing(true);
+    setFixResults([]);
+    try {
+      const res = await fetch("/api/test-agent/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ testNames: failedTests }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setFixResults(data.fixes || []);
+        // Auto re-run tests after fixes
+        setTimeout(() => runTests(), 500);
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setFixing(false);
     }
   };
 
@@ -164,6 +192,48 @@ export default function TestAgentClient() {
               </div>
             </div>
           </Card>
+
+          {/* Fix button when there are failures */}
+          {failedTests.length > 0 && (
+            <Card className="p-4 border-red-200 bg-red-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wrench className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-semibold text-red-900">{failedTests.length} test{failedTests.length > 1 ? "s" : ""} failed</p>
+                    <p className="text-sm text-red-700">
+                      Auto-fix will attempt to repair data inconsistencies such as campaign totals and orphaned references.
+                    </p>
+                  </div>
+                </div>
+                <Button onClick={runFixes} disabled={fixing || running} variant="destructive">
+                  {fixing ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Fixing...</>
+                  ) : (
+                    <><Wrench className="h-4 w-4 mr-2" /> Auto-Fix {failedTests.length} Issue{failedTests.length > 1 ? "s" : ""}</>
+                  )}
+                </Button>
+              </div>
+              {fixResults.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-red-200 space-y-2">
+                  {fixResults.map((fix, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      {fix.status === "FIXED" ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : fix.status === "SKIPPED" ? (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                      )}
+                      <span className={fix.status === "FIXED" ? "text-green-800" : "text-red-800"}>
+                        {fix.name}: {fix.detail}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* Results by category */}
           {Object.entries(grouped).map(([category, tests]) => {
