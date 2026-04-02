@@ -180,7 +180,7 @@ export default function ProspectsClient({
       } else {
         setResults(data.results || []);
         // Auto-select all new prospects
-        const newIds = new Set(
+        const newIds = new Set<string>(
           (data.results || []).filter((r: ProspectResult) => !r.alreadyExists).map((r: ProspectResult) => r.placeId)
         );
         setSelectedProspects(newIds);
