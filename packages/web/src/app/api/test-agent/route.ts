@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         email: `${testPrefix}@test.example`,
         type: "INDIVIDUAL",
         status: "ACTIVE",
+        createdById: user.id,
       },
     });
     testContactId = contact.id;
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
         status: "ACTIVE",
         budgetTarget: 1000,
         startDate: new Date(),
-        createdById: user!.id,
+        createdById: user.id,
       },
     });
     testCampaignId = campaign.id;
@@ -167,7 +168,7 @@ export async function POST(request: Request) {
         type: "DONATION",
         date: new Date(),
         campaignId: testCampaignId,
-        createdById: user!.id,
+        createdById: user.id,
       },
     });
     // Increment campaign actualRaised (mimics the fixed flow)
@@ -222,7 +223,7 @@ export async function POST(request: Request) {
         currency: "GBP",
         type: "GIFT",
         date: new Date(),
-        createdById: user!.id,
+        createdById: user.id,
       },
     });
     cleanup.push(async () => { await prisma.donation.delete({ where: { id: d.id } }).catch(() => {}); });
@@ -252,7 +253,7 @@ export async function POST(request: Request) {
         startDate: new Date(),
         endDate: new Date(Date.now() + 86400000),
         status: "CONFIRMED",
-        createdById: user!.id,
+        createdById: user.id,
       },
     });
     testEventId = event.id;
@@ -324,7 +325,7 @@ export async function POST(request: Request) {
       data: {
         contactId: testContactId,
         content: `Test note from agent ${testPrefix}`,
-        createdById: user!.id,
+        createdById: user.id,
       },
     });
     cleanup.push(async () => { await prisma.note.delete({ where: { id: note.id } }).catch(() => {}); });
@@ -337,9 +338,10 @@ export async function POST(request: Request) {
       data: {
         contactId: testContactId,
         type: "PHONE_CALL",
+        subject: "Test call",
         date: new Date(),
-        summary: `Test call from agent ${testPrefix}`,
-        createdById: user!.id,
+        description: `Test call from agent ${testPrefix}`,
+        createdById: user.id,
       },
     });
     cleanup.push(async () => { await prisma.interaction.delete({ where: { id: interaction.id } }).catch(() => {}); });
