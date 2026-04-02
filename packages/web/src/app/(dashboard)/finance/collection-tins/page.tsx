@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, Package, MapPin, BarChart3, ArrowLeftRight, Route } from "lucide-react";
+import { Plus, Search, Package, MapPin, BarChart3, ArrowLeftRight, Route, UserSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -78,6 +78,12 @@ export default async function CollectionTinsPage({
           <p className="text-gray-500 mt-1">Manage collection tins and track deployments</p>
         </div>
         <div className="flex gap-2">
+          <Link href="/finance/collection-tins/prospects">
+            <Button variant="outline">
+              <UserSearch className="h-4 w-4 mr-2" />
+              Prospects
+            </Button>
+          </Link>
           <Link href="/finance/collection-tins/routes">
             <Button variant="outline">
               <Route className="h-4 w-4 mr-2" />

@@ -38,6 +38,11 @@ model SystemSettings {
   headOfficeLat         Float?   // Latitude for route calculations
   headOfficeLng         Float?   // Longitude for route calculations
 
+  // ── Catchment Area & Prospects ──
+  catchmentPostcodes    String?  // JSON array of postcode prefixes e.g. ["SY10","SY11","SY10 1"]
+  charityDescription    String?  // Free-text paragraph about what the charity does (used in infographics)
+  googlePlacesApiKey    String?  // Google Places API key for prospect finding
+
   // ── HMRC Gift Aid Integration ──
   hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)
   hmrcGatewayUser       String?  // Government Gateway User ID
