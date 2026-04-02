@@ -1125,6 +1125,7 @@ model CollectionRoute {
   assignedToId  String?   // default volunteer for this route
   createdById   String
   isActive      Boolean   @default(true)
+  source        String    @default("MANUAL") // MANUAL | SUGGESTED
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

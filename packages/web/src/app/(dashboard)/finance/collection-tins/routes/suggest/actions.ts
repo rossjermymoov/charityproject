@@ -267,6 +267,7 @@ export async function createRouteFromSuggestion(formData: FormData) {
       tinCount,
       assignedToId: assignedToId || null,
       createdById: session.id,
+      source: "SUGGESTED",
       stops: {
         create: stops.map((stop, index) => ({
           locationId: stop.locationId,

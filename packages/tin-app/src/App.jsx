@@ -512,31 +512,20 @@ export default function TinCollectionsApp() {
           )}
 
           {/* ── Quick Actions ────────────────────────────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button onClick={() => { fetchRoutes(); setScreen("routes"); }} style={{
-              background: "white", borderRadius: 18, padding: "20px 16px", border: `1.5px solid #e5e7eb`,
-              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
-              textAlign: "left", boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-            }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: brand, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <RouteIcon size={20} color="white" />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>Your Routes</div>
-              <div style={{ fontSize: 13, color: "#888", lineHeight: 1.3 }}>View saved routes and schedule runs</div>
-            </button>
-
-            <button onClick={() => { /* TODO: suggested route */ setError("Suggested routes coming soon"); }} style={{
-              background: "white", borderRadius: 18, padding: "20px 16px", border: `1.5px solid #e5e7eb`,
-              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
-              textAlign: "left", boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-            }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <MapPinIcon size={20} color="white" />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>Suggested Route</div>
-              <div style={{ fontSize: 13, color: "#888", lineHeight: 1.3 }}>Ad-hoc route based on nearby tins</div>
-            </button>
-          </div>
+          <button onClick={() => { fetchRoutes(); setScreen("routes"); }} style={{
+            width: "100%", background: "white", borderRadius: 18, padding: "18px 20px", border: `1.5px solid #e5e7eb`,
+            cursor: "pointer", display: "flex", alignItems: "center", gap: 14,
+            textAlign: "left", boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+          }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: brand, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <RouteIcon size={22} color="white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#111" }}>My Routes</div>
+              <div style={{ fontSize: 14, color: "#888" }}>View assigned routes and schedule runs</div>
+            </div>
+            <ChevronRight size={22} color="#ccc" />
+          </button>
 
           {/* ── Upcoming Runs ────────────────────────────────── */}
           {upcomingRuns.length > 0 && (

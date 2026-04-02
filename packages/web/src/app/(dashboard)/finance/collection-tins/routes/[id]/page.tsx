@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Plus, Trash2, GripVertical, Calendar, User } from "lucide-react";
+import { ArrowLeft, MapPin, Plus, Trash2, GripVertical, Calendar, User, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,43 @@ export default async function RouteDetailPage({
 
   const totalStops = route.stops.length;
 
+  // Calculate this route's average completion time
+  const routeRunTimes: number[] = [];
+  for (const run of route.runs) {
+    if (run.startedAt && run.completedAt) {
+      const mins = Math.round(
+        (new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()) / 60000
+      );
+      if (mins > 0 && mins < 1440) routeRunTimes.push(mins);
+    }
+  }
+  const thisRouteAvg = routeRunTimes.length > 0
+    ? Math.round(routeRunTimes.reduce((a, b) => a + b, 0) / routeRunTimes.length)
+    : null;
+
+  // Calculate global average across ALL completed runs
+  const allCompletedRuns = await prisma.collectionRun.findMany({
+    where: {
+      status: "COMPLETED",
+      startedAt: { not: null },
+      completedAt: { not: null },
+    },
+    select: { startedAt: true, completedAt: true },
+  });
+  const allTimes = allCompletedRuns
+    .map((r) => Math.round((new Date(r.completedAt!).getTime() - new Date(r.startedAt!).getTime()) / 60000))
+    .filter((m) => m > 0 && m < 1440);
+  const globalAvg = allTimes.length > 0 ? Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length) : null;
+
+  const isAboveAvg = thisRouteAvg && globalAvg && thisRouteAvg > globalAvg;
+  const isBelowAvg = thisRouteAvg && globalAvg && thisRouteAvg < globalAvg;
+
+  function formatTime(mins: number): string {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -76,7 +113,7 @@ export default async function RouteDetailPage({
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card className="p-4">
           <p className="text-sm text-gray-500">Stops</p>
           <p className="text-2xl font-bold">{totalStops}</p>
@@ -88,6 +125,25 @@ export default async function RouteDetailPage({
         <Card className="p-4">
           <p className="text-sm text-gray-500">Completed Runs</p>
           <p className="text-2xl font-bold text-green-600">{route.runs.length}</p>
+        </Card>
+        <Card className={`p-4 ${isAboveAvg ? "border-orange-200 bg-orange-50" : isBelowAvg ? "border-green-200 bg-green-50" : ""}`}>
+          <div className="flex items-center gap-1.5">
+            <Clock className={`h-3.5 w-3.5 ${isAboveAvg ? "text-orange-500" : isBelowAvg ? "text-green-500" : "text-gray-400"}`} />
+            <p className="text-sm text-gray-500">Avg Time</p>
+          </div>
+          <p className={`text-2xl font-bold ${isAboveAvg ? "text-orange-600" : isBelowAvg ? "text-green-600" : ""}`}>
+            {thisRouteAvg ? formatTime(thisRouteAvg) : "No data"}
+          </p>
+          {isAboveAvg && (
+            <p className="text-xs text-orange-500 flex items-center gap-1 mt-1">
+              <AlertTriangle className="h-3 w-3" /> Above average ({formatTime(globalAvg!)})
+            </p>
+          )}
+          {isBelowAvg && (
+            <p className="text-xs text-green-500 flex items-center gap-1 mt-1">
+              <CheckCircle className="h-3 w-3" /> Below average ({formatTime(globalAvg!)})
+            </p>
+          )}
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-500">Assigned To</p>
