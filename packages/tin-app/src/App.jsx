@@ -1,31 +1,20 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 
-// ─── Bucket Icon (charity collection tin/bucket) ─────────────────
+const API_BASE = "https://web-production-68151.up.railway.app";
+
+// ─── Bucket Icon ─────────────────────────────────────────────────
 function BucketIcon({ size = 32, color = "white" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {/* Bucket body */}
       <path d="M5 9l1.5 11a1 1 0 0 0 1 .9h9a1 1 0 0 0 1-.9L19 9" />
-      {/* Bucket rim */}
       <ellipse cx="12" cy="9" rx="8" ry="2.5" />
-      {/* Handle */}
       <path d="M8.5 6.5C8.5 4 10 2.5 12 2.5s3.5 1.5 3.5 4" />
-      {/* Coin slot */}
       <line x1="10" y1="9" x2="14" y2="9" strokeWidth="2.2" />
     </svg>
   );
 }
-
-// ─── Mock Data ───────────────────────────────────────────────────
-const MOCK_STOPS = [
-  { id: "s1", name: "Premier Stores", address: "Whittington Rd, SY11 4AA", status: "PENDING", parking: "On street", access: null },
-  { id: "s2", name: "Co-op Gobowen", address: "St Martins Rd, SY11 3EP", status: "PENDING", parking: null, access: "Ask at counter" },
-  { id: "s3", name: "Spar Oswestry", address: "Church St, SY11 2SP", status: "PENDING", parking: "Car park behind", access: null },
-  { id: "s4", name: "Tesco Express", address: "Salop Rd, SY11 2NR", status: "PENDING", parking: "Customer car park", access: null },
-  { id: "s5", name: "Post Office", address: "Station Rd, SY11 4DA", status: "PENDING", parking: null, access: "Side entrance" },
-];
 
 const PRESETS = [
   { name: "Teal", color: "#0d9488" },
@@ -56,7 +45,6 @@ function BarcodeScanner({ onScan, onClose, brand }) {
         }
       } catch (err) {
         console.error("Camera error:", err);
-        // Fallback: prompt for manual entry
         const code = prompt("Camera unavailable. Enter barcode manually:");
         if (code) onScan(code);
         else onClose();
@@ -70,32 +58,19 @@ function BarcodeScanner({ onScan, onClose, brand }) {
   }, []);
 
   function captureAndRead() {
-    // For now, use a simple approach: take photo and let user confirm
-    // In production this would use a barcode detection library
     if (videoRef.current) {
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
       canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
-
-      // Try BarcodeDetector API (available on Android Chrome/WebView)
       if ("BarcodeDetector" in window) {
         const detector = new BarcodeDetector();
         detector.detect(canvas).then(barcodes => {
-          if (barcodes.length > 0) {
-            onScan(barcodes[0].rawValue);
-          } else {
-            const code = prompt("No barcode detected. Enter manually:");
-            if (code) onScan(code);
-          }
-        }).catch(() => {
-          const code = prompt("Scan failed. Enter manually:");
-          if (code) onScan(code);
-        });
+          if (barcodes.length > 0) onScan(barcodes[0].rawValue);
+          else { const c = prompt("No barcode detected. Enter manually:"); if (c) onScan(c); }
+        }).catch(() => { const c = prompt("Scan failed. Enter manually:"); if (c) onScan(c); });
       } else {
-        // Fallback for devices without BarcodeDetector
-        const code = prompt("Enter barcode number:");
-        if (code) onScan(code);
+        const c = prompt("Enter barcode number:"); if (c) onScan(c);
       }
     }
   }
@@ -104,7 +79,6 @@ function BarcodeScanner({ onScan, onClose, brand }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#000", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover" }} playsInline muted />
-        {/* Scan overlay */}
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ width: "75%", height: 200, border: "3px solid white", borderRadius: 16, boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)" }} />
         </div>
@@ -113,12 +87,8 @@ function BarcodeScanner({ onScan, onClose, brand }) {
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, padding: 16, background: "#000", flexShrink: 0 }}>
-        <button onClick={onClose} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "2px solid #666", background: "transparent", color: "white", cursor: "pointer" }}>
-          Cancel
-        </button>
-        <button onClick={captureAndRead} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "none", background: brand || "#0d9488", color: "white", cursor: "pointer" }}>
-          Capture
-        </button>
+        <button onClick={onClose} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "2px solid #666", background: "transparent", color: "white", cursor: "pointer" }}>Cancel</button>
+        <button onClick={captureAndRead} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "none", background: brand || "#0d9488", color: "white", cursor: "pointer" }}>Capture</button>
       </div>
     </div>
   );
@@ -126,22 +96,42 @@ function BarcodeScanner({ onScan, onClose, brand }) {
 
 // ─── App ─────────────────────────────────────────────────────────
 export default function TinCollectionsApp() {
-  const [brand, setBrand] = useState(null);
+  const [brand, setBrand] = useState(() => {
+    try { return localStorage.getItem("tc_brand") || null; } catch { return null; }
+  });
   const [screen, setScreen] = useState("login");
-  const [user, setUser] = useState("");
-  const [stops, setStops] = useState(MOCK_STOPS.map(s => ({ ...s })));
+  const [token, setToken] = useState(() => {
+    try { return localStorage.getItem("tc_token") || null; } catch { return null; }
+  });
+  const [userName, setUserName] = useState(() => {
+    try { return localStorage.getItem("tc_name") || ""; } catch { return ""; }
+  });
+  const [runs, setRuns] = useState([]);
+  const [selectedRun, setSelectedRun] = useState(null);
+  const [stops, setStops] = useState([]);
   const [idx, setIdx] = useState(0);
   const [deployTin, setDeployTin] = useState("");
   const [collectTin, setCollectTin] = useState("");
   const [skipReason, setSkipReason] = useState("");
   const [notes, setNotes] = useState("");
-  const [scanning, setScanning] = useState(null); // "collect" | "deploy" | null
+  const [scanning, setScanning] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPass, setLoginPass] = useState("");
   const screenRef = useRef(screen);
 
-  // Keep ref in sync for back button handler
   useEffect(() => { screenRef.current = screen; }, [screen]);
 
-  // ─── Android hardware back button handling ──────────────────────
+  // Auto-login if we have a saved token
+  useEffect(() => {
+    if (token && brand) {
+      setScreen("home");
+      fetchRuns(token);
+    }
+  }, []);
+
+  // ─── Android back button ──────────────────────────────────────
   useEffect(() => {
     const listener = CapApp.addListener("backButton", () => {
       const s = screenRef.current;
@@ -155,98 +145,221 @@ export default function TinCollectionsApp() {
     return () => { listener.then(l => l.remove()); };
   }, []);
 
-  const brandDark = brand ? darken(brand, 15) : "#000";
-  const brandLight = brand ? lighten(brand, 92) : "#fff";
-  const pending = stops.filter(s => s.status === "PENDING");
-  const done = stops.filter(s => s.status !== "PENDING");
-  const pct = stops.length > 0 ? Math.round((done.length / stops.length) * 100) : 0;
-  const stop = stops[idx];
-
-  function darken(hex, pct) {
-    const [r, g, b] = hexToRgb(hex);
-    const f = 1 - pct / 100;
-    return rgbToHex(Math.round(r * f), Math.round(g * f), Math.round(b * f));
-  }
-  function lighten(hex, pct) {
-    const [r, g, b] = hexToRgb(hex);
-    const f = pct / 100;
-    return rgbToHex(Math.round(r + (255 - r) * f), Math.round(g + (255 - g) * f), Math.round(b + (255 - b) * f));
-  }
-  function hexToRgb(hex) {
-    const n = parseInt(hex.slice(1), 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  }
-  function rgbToHex(r, g, b) {
-    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
-  }
-
-  // ─── Navigate to address in Google Maps ─────────────────────────
-  async function openNavigation(address) {
-    const encoded = encodeURIComponent(address);
-    // Try native Google Maps intent first, fall back to browser
+  // ─── API calls ────────────────────────────────────────────────
+  async function doLogin(email, password) {
+    setLoading(true);
+    setError(null);
     try {
-      await Browser.open({ url: `https://www.google.com/maps/search/?api=1&query=${encoded}` });
-    } catch {
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+      setToken(data.token);
+      setUserName(data.user.name);
+      try {
+        localStorage.setItem("tc_token", data.token);
+        localStorage.setItem("tc_name", data.user.name);
+      } catch {}
+      setScreen("home");
+      await fetchRuns(data.token);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  // ─── Handle barcode scan result ─────────────────────────────────
+  async function fetchRuns(t) {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/mobile/runs?token=${t}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load runs");
+      setRuns(data.runs || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function selectRun(run) {
+    setSelectedRun(run);
+    const mapped = run.runStops.map(rs => ({
+      id: rs.id,
+      name: rs.routeStop.location.name,
+      address: rs.routeStop.location.address,
+      status: rs.status,
+      parking: rs.routeStop.parkingNotes,
+      access: rs.routeStop.accessNotes,
+      deployedTinNumber: rs.deployedTin?.tinNumber || null,
+      collectedTinNumber: rs.collectedTin?.tinNumber || null,
+    }));
+    setStops(mapped);
+    const firstPending = mapped.findIndex(s => s.status === "PENDING");
+    setIdx(firstPending >= 0 ? firstPending : 0);
+
+    // Start run if SCHEDULED
+    if (run.status === "SCHEDULED") {
+      fetch(`${API_BASE}/api/mobile/runs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, runId: run.id, action: "start" }),
+      });
+    }
+
+    setScreen("collect");
+  }
+
+  async function completeStop() {
+    setLoading(true);
+    const stop = stops[idx];
+    try {
+      await fetch(`${API_BASE}/api/mobile/runs/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          runStopId: stop.id,
+          action: "complete",
+          deployedTinNumber: deployTin.trim(),
+          collectedTinNumber: collectTin.trim(),
+          notes,
+        }),
+      });
+
+      const next = [...stops];
+      next[idx] = { ...next[idx], status: "COMPLETED" };
+      setStops(next);
+      setDeployTin(""); setCollectTin(""); setNotes("");
+
+      const ni = next.findIndex((s, i) => i > idx && s.status === "PENDING");
+      if (ni >= 0) {
+        setIdx(ni);
+      } else {
+        // All stops done — complete the run
+        await fetch(`${API_BASE}/api/mobile/runs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, runId: selectedRun.id, action: "complete" }),
+        });
+        setScreen("done");
+      }
+    } catch (err) {
+      setError("Failed to save. Check connection.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function skipStop() {
+    setLoading(true);
+    const stop = stops[idx];
+    try {
+      await fetch(`${API_BASE}/api/mobile/runs/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, runStopId: stop.id, action: "skip", skipReason }),
+      });
+
+      const next = [...stops];
+      next[idx] = { ...next[idx], status: "SKIPPED" };
+      setStops(next);
+      setSkipReason("");
+
+      const ni = next.findIndex((s, i) => i > idx && s.status === "PENDING");
+      if (ni >= 0) { setIdx(ni); setScreen("collect"); }
+      else {
+        await fetch(`${API_BASE}/api/mobile/runs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, runId: selectedRun.id, action: "complete" }),
+        });
+        setScreen("done");
+      }
+    } catch (err) {
+      setError("Failed to save.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function doLogout() {
+    setToken(null);
+    setUserName("");
+    setRuns([]);
+    try { localStorage.removeItem("tc_token"); localStorage.removeItem("tc_name"); } catch {}
+    setScreen("login");
+  }
+
+  function saveBrand(c) {
+    setBrand(c);
+    try { localStorage.setItem("tc_brand", c); } catch {}
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────
+  function darken(hex, pct) { const [r,g,b]=hexToRgb(hex); const f=1-pct/100; return rgbToHex(Math.round(r*f),Math.round(g*f),Math.round(b*f)); }
+  function lighten(hex, pct) { const [r,g,b]=hexToRgb(hex); const f=pct/100; return rgbToHex(Math.round(r+(255-r)*f),Math.round(g+(255-g)*f),Math.round(b+(255-b)*f)); }
+  function hexToRgb(hex) { const n=parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+  function rgbToHex(r,g,b) { return "#"+[r,g,b].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+
+  async function openNavigation(address) {
+    const encoded = encodeURIComponent(address);
+    try { await Browser.open({ url: `https://www.google.com/maps/search/?api=1&query=${encoded}` }); }
+    catch { window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank"); }
+  }
+
   function handleScan(code) {
     if (scanning === "collect") setCollectTin(code);
     else if (scanning === "deploy") setDeployTin(code);
     setScanning(null);
   }
 
-  function completeStop() {
-    const next = [...stops];
-    next[idx] = { ...next[idx], status: "COMPLETED" };
-    setStops(next);
-    setDeployTin(""); setCollectTin(""); setNotes("");
-    const ni = next.findIndex((s, i) => i > idx && s.status === "PENDING");
-    if (ni >= 0) setIdx(ni);
-    else setScreen("done");
-  }
+  const brandLight = brand ? lighten(brand, 92) : "#fff";
+  const done = stops.filter(s => s.status !== "PENDING");
+  const pct = stops.length > 0 ? Math.round((done.length / stops.length) * 100) : 0;
+  const stop = stops[idx];
 
-  function skipStop() {
-    const next = [...stops];
-    next[idx] = { ...next[idx], status: "SKIPPED" };
-    setStops(next);
-    setSkipReason("");
-    const ni = next.findIndex((s, i) => i > idx && s.status === "PENDING");
-    if (ni >= 0) { setIdx(ni); setScreen("collect"); }
-    else setScreen("done");
-  }
+  // ─── Error toast ──────────────────────────────────────────────
+  const ErrorToast = error ? (
+    <div style={{ position: "fixed", top: 16, left: 16, right: 16, zIndex: 10000, background: "#ef4444", color: "white", padding: "14px 20px", borderRadius: 14, fontSize: 16, fontWeight: 700, textAlign: "center" }} onClick={() => setError(null)}>
+      {error} <span style={{ opacity: 0.6 }}>(tap to dismiss)</span>
+    </div>
+  ) : null;
 
-  // ─── SCANNER OVERLAY ──────────────────────────────────────────
-  if (scanning) {
-    return <BarcodeScanner brand={brand} onScan={handleScan} onClose={() => setScanning(null)} />;
-  }
+  // ─── Loading overlay ──────────────────────────────────────────
+  const LoadingOverlay = loading ? (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "white", borderRadius: 20, padding: "24px 32px", fontSize: 18, fontWeight: 700, color: "#333" }}>Loading...</div>
+    </div>
+  ) : null;
 
-  // ─── SETUP SCREEN (first launch) ──────────────────────────────
+  // ─── SCANNER ──────────────────────────────────────────────────
+  if (scanning) return <BarcodeScanner brand={brand} onScan={handleScan} onClose={() => setScanning(null)} />;
+
+  // ─── SETUP (first launch) ─────────────────────────────────────
   if (!brand) {
     return (
       <div style={S.app}>
+        {ErrorToast}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, background: "#f8fafc" }}>
           <div style={{ width: 72, height: 72, borderRadius: 20, background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}><BucketIcon size={38} color="#475569" /></div>
           <div style={{ fontSize: 26, fontWeight: 900, color: "#111", marginBottom: 6 }}>Welcome</div>
-          <div style={{ fontSize: 16, color: "#666", marginBottom: 32, textAlign: "center" }}>Pick your charity&apos;s brand colour</div>
-
+          <div style={{ fontSize: 16, color: "#666", marginBottom: 32, textAlign: "center" }}>Pick your charity's brand colour</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, width: "100%", maxWidth: 300, marginBottom: 32 }}>
             {PRESETS.map(p => (
-              <button key={p.color} onClick={() => setBrand(p.color)} style={{
-                width: "100%", aspectRatio: "1", borderRadius: 20, background: p.color, border: "none", cursor: "pointer",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 13, gap: 2,
-              }}>
+              <button key={p.color} onClick={() => saveBrand(p.color)} style={{ width: "100%", aspectRatio: "1", borderRadius: 20, background: p.color, border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 13, gap: 2 }}>
                 {p.name}
               </button>
             ))}
           </div>
-
           <div style={{ fontSize: 14, color: "#999", marginBottom: 10 }}>Or enter a hex code</div>
           <div style={{ display: "flex", gap: 8, width: "100%", maxWidth: 260 }}>
             <input id="hex-input" defaultValue="#0d9488" style={{ flex: 1, padding: "14px 16px", fontSize: 18, fontFamily: "monospace", borderRadius: 14, border: "2px solid #d1d5db", outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-            <button onClick={() => { const v = document.getElementById("hex-input").value; if (/^#[0-9a-fA-F]{6}$/.test(v)) setBrand(v); }} style={{ padding: "14px 20px", fontSize: 16, fontWeight: 800, borderRadius: 14, border: "none", background: "#111", color: "white", cursor: "pointer" }}>Go</button>
+            <button onClick={() => { const v = document.getElementById("hex-input").value; if (/^#[0-9a-fA-F]{6}$/.test(v)) saveBrand(v); }} style={{ padding: "14px 20px", fontSize: 16, fontWeight: 800, borderRadius: 14, border: "none", background: "#111", color: "white", cursor: "pointer" }}>Go</button>
           </div>
         </div>
       </div>
@@ -257,16 +370,17 @@ export default function TinCollectionsApp() {
   if (screen === "login") {
     return (
       <div style={S.app}>
+        {ErrorToast}{LoadingOverlay}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: brand, padding: 32 }}>
           <div style={{ width: 80, height: 80, borderRadius: 24, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}><BucketIcon size={42} color="white" /></div>
           <div style={{ fontSize: 30, fontWeight: 900, color: "white", marginBottom: 4 }}>Tin Collections</div>
           <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 40 }}>CharityOS</div>
-          <input style={{ ...S.loginInput, background: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.25)", color: "white" }} placeholder="Email" defaultValue="admin@charity.org" />
-          <input style={{ ...S.loginInput, background: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.25)", color: "white" }} type="password" placeholder="Password" defaultValue="password" />
-          <button onClick={() => { setUser("Ross"); setScreen("home"); }} style={{ width: "100%", maxWidth: 320, padding: "20px 0", fontSize: 22, fontWeight: 800, borderRadius: 18, border: "none", background: "white", color: brand, cursor: "pointer", marginTop: 8 }}>
-            Sign In
+          <input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} style={{ ...S.loginInput, background: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.25)", color: "white" }} placeholder="Email" />
+          <input value={loginPass} onChange={e => setLoginPass(e.target.value)} style={{ ...S.loginInput, background: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.25)", color: "white" }} type="password" placeholder="Password" />
+          <button onClick={() => doLogin(loginEmail, loginPass)} disabled={loading} style={{ width: "100%", maxWidth: 320, padding: "20px 0", fontSize: 22, fontWeight: 800, borderRadius: 18, border: "none", background: "white", color: brand, cursor: "pointer", marginTop: 8, opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Signing in..." : "Sign In"}
           </button>
-          <button onClick={() => setBrand(null)} style={{ marginTop: 20, fontSize: 14, color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer" }}>Change colour</button>
+          <button onClick={() => { setBrand(null); try { localStorage.removeItem("tc_brand"); } catch {} }} style={{ marginTop: 20, fontSize: 14, color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer" }}>Change colour</button>
         </div>
       </div>
     );
@@ -276,40 +390,54 @@ export default function TinCollectionsApp() {
   if (screen === "home") {
     return (
       <div style={S.app}>
+        {ErrorToast}{LoadingOverlay}
         <div style={{ background: brand, color: "white", padding: "24px 24px 20px", flexShrink: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 42, height: 42, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}><BucketIcon size={24} color="white" /></div>
-              <div><div style={{ fontSize: 17, fontWeight: 800 }}>Tin Collections</div></div>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>Tin Collections</div>
             </div>
-            <button onClick={() => setScreen("login")} style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", background: "none", border: "none", cursor: "pointer" }}>Sign out</button>
+            <button onClick={doLogout} style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", background: "none", border: "none", cursor: "pointer" }}>Sign out</button>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 900 }}>Hey {user}!</div>
+          <div style={{ fontSize: 32, fontWeight: 900 }}>Hey {userName}!</div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 20, gap: 16 }}>
-          <div style={{ background: "white", borderRadius: 24, padding: 24, border: `2px solid ${brand}20`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", flex: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 4 }}>Route from SY11 4FN</div>
-            <div style={{ fontSize: 16, color: "#888", marginBottom: 16 }}>{stops.length} stops · Thu 2 Apr</div>
-            {done.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
-                  <span>{done.length} of {stops.length}</span><span>{pct}%</span>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 20, gap: 16, overflow: "auto" }}>
+          {runs.length === 0 && !loading && (
+            <div style={{ textAlign: "center", padding: 40, color: "#999", fontSize: 18 }}>No collections assigned</div>
+          )}
+
+          {runs.map(run => {
+            const totalStops = run.runStops.length;
+            const doneStops = run.runStops.filter(rs => rs.status !== "PENDING").length;
+            const runPct = totalStops > 0 ? Math.round((doneStops / totalStops) * 100) : 0;
+            return (
+              <div key={run.id} style={{ background: "white", borderRadius: 24, padding: 24, border: `2px solid ${brand}20`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 4 }}>{run.route.name}</div>
+                <div style={{ fontSize: 16, color: "#888", marginBottom: 4 }}>{run.route.description || ""}</div>
+                <div style={{ fontSize: 15, color: "#aaa", marginBottom: 16 }}>
+                  {totalStops} stops · {run.scheduledDate ? new Date(run.scheduledDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "Unscheduled"}
+                  {run.status === "IN_PROGRESS" && <span style={{ color: brand, fontWeight: 700 }}> · In Progress</span>}
                 </div>
-                <div style={{ height: 10, background: "#e5e7eb", borderRadius: 5 }}>
-                  <div style={{ height: "100%", width: `${pct}%`, background: brand, borderRadius: 5, transition: "width 0.3s" }} />
-                </div>
+                {doneStops > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
+                      <span>{doneStops} of {totalStops}</span><span>{runPct}%</span>
+                    </div>
+                    <div style={{ height: 10, background: "#e5e7eb", borderRadius: 5 }}>
+                      <div style={{ height: "100%", width: `${runPct}%`, background: brand, borderRadius: 5, transition: "width 0.3s" }} />
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => selectRun(run)} style={{ width: "100%", padding: "18px 0", fontSize: 20, fontWeight: 900, borderRadius: 18, border: "none", background: brand, color: "white", cursor: "pointer", boxShadow: `0 4px 16px ${brand}40` }}>
+                  {doneStops > 0 ? "Continue Collection" : "Start Collection"}
+                </button>
               </div>
-            )}
-          </div>
+            );
+          })}
 
-          <div style={{ flex: 1 }} />
-
-          <button onClick={() => { setIdx(stops.findIndex(s => s.status === "PENDING") || 0); setScreen("collect"); }} style={{
-            width: "100%", padding: "24px 0", fontSize: 24, fontWeight: 900, borderRadius: 20, border: "none",
-            background: brand, color: "white", cursor: "pointer", boxShadow: `0 4px 16px ${brand}40`,
-          }}>
-            {done.length > 0 ? "Continue Collection" : "Start Collection"}
+          <button onClick={() => fetchRuns(token)} style={{ padding: "14px 0", fontSize: 16, fontWeight: 700, borderRadius: 14, border: `2px solid ${brand}30`, background: brandLight, color: brand, cursor: "pointer", marginTop: 8 }}>
+            Refresh
           </button>
         </div>
       </div>
@@ -325,7 +453,7 @@ export default function TinCollectionsApp() {
           <div style={{ fontSize: 32, fontWeight: 900, color: "#14532d", marginTop: 16 }}>All Done!</div>
           <div style={{ fontSize: 18, color: "#166534", marginTop: 8 }}>{done.length} of {stops.length} stops completed</div>
           <div style={{ fontSize: 16, color: "#16a34a", marginTop: 16 }}>Head back to base to count tins</div>
-          <button onClick={() => setScreen("home")} style={{ marginTop: 40, width: "100%", maxWidth: 300, padding: "20px 0", fontSize: 22, fontWeight: 800, borderRadius: 20, border: "none", background: "#16a34a", color: "white", cursor: "pointer" }}>
+          <button onClick={() => { fetchRuns(token); setScreen("home"); }} style={{ marginTop: 40, width: "100%", maxWidth: 300, padding: "20px 0", fontSize: 22, fontWeight: 800, borderRadius: 20, border: "none", background: "#16a34a", color: "white", cursor: "pointer" }}>
             Back to Home
           </button>
         </div>
@@ -367,6 +495,7 @@ export default function TinCollectionsApp() {
   if (screen === "skip") {
     return (
       <div style={S.app}>
+        {LoadingOverlay}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fffbeb", padding: 32 }}>
           <div style={{ fontSize: 56 }}>⏭️</div>
           <div style={{ fontSize: 24, fontWeight: 900, color: "#92400e", marginTop: 12 }}>Skip this stop?</div>
@@ -382,7 +511,7 @@ export default function TinCollectionsApp() {
   // ─── COLLECTION (main screen) ──────────────────────────────────
   return (
     <div style={S.app}>
-      {/* Compact header */}
+      {ErrorToast}{LoadingOverlay}
       <div style={{ background: brand, color: "white", padding: "14px 20px", flexShrink: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <button onClick={() => setScreen("home")} style={{ fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.8)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>← Home</button>
@@ -393,9 +522,7 @@ export default function TinCollectionsApp() {
         </div>
       </div>
 
-      {/* Content fills screen */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "14px 16px 16px", gap: 10, overflow: "hidden" }}>
-        {/* Location card — deeper with notes area */}
         <div style={{ background: "white", borderRadius: 20, padding: "18px 20px", flexShrink: 0, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 24, fontWeight: 900, color: "#111", lineHeight: 1.15 }}>{stop?.name}</div>
           <div style={{ fontSize: 15, color: "#888", marginTop: 4 }}>{stop?.address}</div>
@@ -404,24 +531,13 @@ export default function TinCollectionsApp() {
               {stop?.parking && `🅿️ ${stop.parking}`}{stop?.parking && stop?.access && "  ·  "}{stop?.access && `🚪 ${stop.access}`}
             </div>
           )}
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Notes about this pickup..."
-            style={{
-              flex: 1, marginTop: 12, padding: "14px 16px", fontSize: 16, fontFamily: "inherit",
-              borderRadius: 14, border: "2px solid #e5e7eb", outline: "none", boxSizing: "border-box",
-              resize: "none", color: "#333", background: "#f9fafb", minHeight: 60,
-            }}
-          />
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes about this pickup..." style={{ flex: 1, marginTop: 12, padding: "14px 16px", fontSize: 16, fontFamily: "inherit", borderRadius: 14, border: "2px solid #e5e7eb", outline: "none", boxSizing: "border-box", resize: "none", color: "#333", background: "#f9fafb", minHeight: 60 }} />
         </div>
 
-        {/* Navigate — opens Google Maps */}
         <button onClick={() => openNavigation(stop?.address)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: brand, color: "white", fontSize: 20, fontWeight: 800, padding: "16px 0", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0 }}>
           📍 Navigate
         </button>
 
-        {/* Collect Tin — full width */}
         <div style={{ flexShrink: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Collect Tin</div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -432,7 +548,6 @@ export default function TinCollectionsApp() {
           </div>
         </div>
 
-        {/* Leave Tin — full width */}
         <div style={{ flexShrink: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Leave Tin</div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -443,8 +558,7 @@ export default function TinCollectionsApp() {
           </div>
         </div>
 
-        {/* COMPLETE — big green button, requires BOTH tins */}
-        <button onClick={completeStop} disabled={!collectTin.trim() || !deployTin.trim()} style={{
+        <button onClick={completeStop} disabled={!collectTin.trim() || !deployTin.trim() || loading} style={{
           width: "100%", padding: "22px 0", fontSize: 24, fontWeight: 900, borderRadius: 20,
           border: "none", cursor: (collectTin.trim() && deployTin.trim()) ? "pointer" : "default",
           background: (collectTin.trim() && deployTin.trim()) ? "#16a34a" : "#d1d5db",
@@ -452,24 +566,18 @@ export default function TinCollectionsApp() {
           boxShadow: (collectTin.trim() && deployTin.trim()) ? "0 6px 20px rgba(22,163,74,0.3)" : "none",
           transition: "background 0.2s, box-shadow 0.2s",
         }}>
-          {(collectTin.trim() && deployTin.trim()) ? "Complete Stop" : !collectTin.trim() && !deployTin.trim() ? "Enter both tin numbers" : !collectTin.trim() ? "Enter collect tin" : "Enter leave tin"}
+          {loading ? "Saving..." : (collectTin.trim() && deployTin.trim()) ? "Complete Stop" : !collectTin.trim() && !deployTin.trim() ? "Enter both tin numbers" : !collectTin.trim() ? "Enter collect tin" : "Enter leave tin"}
         </button>
 
-        {/* Bottom row */}
         <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-          <button onClick={() => setScreen("skip")} style={{ flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700, borderRadius: 14, border: "2px solid #fcd34d", background: "#fffbeb", color: "#92400e", cursor: "pointer" }}>
-            Skip
-          </button>
-          <button onClick={() => setScreen("stops")} style={{ flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700, borderRadius: 14, border: `2px solid ${brand}30`, background: brandLight, color: brand, cursor: "pointer" }}>
-            All Stops
-          </button>
+          <button onClick={() => setScreen("skip")} style={{ flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700, borderRadius: 14, border: "2px solid #fcd34d", background: "#fffbeb", color: "#92400e", cursor: "pointer" }}>Skip</button>
+          <button onClick={() => setScreen("stops")} style={{ flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 700, borderRadius: 14, border: `2px solid ${brand}30`, background: brandLight, color: brand, cursor: "pointer" }}>All Stops</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Shared base styles ──────────────────────────────────────────
 const S = {
   app: { width: "100%", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: "#f3f4f6" },
   loginInput: { width: "100%", maxWidth: 320, padding: "18px 20px", fontSize: 18, borderRadius: 16, border: "2px solid #d1d5db", outline: "none", marginBottom: 12, boxSizing: "border-box" },
