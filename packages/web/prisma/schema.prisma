@@ -142,6 +142,7 @@ model User {
   automationRules        AutomationRule[]     @relation("AutomationRulesCreated")
   emailTemplates         EmailTemplate[]      @relation("EmailTemplatesCreated")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
+  savedReports           SavedReport[]        @relation("SavedReportCreatedBy")
 }
 
 model Department {
@@ -2186,4 +2187,31 @@ model AutomationLog {
 
   @@index([ruleId])
   @@index([executedAt])
+}
+
+// ============================================
+// CUSTOM REPORT BUILDER
+// ============================================
+
+model SavedReport {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  entity      String   // CONTACTS, DONATIONS, EVENTS, CAMPAIGNS, VOLUNTEERS, MEMBERSHIPS
+  filters     Json     @default("[]") // Array of filter objects
+  columns     Json     @default("[]") // Array of column field names
+  groupBy     String?
+  sortBy      String?
+  sortDir     String   @default("asc") // asc | desc
+  createdById String
+  isShared    Boolean  @default(false)
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User     @relation("SavedReportCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@index([entity])
+  @@index([isShared])
 }

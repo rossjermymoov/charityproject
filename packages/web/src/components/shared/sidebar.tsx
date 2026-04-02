@@ -170,6 +170,7 @@ const sections: NavSection[] = [
       { name: "Automations", href: "/settings/automations", icon: Wrench },
       { name: "Email Templates", href: "/settings/email-templates", icon: Mail },
       { name: "Reports", href: "/reports", icon: BarChart3 },
+      { name: "Report Builder", href: "/reports/builder", icon: BarChart3 },
       { name: "Audit Log", href: "/settings/audit-log", icon: Shield },
     ],
   },
