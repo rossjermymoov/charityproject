@@ -15,16 +15,27 @@ export const metadata: Metadata = {
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mobile-app">
+    <>
       {children}
       <style>{`
-        .mobile-app {
+        html, body {
+          overflow: hidden !important;
+          height: 100% !important;
+          width: 100% !important;
+          position: fixed !important;
+          -webkit-text-size-adjust: 100%;
+          text-size-adjust: 100%;
+        }
+        * {
           -webkit-tap-highlight-color: transparent;
           -webkit-touch-callout: none;
-          overscroll-behavior: none;
-          min-height: 100dvh;
+          touch-action: manipulation;
+        }
+        input, textarea {
+          font-size: 16px !important; /* prevents iOS zoom on focus */
+          touch-action: auto;
         }
       `}</style>
-    </div>
+    </>
   );
 }
