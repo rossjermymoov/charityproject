@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
+import { executeAutomations } from "@/lib/automation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -59,6 +60,17 @@ export default async function NewDonationPage() {
     }
 
     await logAudit({ userId: session.id, action: "CREATE", entityType: "Donation", entityId: donation.id, details: { amount, type: formData.get("type") } });
+
+    // Trigger automations
+    await executeAutomations("DONATION_RECEIVED", {
+      contactId: donation.contactId,
+      amount: donation.amount,
+      campaignId: donation.campaignId,
+      donationType: donation.type,
+      donationId: donation.id,
+      eventId: donation.eventId,
+    });
+
     revalidatePath("/finance/donations");
     if (campaignId) revalidatePath(`/campaigns/${campaignId}`);
     redirect(`/finance/donations/${donation.id}`);

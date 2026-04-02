@@ -43,6 +43,7 @@ import {
   Briefcase,
   FileInput,
   ChevronRight,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -164,6 +165,8 @@ const sections: NavSection[] = [
     roles: ALL_STAFF,
     items: [
       { name: "Form Builder", href: "/settings/forms", icon: FileInput },
+      { name: "Automations", href: "/settings/automations", icon: Wrench },
+      { name: "Email Templates", href: "/settings/email-templates", icon: Mail },
       { name: "Reports", href: "/reports", icon: BarChart3 },
       { name: "Audit Log", href: "/settings/audit-log", icon: Shield },
     ],

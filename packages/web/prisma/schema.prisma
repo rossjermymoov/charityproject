@@ -139,6 +139,8 @@ model User {
   routesCreated          CollectionRoute[]    @relation("RouteCreatedBy")
   runsCreated            CollectionRun[]      @relation("RunCreatedBy")
   tinReturnsProcessed    TinReturn[]          @relation("TinReturnCountedBy")
+  automationRules        AutomationRule[]     @relation("AutomationRulesCreated")
+  emailTemplates         EmailTemplate[]      @relation("EmailTemplatesCreated")
   linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
 }
 
@@ -2128,4 +2130,60 @@ model SageSyncLog {
 
   @@index([entityType, entityId])
   @@index([status])
+}
+
+// ============================================
+// AUTOMATION & EMAIL TEMPLATES
+// ============================================
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String   // DONATION_RECEIVED, CONTACT_CREATED, TAG_ADDED, EVENT_REGISTERED, MEMBERSHIP_RENEWED, GIFT_AID_DECLARED, CAMPAIGN_TARGET_MET
+  conditions  Json     @default("{}")
+  actions     Json     @default("[]")
+  isActive    Boolean  @default(true)
+  runCount    Int      @default(0)
+  lastRunAt   DateTime?
+  createdById String
+  createdBy   User     @relation("AutomationRulesCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  logs        AutomationLog[]
+
+  @@index([trigger, isActive])
+  @@index([createdById])
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  bodyHtml  String
+  bodyText  String?
+  category  String   @default("GENERAL") // THANK_YOU, WELCOME, RECEIPT, RENEWAL, CUSTOM
+  variables Json     @default("[]")
+  isActive  Boolean  @default(true)
+  createdById String
+  createdBy User     @relation("EmailTemplatesCreated", fields: [createdById], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+  @@index([category])
+}
+
+model AutomationLog {
+  id        String   @id @default(cuid())
+  ruleId    String
+  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  trigger   String
+  contactId String?
+  status    String   @default("SUCCESS") // SUCCESS, FAILED, SKIPPED
+  detail    String?
+  executedAt DateTime @default(now())
+
+  @@index([ruleId])
+  @@index([executedAt])
 }
