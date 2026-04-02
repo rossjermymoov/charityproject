@@ -30,6 +30,8 @@ export default async function NewDonationPage() {
     const amount = parseFloat(formData.get("amount") as string);
     const isGiftAidable = (formData.get("isGiftAidable") as string) === "on";
 
+    const campaignId = (formData.get("campaignId") as string) || null;
+
     const donation = await prisma.donation.create({
       data: {
         contactId: formData.get("contactId") as string,
@@ -40,7 +42,7 @@ export default async function NewDonationPage() {
         reference: (formData.get("reference") as string) || null,
         date: new Date(formData.get("date") as string),
         ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
-        campaignId: (formData.get("campaignId") as string) || null,
+        campaignId,
         eventId: (formData.get("eventId") as string) || null,
         isGiftAidable,
         notes: (formData.get("notes") as string) || null,
@@ -48,8 +50,17 @@ export default async function NewDonationPage() {
       },
     });
 
+    // Update campaign's actualRaised total
+    if (campaignId) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { actualRaised: { increment: amount } },
+      });
+    }
+
     await logAudit({ userId: session.id, action: "CREATE", entityType: "Donation", entityId: donation.id, details: { amount, type: formData.get("type") } });
     revalidatePath("/finance/donations");
+    if (campaignId) revalidatePath(`/campaigns/${campaignId}`);
     redirect(`/finance/donations/${donation.id}`);
   }
 

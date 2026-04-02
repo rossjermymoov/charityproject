@@ -13,6 +13,7 @@ import {
   Palette,
   ChevronRight,
   Target,
+  FlaskConical,
   Coins,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
@@ -80,6 +81,12 @@ export default async function SettingsPage() {
       title: "User Management",
       description: "Manage user accounts, roles, and permissions",
       href: "/settings/users",
+    },
+    {
+      icon: FlaskConical,
+      title: "System Test Agent",
+      description: "Run automated tests on all data entry flows and monitor pass/fail",
+      href: "/settings/test-agent",
     },
   ];
 

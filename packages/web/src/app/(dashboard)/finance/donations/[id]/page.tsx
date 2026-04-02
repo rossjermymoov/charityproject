@@ -50,6 +50,13 @@ export default async function DonationDetailPage({
 
     const amount = parseFloat(formData.get("amount") as string);
     const isGiftAidable = (formData.get("isGiftAidable") as string) === "on";
+    const newCampaignId = (formData.get("campaignId") as string) || null;
+
+    // Get existing donation to compare campaign/amount changes
+    const existing = await prisma.donation.findUnique({
+      where: { id },
+      select: { amount: true, campaignId: true },
+    });
 
     await prisma.donation.update({
       where: { id },
@@ -62,12 +69,33 @@ export default async function DonationDetailPage({
         reference: (formData.get("reference") as string) || null,
         date: new Date(formData.get("date") as string),
         ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
-        campaignId: (formData.get("campaignId") as string) || null,
+        campaignId: newCampaignId,
         eventId: (formData.get("eventId") as string) || null,
         isGiftAidable,
         notes: (formData.get("notes") as string) || null,
       },
     });
+
+    // Update campaign actualRaised if campaign or amount changed
+    if (existing) {
+      // Remove old amount from previous campaign
+      if (existing.campaignId) {
+        await prisma.campaign.update({
+          where: { id: existing.campaignId },
+          data: { actualRaised: { decrement: existing.amount } },
+        });
+        revalidatePath(`/campaigns/${existing.campaignId}`);
+      }
+      // Add new amount to new campaign
+      if (newCampaignId) {
+        await prisma.campaign.update({
+          where: { id: newCampaignId },
+          data: { actualRaised: { increment: amount } },
+        });
+        revalidatePath(`/campaigns/${newCampaignId}`);
+      }
+    }
+
     await logAudit({ userId: session.id, action: "UPDATE", entityType: "Donation", entityId: id, details: { amount, type: formData.get("type") } });
 
     revalidatePath(`/finance/donations/${id}`);
@@ -77,12 +105,28 @@ export default async function DonationDetailPage({
     "use server";
     const session = await requireAuth();
 
+    // Get donation details before deleting to update campaign total
+    const existing = await prisma.donation.findUnique({
+      where: { id },
+      select: { amount: true, campaignId: true },
+    });
+
     await prisma.donation.delete({
       where: { id },
     });
+
+    // Decrement campaign actualRaised
+    if (existing?.campaignId) {
+      await prisma.campaign.update({
+        where: { id: existing.campaignId },
+        data: { actualRaised: { decrement: existing.amount } },
+      });
+    }
+
     await logAudit({ userId: session.id, action: "DELETE", entityType: "Donation", entityId: id });
 
     revalidatePath("/finance/donations");
+    if (existing?.campaignId) revalidatePath(`/campaigns/${existing.campaignId}`);
     redirect("/finance/donations");
   }
 
@@ -199,7 +243,7 @@ export default async function DonationDetailPage({
                     Campaign
                   </p>
                   <Link
-                    href={`/finance/campaigns/${donation.campaign.id}`}
+                    href={`/campaigns/${donation.campaign.id}`}
                     className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 block"
                   >
                     {donation.campaign.name}

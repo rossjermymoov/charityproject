@@ -33,7 +33,7 @@ export default async function ContactDetailPage({
       interactions: { include: { createdBy: true }, orderBy: { date: "desc" } },
       volunteerProfile: true,
       giftAids: { orderBy: { createdAt: "desc" }, take: 5 },
-      donations: { orderBy: { date: "desc" }, take: 5 },
+      donations: { include: { campaign: true }, orderBy: { date: "desc" }, take: 5 },
       eventAttendees: { include: { event: true }, orderBy: { createdAt: "desc" }, take: 5 },
       eventOrders: { include: { event: true, lineItems: { include: { item: true } } }, orderBy: { createdAt: "desc" }, take: 5 },
       fundraisingPages: {
@@ -763,7 +763,10 @@ export default async function ContactDetailPage({
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900">{d.type}</p>
-                        <p className="text-xs text-gray-500">{formatDate(d.date)}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(d.date)}
+                          {d.campaign && <span className="text-indigo-600"> &middot; {d.campaign.name}</span>}
+                        </p>
                       </div>
                       <span className="text-sm font-semibold text-gray-900">
                         £{d.amount.toFixed(2)}
