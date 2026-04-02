@@ -297,6 +297,24 @@ export async function createGeneratedRoutes(formData: FormData) {
   const routesJson = formData.get("routes") as string;
   const routes: GeneratedRoute[] = JSON.parse(routesJson);
 
+  // Deactivate all existing active routes — the generator covers ALL deployed
+  // tins, so old routes would overlap. A location can only be on one route.
+  const existingRoutes = await prisma.collectionRoute.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
+
+  if (existingRoutes.length > 0) {
+    // Delete route stops for existing routes, then deactivate the routes
+    await prisma.routeStop.deleteMany({
+      where: { routeId: { in: existingRoutes.map((r) => r.id) } },
+    });
+    await prisma.collectionRoute.updateMany({
+      where: { id: { in: existingRoutes.map((r) => r.id) } },
+      data: { isActive: false },
+    });
+  }
+
   for (const route of routes) {
     await prisma.collectionRoute.create({
       data: {

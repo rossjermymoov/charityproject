@@ -218,8 +218,8 @@ export default function GenerateClient({
                 </>
               )}
             </button>
-            <p className="text-xs text-gray-400 mt-2">
-              You can edit individual routes, add/remove stops, and assign volunteers afterwards.
+            <p className="text-xs text-amber-600 mt-2 font-medium">
+              This will replace all existing routes. Each location can only appear on one route.
             </p>
           </div>
         </div>
