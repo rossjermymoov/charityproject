@@ -141,11 +141,6 @@ export default function TinCollectionsApp() {
   const [notes, setNotes] = useState("");
   const [scanning, setScanning] = useState(null);
 
-  // Routes state
-  const [savedRoutes, setSavedRoutes] = useState([]);
-  const [scheduleRouteId, setScheduleRouteId] = useState(null);
-  const [scheduleDate, setScheduleDate] = useState("");
-
   // General
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -171,8 +166,6 @@ export default function TinCollectionsApp() {
       else if (s === "stops") setScreen("collect");
       else if (s === "skip") setScreen("collect");
       else if (s === "done") setScreen("home");
-      else if (s === "routes") setScreen("home");
-      else if (s === "schedule") setScreen("routes");
       else if (s === "home") setScreen("login");
       else if (s === "login") CapApp.exitApp();
     });
@@ -213,42 +206,6 @@ export default function TinCollectionsApp() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load runs");
       setRuns(data.runs || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchRoutes() {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/mobile/routes?token=${token}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load routes");
-      setSavedRoutes(data.routes || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function scheduleRun(routeId, date) {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/mobile/routes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, routeId, scheduledDate: date || new Date().toISOString() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to schedule run");
-      setScheduleRouteId(null);
-      setScheduleDate("");
-      // Refresh both routes and runs
-      await Promise.all([fetchRoutes(), fetchRuns(token)]);
-      setScreen("home");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -360,7 +317,6 @@ export default function TinCollectionsApp() {
     setToken(null);
     setUserName("");
     setRuns([]);
-    setSavedRoutes([]);
     try { localStorage.removeItem("tc_token"); localStorage.removeItem("tc_name"); } catch {}
     setScreen("login");
   }
@@ -393,7 +349,6 @@ export default function TinCollectionsApp() {
   }
 
   const brandLight = brand ? lighten(brand, 92) : "#fff";
-  const brandFaint = brand ? `${brand}15` : "#f3f4f6";
   const done = stops.filter(s => s.status !== "PENDING");
   const pct = stops.length > 0 ? Math.round((done.length / stops.length) * 100) : 0;
   const stop = stops[idx];
@@ -511,22 +466,6 @@ export default function TinCollectionsApp() {
             </div>
           )}
 
-          {/* ── Quick Actions ────────────────────────────────── */}
-          <button onClick={() => { fetchRoutes(); setScreen("routes"); }} style={{
-            width: "100%", background: "white", borderRadius: 18, padding: "18px 20px", border: `1.5px solid #e5e7eb`,
-            cursor: "pointer", display: "flex", alignItems: "center", gap: 14,
-            textAlign: "left", boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-          }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: brand, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <RouteIcon size={22} color="white" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#111" }}>My Routes</div>
-              <div style={{ fontSize: 14, color: "#888" }}>View assigned routes and schedule runs</div>
-            </div>
-            <ChevronRight size={22} color="#ccc" />
-          </button>
-
           {/* ── Upcoming Runs ────────────────────────────────── */}
           {upcomingRuns.length > 0 && (
             <div>
@@ -535,17 +474,14 @@ export default function TinCollectionsApp() {
                 const totalStops = run.runStops.length;
                 return (
                   <div key={run.id} style={{ background: "white", borderRadius: 18, padding: 18, border: "1.5px solid #e5e7eb", boxShadow: "0 1px 6px rgba(0,0,0,0.04)", marginBottom: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 4 }}>{run.route.name}</div>
-                        <div style={{ fontSize: 14, color: "#888", display: "flex", alignItems: "center", gap: 6 }}>
-                          <CalendarIcon size={14} color="#aaa" />
-                          {run.scheduledDate ? formatDate(run.scheduledDate) : "Unscheduled"}
-                          <span style={{ margin: "0 4px" }}>·</span>
-                          {totalStops} stops
-                        </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 4 }}>{run.route.name}</div>
+                      <div style={{ fontSize: 14, color: "#888", display: "flex", alignItems: "center", gap: 6 }}>
+                        <CalendarIcon size={14} color="#aaa" />
+                        {run.scheduledDate ? formatDate(run.scheduledDate) : "Unscheduled"}
+                        <span style={{ margin: "0 4px" }}>·</span>
+                        {totalStops} stops
                       </div>
-                      <ChevronRight size={22} color={brand} />
                     </div>
                     <button onClick={() => selectRun(run)} style={{
                       width: "100%", padding: "14px 0", fontSize: 17, fontWeight: 800, borderRadius: 14,
@@ -562,145 +498,14 @@ export default function TinCollectionsApp() {
           {inProgressRuns.length === 0 && upcomingRuns.length === 0 && !loading && (
             <div style={{ textAlign: "center", padding: 32, color: "#999" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No runs scheduled</div>
-              <div style={{ fontSize: 15, color: "#bbb" }}>Head to Your Routes to schedule one</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No collections scheduled</div>
+              <div style={{ fontSize: 15, color: "#bbb" }}>Your upcoming runs will appear here</div>
             </div>
           )}
 
           <button onClick={() => fetchRuns(token)} style={{ padding: "12px 0", fontSize: 15, fontWeight: 700, borderRadius: 12, border: `1.5px solid ${brand}30`, background: brandLight, color: brand, cursor: "pointer" }}>
             Refresh
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── YOUR ROUTES ──────────────────────────────────────────────
-  if (screen === "routes") {
-    return (
-      <div style={S.app}>
-        {ErrorToast}{LoadingOverlay}
-        <div style={{ background: brand, color: "white", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-          <button onClick={() => setScreen("home")} style={{ fontSize: 18, fontWeight: 700, color: "white", background: "none", border: "none", cursor: "pointer" }}>← Home</button>
-          <div style={{ fontSize: 17, fontWeight: 800 }}>Your Routes</div>
-          <div style={{ width: 50 }} />
-        </div>
-
-        <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
-          {savedRoutes.length === 0 && !loading && (
-            <div style={{ textAlign: "center", padding: 40, color: "#999" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🗺️</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No routes yet</div>
-              <div style={{ fontSize: 15, color: "#bbb" }}>Routes assigned to you will appear here</div>
-            </div>
-          )}
-
-          {savedRoutes.map(route => {
-            const hasActiveRun = route.runs && route.runs.length > 0;
-            const nextRun = hasActiveRun ? route.runs[0] : null;
-            return (
-              <div key={route.id} style={{
-                background: "white", borderRadius: 18, padding: 20, marginBottom: 12,
-                border: "1.5px solid #e5e7eb", boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-              }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 6 }}>{route.name}</div>
-                {route.description && <div style={{ fontSize: 14, color: "#888", marginBottom: 6 }}>{route.description}</div>}
-                <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14, color: "#aaa", marginBottom: 14 }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPinIcon size={14} color="#ccc" /> {route.stops?.length || 0} stops</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><BucketIcon size={14} color="#ccc" /> {route.tinCount} tins</span>
-                </div>
-
-                {nextRun && (
-                  <div style={{ background: brandFaint, borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-                    <CalendarIcon size={16} color={brand} />
-                    <span style={{ color: "#555", fontWeight: 600 }}>
-                      {nextRun.status === "IN_PROGRESS" ? "In progress" : `Scheduled: ${formatDate(nextRun.scheduledDate)}`}
-                    </span>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => { setScheduleRouteId(route.id); setScheduleDate(""); setScreen("schedule"); }} style={{
-                    flex: 1, padding: "14px 0", fontSize: 16, fontWeight: 800, borderRadius: 14,
-                    border: "none", background: brand, color: "white", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  }}>
-                    <CalendarIcon size={16} color="white" /> Schedule Run
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          <button onClick={fetchRoutes} style={{ width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 700, borderRadius: 12, border: `1.5px solid ${brand}30`, background: brandLight, color: brand, cursor: "pointer", marginTop: 8 }}>
-            Refresh
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── SCHEDULE RUN ─────────────────────────────────────────────
-  if (screen === "schedule") {
-    const routeToSchedule = savedRoutes.find(r => r.id === scheduleRouteId);
-    return (
-      <div style={S.app}>
-        {ErrorToast}{LoadingOverlay}
-        <div style={{ background: brand, color: "white", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-          <button onClick={() => setScreen("routes")} style={{ fontSize: 18, fontWeight: 700, color: "white", background: "none", border: "none", cursor: "pointer" }}>← Back</button>
-          <div style={{ fontSize: 17, fontWeight: 800 }}>Schedule Run</div>
-          <div style={{ width: 50 }} />
-        </div>
-
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 24, gap: 20, overflow: "auto" }}>
-          {routeToSchedule && (
-            <div style={{ background: "white", borderRadius: 18, padding: 20, border: "1.5px solid #e5e7eb" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#111", marginBottom: 4 }}>{routeToSchedule.name}</div>
-              <div style={{ fontSize: 14, color: "#888" }}>{routeToSchedule.stops?.length || 0} stops · {routeToSchedule.tinCount} tins</div>
-            </div>
-          )}
-
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#333", marginBottom: 8 }}>Pick a date</div>
-            <input
-              type="date"
-              value={scheduleDate}
-              onChange={e => setScheduleDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              style={{
-                width: "100%", padding: "16px 18px", fontSize: 18, borderRadius: 16,
-                border: "2px solid #d1d5db", outline: "none", boxSizing: "border-box",
-                fontFamily: "inherit", color: "#333", background: "white",
-              }}
-            />
-          </div>
-
-          <button
-            onClick={() => scheduleRun(scheduleRouteId, scheduleDate ? new Date(scheduleDate).toISOString() : null)}
-            disabled={!scheduleDate || loading}
-            style={{
-              width: "100%", padding: "20px 0", fontSize: 20, fontWeight: 900, borderRadius: 18,
-              border: "none", cursor: scheduleDate ? "pointer" : "default",
-              background: scheduleDate ? brand : "#d1d5db", color: "white",
-              boxShadow: scheduleDate ? `0 4px 16px ${brand}40` : "none",
-            }}
-          >
-            {loading ? "Scheduling..." : "Schedule Run"}
-          </button>
-
-          <div style={{ textAlign: "center" }}>
-            <button
-              onClick={() => scheduleRun(scheduleRouteId, new Date().toISOString())}
-              disabled={loading}
-              style={{
-                padding: "14px 24px", fontSize: 16, fontWeight: 700, borderRadius: 14,
-                border: `2px solid ${brand}30`, background: brandLight, color: brand,
-                cursor: "pointer",
-              }}
-            >
-              Start Now (Ad-hoc)
-            </button>
-          </div>
         </div>
       </div>
     );
