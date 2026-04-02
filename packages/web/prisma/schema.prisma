@@ -681,7 +681,7 @@ model LedgerCode {
   events              Event[]
   campaigns           Campaign[]
   sageAccountMappings SageAccountMapping[]
-  xeroAccountMappings XeroAccountMapping[]
+  xeroAccountMappings XeroAccountMapping[] @relation("XeroAccountMappings")
 }
 
 model Donation {
