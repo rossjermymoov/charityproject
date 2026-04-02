@@ -33,6 +33,11 @@ model SystemSettings {
   // SUGGESTED_ROUTES = AI-suggested ad-hoc routes based on distance & data (smaller charities)
   collectionMode        String   @default("SUGGESTED_ROUTES") // MY_ROUTES | SUGGESTED_ROUTES
 
+  // ── Collection Tins — Head Office (route start point) ──
+  headOfficeAddress     String?  // Full address text
+  headOfficeLat         Float?   // Latitude for route calculations
+  headOfficeLng         Float?   // Longitude for route calculations
+
   // ── HMRC Gift Aid Integration ──
   hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)
   hmrcGatewayUser       String?  // Government Gateway User ID

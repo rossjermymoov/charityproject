@@ -25,23 +25,32 @@ type LocPoint = {
   tinCount: number;
 };
 
-// K-means-style geographic clustering
-function clusterLocations(locations: LocPoint[], k: number): LocPoint[][] {
+/**
+ * Balanced clustering: ensures each cluster has roughly the same number of locations.
+ *
+ * Algorithm:
+ * 1. Run standard k-means to get centroids (for geographic grouping)
+ * 2. Then use a balanced assignment: iteratively assign each location to its
+ *    nearest centroid that still has capacity (capacity = ceil(N/k))
+ * 3. Re-run centroid updates and balanced assignment for several iterations
+ */
+function balancedCluster(locations: LocPoint[], k: number): LocPoint[][] {
   if (locations.length <= k) {
     return locations.map((l) => [l]);
   }
 
-  // Initialise centroids by picking spread-out locations
+  const n = locations.length;
+  const maxPerCluster = Math.ceil(n / k);
+
+  // Initialise centroids using farthest-first
   const centroids: { lat: number; lng: number }[] = [];
-  // First centroid: northernmost location
   const sorted = [...locations].sort((a, b) => b.lat - a.lat);
   centroids.push({ lat: sorted[0].lat, lng: sorted[0].lng });
 
-  // Remaining centroids: pick location farthest from existing centroids
   for (let i = 1; i < k; i++) {
     let bestIdx = 0;
     let bestDist = -1;
-    for (let j = 0; j < locations.length; j++) {
+    for (let j = 0; j < n; j++) {
       const minDist = Math.min(
         ...centroids.map((c) => haversine(locations[j].lat, locations[j].lng, c.lat, c.lng))
       );
@@ -53,28 +62,60 @@ function clusterLocations(locations: LocPoint[], k: number): LocPoint[][] {
     centroids.push({ lat: locations[bestIdx].lat, lng: locations[bestIdx].lng });
   }
 
-  // Iterate k-means (20 iterations max)
-  let assignments = new Array(locations.length).fill(0);
-  for (let iter = 0; iter < 20; iter++) {
-    // Assign each location to nearest centroid
-    const newAssignments = locations.map((loc) => {
-      let minDist = Infinity;
-      let minIdx = 0;
-      for (let c = 0; c < centroids.length; c++) {
-        const d = haversine(loc.lat, loc.lng, centroids[c].lat, centroids[c].lng);
-        if (d < minDist) {
-          minDist = d;
-          minIdx = c;
-        }
+  let assignments = new Array(n).fill(0);
+
+  // Iterate balanced k-means (15 iterations)
+  for (let iter = 0; iter < 15; iter++) {
+    // --- Balanced assignment step ---
+    // For each location, compute distance to every centroid
+    // Sort all (location, centroid) pairs by distance
+    // Greedily assign: pick shortest distance pair where both location is
+    // unassigned AND centroid has capacity remaining
+    const pairs: { locIdx: number; centIdx: number; dist: number }[] = [];
+    for (let i = 0; i < n; i++) {
+      for (let c = 0; c < k; c++) {
+        pairs.push({
+          locIdx: i,
+          centIdx: c,
+          dist: haversine(locations[i].lat, locations[i].lng, centroids[c].lat, centroids[c].lng),
+        });
       }
-      return minIdx;
-    });
+    }
+    pairs.sort((a, b) => a.dist - b.dist);
+
+    const newAssignments = new Array(n).fill(-1);
+    const clusterSizes = new Array(k).fill(0);
+    const assigned = new Set<number>();
+
+    for (const pair of pairs) {
+      if (assigned.has(pair.locIdx)) continue;
+      if (clusterSizes[pair.centIdx] >= maxPerCluster) continue;
+
+      newAssignments[pair.locIdx] = pair.centIdx;
+      clusterSizes[pair.centIdx]++;
+      assigned.add(pair.locIdx);
+
+      if (assigned.size === n) break;
+    }
+
+    // Handle any stragglers (shouldn't happen, but safety net)
+    for (let i = 0; i < n; i++) {
+      if (newAssignments[i] === -1) {
+        // Find centroid with smallest size
+        let minC = 0;
+        for (let c = 1; c < k; c++) {
+          if (clusterSizes[c] < clusterSizes[minC]) minC = c;
+        }
+        newAssignments[i] = minC;
+        clusterSizes[minC]++;
+      }
+    }
 
     // Check convergence
     if (JSON.stringify(newAssignments) === JSON.stringify(assignments)) break;
     assignments = newAssignments;
 
-    // Recompute centroids
+    // --- Centroid update step ---
     for (let c = 0; c < k; c++) {
       const members = locations.filter((_, i) => assignments[i] === c);
       if (members.length > 0) {
@@ -90,20 +131,34 @@ function clusterLocations(locations: LocPoint[], k: number): LocPoint[][] {
   const clusters: LocPoint[][] = Array.from({ length: k }, () => []);
   assignments.forEach((c, i) => clusters[c].push(locations[i]));
 
-  // Remove empty clusters
+  // Remove empty clusters (shouldn't happen with balanced algo but just in case)
   return clusters.filter((c) => c.length > 0);
 }
 
-// Order stops within a cluster using nearest-neighbour
-function orderByNearest(locations: LocPoint[]): LocPoint[] {
+// Order stops within a cluster using nearest-neighbour from a start point
+function orderByNearest(locations: LocPoint[], startLat?: number, startLng?: number): LocPoint[] {
   if (locations.length <= 1) return locations;
 
   const ordered: LocPoint[] = [];
   const remaining = [...locations];
 
-  // Start from the northernmost point
-  remaining.sort((a, b) => b.lat - a.lat);
-  ordered.push(remaining.shift()!);
+  if (startLat != null && startLng != null) {
+    // Start from the location nearest to the head office
+    let nearestIdx = 0;
+    let nearestDist = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = haversine(startLat, startLng, remaining[i].lat, remaining[i].lng);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestIdx = i;
+      }
+    }
+    ordered.push(remaining.splice(nearestIdx, 1)[0]);
+  } else {
+    // Fallback: start from northernmost point
+    remaining.sort((a, b) => b.lat - a.lat);
+    ordered.push(remaining.shift()!);
+  }
 
   while (remaining.length > 0) {
     const last = ordered[ordered.length - 1];
@@ -150,6 +205,7 @@ export type GeneratePreview = {
   totalTins: number;
   avgStopsPerRoute: number;
   avgTimeMinutes: number;
+  headOfficeAddress: string | null;
 };
 
 export async function previewGenerateRoutes(formData: FormData): Promise<GeneratePreview | null> {
@@ -157,6 +213,12 @@ export async function previewGenerateRoutes(formData: FormData): Promise<Generat
   if (!session) return null;
 
   const numRoutes = parseInt(formData.get("numRoutes") as string) || 5;
+
+  // Fetch head office location from settings
+  const settings = await prisma.systemSettings.findUnique({
+    where: { id: "default" },
+    select: { headOfficeAddress: true, headOfficeLat: true, headOfficeLng: true },
+  });
 
   // Fetch all active locations with geocodes that have deployed tins
   const locations = await prisma.tinLocation.findMany({
@@ -181,12 +243,15 @@ export async function previewGenerateRoutes(formData: FormData): Promise<Generat
     tinCount: loc.tins.length,
   }));
 
-  // Cluster locations into N groups
-  const clusters = clusterLocations(points, Math.min(numRoutes, points.length));
+  // Cluster locations into N balanced groups
+  const clusters = balancedCluster(points, Math.min(numRoutes, points.length));
+
+  const startLat = settings?.headOfficeLat ?? undefined;
+  const startLng = settings?.headOfficeLng ?? undefined;
 
   // Order stops within each cluster and calculate stats
   const routes: GeneratedRoute[] = clusters.map((cluster, idx) => {
-    const ordered = orderByNearest(cluster);
+    const ordered = orderByNearest(cluster, startLat, startLng);
     let totalMiles = 0;
     for (let i = 1; i < ordered.length; i++) {
       totalMiles += haversine(ordered[i - 1].lat, ordered[i - 1].lng, ordered[i].lat, ordered[i].lng);
@@ -195,7 +260,7 @@ export async function previewGenerateRoutes(formData: FormData): Promise<Generat
     const tinCount = ordered.reduce((sum, s) => sum + s.tinCount, 0);
 
     return {
-      name: `Route ${idx + 1} — ${ordered[0]?.name?.split(" ").slice(-1)[0] || "Area"} area`,
+      name: `Route ${idx + 1}`,
       stops: ordered,
       totalMiles: Math.round(totalMiles * 10) / 10,
       estimatedMinutes: Math.round(estimatedMinutes),
@@ -203,7 +268,7 @@ export async function previewGenerateRoutes(formData: FormData): Promise<Generat
     };
   });
 
-  // Sort routes by estimated time descending so user can see balance
+  // Sort routes by number of stops descending
   routes.sort((a, b) => b.stops.length - a.stops.length);
 
   // Rename with proper numbering after sort
@@ -221,6 +286,7 @@ export async function previewGenerateRoutes(formData: FormData): Promise<Generat
     totalTins,
     avgStopsPerRoute: avgStops,
     avgTimeMinutes: avgTime,
+    headOfficeAddress: settings?.headOfficeAddress || null,
   };
 }
 
@@ -231,8 +297,6 @@ export async function createGeneratedRoutes(formData: FormData) {
   const routesJson = formData.get("routes") as string;
   const routes: GeneratedRoute[] = JSON.parse(routesJson);
 
-  // Delete existing AI-generated routes first? No — let the user manage that.
-  // Just create new ones.
   for (const route of routes) {
     await prisma.collectionRoute.create({
       data: {
