@@ -44,6 +44,7 @@ import {
   FileInput,
   ChevronRight,
   Mail,
+  Merge2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -99,6 +100,7 @@ const sections: NavSection[] = [
     roles: ALL_STAFF,
     items: [
       { name: "Contacts", href: "/crm/contacts", icon: Users },
+      { name: "Duplicates", href: "/crm/duplicates", icon: Merge2 },
       { name: "Organisations", href: "/crm/organisations", icon: Building2 },
       { name: "Volunteers", href: "/volunteers", icon: UserCheck },
       { name: "Departments", href: "/volunteers/departments", icon: Building2 },
