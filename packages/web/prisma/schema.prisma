@@ -44,6 +44,7 @@ model SystemSettings {
   charityWebsite        String?  // Charity website URL for AI letter generation
   charityWebsiteSummary String?  // AI-generated summary of charity website content (cached)
   googlePlacesApiKey    String?  // Google Places API key for prospect finding
+  letterheadImage       String?  // Base64 data URL of charity letterhead image (PNG/JPEG)
 
   // ── HMRC Gift Aid Integration ──
   hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)

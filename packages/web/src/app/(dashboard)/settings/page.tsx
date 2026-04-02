@@ -16,13 +16,14 @@ import {
   Coins,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
+import LetterheadForm from "./letterhead-form";
 
 export default async function SettingsPage() {
   const user = await requireAuth();
 
   const settings = await prisma.systemSettings.findUnique({
     where: { id: "default" },
-    select: { headOfficeAddress: true, headOfficeLat: true, headOfficeLng: true },
+    select: { headOfficeAddress: true, headOfficeLat: true, headOfficeLng: true, letterheadImage: true },
   });
 
   const settingsLinks = [
@@ -119,6 +120,11 @@ export default async function SettingsPage() {
           lat={settings?.headOfficeLat || null}
           lng={settings?.headOfficeLng || null}
         />
+      </Card>
+
+      {/* Letterhead */}
+      <Card className="p-6">
+        <LetterheadForm currentImage={settings?.letterheadImage || null} />
       </Card>
 
       {/* Settings sections */}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 type LetterInput = {
   prospectName: string;
@@ -11,18 +12,10 @@ type LetterInput = {
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
+    parseInt(h.substring(0, 2), 16) / 255,
+    parseInt(h.substring(2, 4), 16) / 255,
+    parseInt(h.substring(4, 6), 16) / 255,
   ];
-}
-
-function escPdf(text: string): string {
-  return text
-    .replace(/\\/g, "\\\\")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)")
-    .replace(/£/g, "\\243");
 }
 
 function wrapLine(text: string, maxChars: number): string[] {
@@ -52,13 +45,13 @@ export async function POST(request: Request) {
 
   const settings = await prisma.systemSettings.findUnique({
     where: { id: "default" },
-    select: { orgName: true, primaryColour: true },
+    select: { orgName: true, primaryColour: true, letterheadImage: true },
   });
 
   const orgName = settings?.orgName || "Our Charity";
   const colour = settings?.primaryColour || "#4f46e5";
-  const [cr, cg, cb] = hexToRgb(colour);
-  const rf = cr / 255, gf = cg / 255, bf = cb / 255;
+  const [rf, gf, bf] = hexToRgb(colour);
+  const brandColour = rgb(rf, gf, bf);
 
   // A4 in points
   const W = 595.28;
@@ -66,34 +59,103 @@ export async function POST(request: Request) {
   const MARGIN = 60;
   const LINE_HEIGHT = 15;
   const PARA_GAP = 8;
-  const MAX_CHARS = 85; // chars per line at 10.5pt Helvetica
+  const MAX_CHARS = 85;
 
-  // Build PDF with one letter per page
-  const pageStreams: string[] = [];
+  const pdfDoc = await PDFDocument.create();
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+  // Embed letterhead image if available
+  let letterheadEmbed: Awaited<ReturnType<typeof pdfDoc.embedPng>> | null = null;
+  let letterheadHeight = 0;
+
+  if (settings?.letterheadImage) {
+    try {
+      const dataUrlMatch = settings.letterheadImage.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+      if (dataUrlMatch) {
+        const imgType = dataUrlMatch[1];
+        const imgBase64 = dataUrlMatch[2];
+        const imgBytes = Buffer.from(imgBase64, "base64");
+
+        if (imgType === "png") {
+          letterheadEmbed = await pdfDoc.embedPng(imgBytes);
+        } else {
+          letterheadEmbed = await pdfDoc.embedJpg(imgBytes);
+        }
+
+        // Scale letterhead to fit page width minus margins
+        const maxWidth = W - 2 * MARGIN;
+        const scale = maxWidth / letterheadEmbed.width;
+        letterheadHeight = letterheadEmbed.height * scale;
+      }
+    } catch (e) {
+      // If letterhead fails to embed, continue without it
+      console.error("Failed to embed letterhead:", e);
+    }
+  }
 
   for (const letter of letters as LetterInput[]) {
-    let stream = "";
+    const page = pdfDoc.addPage([W, H]);
     let y = H - MARGIN;
 
-    // Header line in brand colour
-    stream += `${rf} ${gf} ${bf} rg ${MARGIN} ${y + 5} ${W - 2 * MARGIN} 2 re f\n`;
-    y -= 25;
+    // Draw letterhead image if available
+    if (letterheadEmbed) {
+      const maxWidth = W - 2 * MARGIN;
+      const scale = maxWidth / letterheadEmbed.width;
+      const imgW = letterheadEmbed.width * scale;
+      const imgH = letterheadEmbed.height * scale;
 
-    // Org name
-    stream += `BT /F1 14 Tf ${rf} ${gf} ${bf} rg ${MARGIN} ${y} Td (${escPdf(orgName)}) Tj ET\n`;
-    y -= 20;
+      page.drawImage(letterheadEmbed, {
+        x: MARGIN,
+        y: y - imgH,
+        width: imgW,
+        height: imgH,
+      });
+      y -= imgH + 20;
+    } else {
+      // Fallback: brand colour header line + org name
+      page.drawRectangle({
+        x: MARGIN,
+        y: y + 5,
+        width: W - 2 * MARGIN,
+        height: 2,
+        color: brandColour,
+      });
+      y -= 25;
+
+      page.drawText(orgName, {
+        x: MARGIN,
+        y,
+        size: 14,
+        font: fontBold,
+        color: brandColour,
+      });
+      y -= 20;
+    }
 
     // Date
     const today = new Date();
     const dateStr = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    stream += `BT /F2 10 Tf 0.4 0.4 0.4 rg ${MARGIN} ${y} Td (${escPdf(dateStr)}) Tj ET\n`;
+    page.drawText(dateStr, {
+      x: MARGIN,
+      y,
+      size: 10,
+      font: fontReg,
+      color: rgb(0.4, 0.4, 0.4),
+    });
     y -= 30;
 
     // Prospect address
     if (letter.prospectAddress) {
       const addrLines = letter.prospectAddress.split(",").map((s: string) => s.trim());
       for (const line of addrLines) {
-        stream += `BT /F2 10 Tf 0.2 0.2 0.2 rg ${MARGIN} ${y} Td (${escPdf(line)}) Tj ET\n`;
+        page.drawText(line, {
+          x: MARGIN,
+          y,
+          size: 10,
+          font: fontReg,
+          color: rgb(0.2, 0.2, 0.2),
+        });
         y -= LINE_HEIGHT;
       }
     }
@@ -105,22 +167,28 @@ export async function POST(request: Request) {
       const trimmed = para.trim();
       if (!trimmed) continue;
 
-      // Check if this is a salutation/signature (short line)
+      // Salutation/signature lines
       if (trimmed.length < 50 && (trimmed.startsWith("Dear") || trimmed.startsWith("Yours") || trimmed === orgName || trimmed.startsWith("http") || trimmed.startsWith("www"))) {
-        // Render as single line, possibly bold for Dear/Yours
         const isBold = trimmed.startsWith("Dear") || trimmed.startsWith("Yours");
-        const font = isBold ? "/F1" : "/F2";
-        stream += `BT ${font} 10.5 Tf 0.15 0.15 0.15 rg ${MARGIN} ${y} Td (${escPdf(trimmed)}) Tj ET\n`;
+        page.drawText(trimmed, {
+          x: MARGIN,
+          y,
+          size: 10.5,
+          font: isBold ? fontBold : fontReg,
+          color: rgb(0.15, 0.15, 0.15),
+        });
         y -= LINE_HEIGHT + PARA_GAP;
       } else {
-        // Wrap paragraph text
         const lines = wrapLine(trimmed, MAX_CHARS);
         for (const line of lines) {
-          if (y < MARGIN + 30) {
-            // Don't overflow — would need a second page per letter in extreme cases
-            break;
-          }
-          stream += `BT /F2 10.5 Tf 0.15 0.15 0.15 rg ${MARGIN} ${y} Td (${escPdf(line)}) Tj ET\n`;
+          if (y < MARGIN + 30) break;
+          page.drawText(line, {
+            x: MARGIN,
+            y,
+            size: 10.5,
+            font: fontReg,
+            color: rgb(0.15, 0.15, 0.15),
+          });
           y -= LINE_HEIGHT;
         }
         y -= PARA_GAP;
@@ -128,69 +196,16 @@ export async function POST(request: Request) {
     }
 
     // Footer line
-    stream += `${rf} ${gf} ${bf} rg ${MARGIN} ${MARGIN - 10} ${W - 2 * MARGIN} 1 re f\n`;
-
-    pageStreams.push(stream);
+    page.drawRectangle({
+      x: MARGIN,
+      y: MARGIN - 10,
+      width: W - 2 * MARGIN,
+      height: 1,
+      color: brandColour,
+    });
   }
 
-  // === Build multi-page PDF ===
-  const objects: string[] = [];
-  let objNum = 0;
-
-  function addObj(content: string): number {
-    objNum++;
-    objects.push(`${objNum} 0 obj\n${content}\nendobj`);
-    return objNum;
-  }
-
-  // 1: Catalog
-  addObj(`<< /Type /Catalog /Pages 2 0 R >>`);
-
-  // 2: Pages (will update kids list after creating page objects)
-  const pagesObjNum = 2;
-  addObj("PLACEHOLDER"); // Will replace
-
-  // Fonts
-  const fontBoldNum = addObj(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>`);
-  const fontRegNum = addObj(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
-
-  // Create page + content stream pairs
-  const pageObjNums: number[] = [];
-  for (const stream of pageStreams) {
-    const streamBytes = Buffer.from(stream, "latin1");
-    const contentNum = addObj(`<< /Length ${streamBytes.length} >>\nstream\n${stream}\nendstream`);
-    const pageNum = addObj(
-      `<< /Type /Page /Parent ${pagesObjNum} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${contentNum} 0 R /Resources << /Font << /F1 ${fontBoldNum} 0 R /F2 ${fontRegNum} 0 R >> >> >>`
-    );
-    pageObjNums.push(pageNum);
-  }
-
-  // Update Pages object with kids
-  const kidsStr = pageObjNums.map((n) => `${n} 0 R`).join(" ");
-  objects[pagesObjNum - 1] = `${pagesObjNum} 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${pageObjNums.length} >>\nendobj`;
-
-  // Build the raw PDF bytes
-  const header = "%PDF-1.4\n";
-  const body = objects.join("\n") + "\n";
-
-  // Calculate object offsets for xref
-  const offsets: number[] = [];
-  let pos = header.length;
-  for (const obj of objects) {
-    offsets.push(pos);
-    pos += obj.length + 1; // +1 for newline between objects
-  }
-
-  const xrefOffset = header.length + body.length;
-  let xref = `xref\n0 ${objNum + 1}\n`;
-  xref += `0000000000 65535 f \n`;
-  for (const offset of offsets) {
-    xref += `${offset.toString().padStart(10, "0")} 00000 n \n`;
-  }
-
-  const trailer = `trailer\n<< /Size ${objNum + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-
-  const pdfBytes = Buffer.from(header + body + xref + trailer, "latin1");
+  const pdfBytes = await pdfDoc.save();
 
   return new NextResponse(new Uint8Array(pdfBytes), {
     headers: {

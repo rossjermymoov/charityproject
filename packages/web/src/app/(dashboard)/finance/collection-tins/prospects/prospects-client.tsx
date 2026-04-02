@@ -486,16 +486,31 @@ export default function ProspectsClient({
               </div>
 
               {/* Generate letters button */}
-              {selectedProspects.size > 0 && (
+              {selectedProspects.size > 0 && !generatingLetters && (
                 <div className="pt-2">
-                  <Button onClick={generateLetters} disabled={generatingLetters}>
-                    {generatingLetters ? (
-                      <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating letters...</>
-                    ) : (
-                      <><Mail className="h-4 w-4 mr-2" /> Generate {selectedProspects.size} Letter{selectedProspects.size > 1 ? "s" : ""}</>
-                    )}
+                  <Button onClick={generateLetters}>
+                    <Mail className="h-4 w-4 mr-2" /> Generate {selectedProspects.size} Letter{selectedProspects.size > 1 ? "s" : ""}
                   </Button>
                 </div>
+              )}
+
+              {/* Letter generation loading graphic */}
+              {generatingLetters && (
+                <Card className="mt-4 p-8 border-indigo-200 bg-indigo-50">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+                      <Mail className="h-6 w-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-indigo-900">Generating {selectedProspects.size} personalised letter{selectedProspects.size > 1 ? "s" : ""}...</p>
+                      <p className="text-xs text-indigo-600 mt-1">Reviewing your charity details and crafting compelling messages for each prospect</p>
+                    </div>
+                    <div className="w-full max-w-xs bg-indigo-200 rounded-full h-2 overflow-hidden">
+                      <div className="bg-indigo-600 h-2 rounded-full animate-pulse" style={{ width: "70%" }} />
+                    </div>
+                  </div>
+                </Card>
               )}
             </div>
           )}
