@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Route, MapPin, Calendar, User, Coins, Sparkles, FolderOpen, Settings } from "lucide-react";
+import { Plus, Route, MapPin, Calendar, User, Coins, Sparkles, FolderOpen, Settings, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -44,26 +44,25 @@ export default async function RoutesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Collection Routes</h1>
           <p className="text-gray-500 mt-1">
             {mode === "MY_ROUTES"
-              ? "Manage predefined routes and schedule collections"
+              ? "Manage predefined routes, generate with AI, and schedule collections"
               : "Use AI-suggested routes to optimise your collections"}
           </p>
         </div>
         <div className="flex gap-2">
-          {mode === "MY_ROUTES" ? (
+          {mode === "MY_ROUTES" && (
             <Link href="/finance/collection-tins/routes/my-routes">
               <Button variant="outline">
                 <FolderOpen className="h-4 w-4 mr-2" />
                 My Routes
               </Button>
             </Link>
-          ) : (
-            <Link href="/finance/collection-tins/routes/suggest">
-              <Button variant="outline">
-                <Sparkles className="h-4 w-4 mr-2" />
-                Suggest Route
-              </Button>
-            </Link>
           )}
+          <Link href="/finance/collection-tins/routes/suggest">
+            <Button variant="outline">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Suggest Route
+            </Button>
+          </Link>
           <Link href="/finance/collection-tins/routes/count">
             <Button variant="outline">
               <Coins className="h-4 w-4 mr-2" />
@@ -71,12 +70,20 @@ export default async function RoutesPage() {
             </Button>
           </Link>
           {mode === "MY_ROUTES" && (
-            <Link href="/finance/collection-tins/routes/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Route
-              </Button>
-            </Link>
+            <>
+              <Link href="/finance/collection-tins/routes/generate">
+                <Button variant="outline">
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  AI Generate Routes
+                </Button>
+              </Link>
+              <Link href="/finance/collection-tins/routes/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Route
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>

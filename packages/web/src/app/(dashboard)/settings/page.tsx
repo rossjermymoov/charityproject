@@ -34,7 +34,7 @@ export default async function SettingsPage() {
     {
       icon: Coins,
       title: "Collection Tins",
-      description: "Choose between predefined routes or AI-suggested routes for tin collections",
+      description: "Choose between predefined routes (manual or AI-generated) or AI-suggested ad-hoc routes",
       href: "/settings/collection-tins",
     },
     {

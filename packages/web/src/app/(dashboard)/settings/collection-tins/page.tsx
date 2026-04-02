@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Route, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, Route, Sparkles, Check, Wand2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { updateCollectionMode } from "./actions";
@@ -81,12 +81,13 @@ export default async function CollectionTinsSettingsPage() {
                     )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Best for larger charities with regular volunteers. Create predefined routes with fixed stops,
-                    assign them to volunteers, and schedule runs on specific dates. Tracks which tins are allocated
-                    to which route and flags unallocated tins.
+                    Best for larger charities with regular volunteers. Create routes manually or use the
+                    AI Route Generator to automatically divide all your tins into balanced routes. Assign
+                    routes to volunteers, schedule runs, and track which tins are allocated.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">Predefined routes</span>
+                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md"><Plus className="h-3 w-3" /> Manual creation</span>
+                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md"><Wand2 className="h-3 w-3" /> AI route generation</span>
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">Volunteer assignments</span>
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">Tin allocation tracking</span>
                   </div>
