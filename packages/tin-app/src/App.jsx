@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { App as CapApp } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
 
 // ─── Mock Data ───────────────────────────────────────────────────
 const MOCK_STOPS = [
@@ -18,9 +20,97 @@ const PRESETS = [
   { name: "Orange", color: "#ea580c" },
 ];
 
+// ─── Barcode Scanner Component ───────────────────────────────────
+function BarcodeScanner({ onScan, onClose, brand }) {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      } catch (err) {
+        console.error("Camera error:", err);
+        // Fallback: prompt for manual entry
+        const code = prompt("Camera unavailable. Enter barcode manually:");
+        if (code) onScan(code);
+        else onClose();
+      }
+    }
+    startCamera();
+    return () => {
+      cancelled = true;
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    };
+  }, []);
+
+  function captureAndRead() {
+    // For now, use a simple approach: take photo and let user confirm
+    // In production this would use a barcode detection library
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
+
+      // Try BarcodeDetector API (available on Android Chrome/WebView)
+      if ("BarcodeDetector" in window) {
+        const detector = new BarcodeDetector();
+        detector.detect(canvas).then(barcodes => {
+          if (barcodes.length > 0) {
+            onScan(barcodes[0].rawValue);
+          } else {
+            const code = prompt("No barcode detected. Enter manually:");
+            if (code) onScan(code);
+          }
+        }).catch(() => {
+          const code = prompt("Scan failed. Enter manually:");
+          if (code) onScan(code);
+        });
+      } else {
+        // Fallback for devices without BarcodeDetector
+        const code = prompt("Enter barcode number:");
+        if (code) onScan(code);
+      }
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#000", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover" }} playsInline muted />
+        {/* Scan overlay */}
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "75%", height: 200, border: "3px solid white", borderRadius: 16, boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)" }} />
+        </div>
+        <div style={{ position: "absolute", top: 40, left: 0, right: 0, textAlign: "center", color: "white", fontSize: 18, fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+          Point camera at barcode
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 10, padding: 16, background: "#000", flexShrink: 0 }}>
+        <button onClick={onClose} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "2px solid #666", background: "transparent", color: "white", cursor: "pointer" }}>
+          Cancel
+        </button>
+        <button onClick={captureAndRead} style={{ flex: 1, padding: "18px 0", fontSize: 20, fontWeight: 800, borderRadius: 16, border: "none", background: brand || "#0d9488", color: "white", cursor: "pointer" }}>
+          Capture
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── App ─────────────────────────────────────────────────────────
 export default function TinCollectionsApp() {
-  const [brand, setBrand] = useState(null); // null = show setup
+  const [brand, setBrand] = useState(null);
   const [screen, setScreen] = useState("login");
   const [user, setUser] = useState("");
   const [stops, setStops] = useState(MOCK_STOPS.map(s => ({ ...s })));
@@ -29,6 +119,25 @@ export default function TinCollectionsApp() {
   const [collectTin, setCollectTin] = useState("");
   const [skipReason, setSkipReason] = useState("");
   const [notes, setNotes] = useState("");
+  const [scanning, setScanning] = useState(null); // "collect" | "deploy" | null
+  const screenRef = useRef(screen);
+
+  // Keep ref in sync for back button handler
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+
+  // ─── Android hardware back button handling ──────────────────────
+  useEffect(() => {
+    const listener = CapApp.addListener("backButton", () => {
+      const s = screenRef.current;
+      if (s === "collect") setScreen("home");
+      else if (s === "stops") setScreen("collect");
+      else if (s === "skip") setScreen("collect");
+      else if (s === "done") setScreen("home");
+      else if (s === "home") setScreen("login");
+      else if (s === "login") CapApp.exitApp();
+    });
+    return () => { listener.then(l => l.remove()); };
+  }, []);
 
   const brandDark = brand ? darken(brand, 15) : "#000";
   const brandLight = brand ? lighten(brand, 92) : "#fff";
@@ -55,6 +164,24 @@ export default function TinCollectionsApp() {
     return "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
   }
 
+  // ─── Navigate to address in Google Maps ─────────────────────────
+  async function openNavigation(address) {
+    const encoded = encodeURIComponent(address);
+    // Try native Google Maps intent first, fall back to browser
+    try {
+      await Browser.open({ url: `https://www.google.com/maps/search/?api=1&query=${encoded}` });
+    } catch {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
+    }
+  }
+
+  // ─── Handle barcode scan result ─────────────────────────────────
+  function handleScan(code) {
+    if (scanning === "collect") setCollectTin(code);
+    else if (scanning === "deploy") setDeployTin(code);
+    setScanning(null);
+  }
+
   function completeStop() {
     const next = [...stops];
     next[idx] = { ...next[idx], status: "COMPLETED" };
@@ -73,6 +200,11 @@ export default function TinCollectionsApp() {
     const ni = next.findIndex((s, i) => i > idx && s.status === "PENDING");
     if (ni >= 0) { setIdx(ni); setScreen("collect"); }
     else setScreen("done");
+  }
+
+  // ─── SCANNER OVERLAY ──────────────────────────────────────────
+  if (scanning) {
+    return <BarcodeScanner brand={brand} onScan={handleScan} onClose={() => setScanning(null)} />;
   }
 
   // ─── SETUP SCREEN (first launch) ──────────────────────────────
@@ -140,7 +272,6 @@ export default function TinCollectionsApp() {
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 20, gap: 16 }}>
-          {/* Run card */}
           <div style={{ background: "white", borderRadius: 24, padding: 24, border: `2px solid ${brand}20`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", flex: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 4 }}>Route from SY11 4FN</div>
             <div style={{ fontSize: 16, color: "#888", marginBottom: 16 }}>{stops.length} stops · Thu 2 Apr</div>
@@ -269,8 +400,8 @@ export default function TinCollectionsApp() {
           />
         </div>
 
-        {/* Navigate */}
-        <button onClick={() => alert("Opens Google Maps")} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: brand, color: "white", fontSize: 20, fontWeight: 800, padding: "16px 0", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0 }}>
+        {/* Navigate — opens Google Maps */}
+        <button onClick={() => openNavigation(stop?.address)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: brand, color: "white", fontSize: 20, fontWeight: 800, padding: "16px 0", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0 }}>
           📍 Navigate
         </button>
 
@@ -279,7 +410,7 @@ export default function TinCollectionsApp() {
           <div style={{ fontSize: 13, fontWeight: 800, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Collect Tin</div>
           <div style={{ display: "flex", gap: 6 }}>
             <input value={collectTin} onChange={e => setCollectTin(e.target.value)} placeholder="Scan or enter tin #" style={{ flex: 1, minWidth: 0, padding: "16px 14px", fontSize: 22, fontFamily: "monospace", fontWeight: 700, borderRadius: 16, border: "2px solid #d1d5db", outline: "none", boxSizing: "border-box" }} />
-            <button onClick={() => alert("Camera opens")} style={{ width: 60, background: brand, color: "white", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button onClick={() => setScanning("collect")} style={{ width: 60, background: brand, color: "white", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
           </div>
@@ -290,7 +421,7 @@ export default function TinCollectionsApp() {
           <div style={{ fontSize: 13, fontWeight: 800, color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Leave Tin</div>
           <div style={{ display: "flex", gap: 6 }}>
             <input value={deployTin} onChange={e => setDeployTin(e.target.value)} placeholder="Scan or enter tin #" style={{ flex: 1, minWidth: 0, padding: "16px 14px", fontSize: 22, fontFamily: "monospace", fontWeight: 700, borderRadius: 16, border: "2px solid #d1d5db", outline: "none", boxSizing: "border-box" }} />
-            <button onClick={() => alert("Camera opens")} style={{ width: 60, background: brand, color: "white", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button onClick={() => setScanning("deploy")} style={{ width: 60, background: brand, color: "white", borderRadius: 16, border: "none", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
           </div>
