@@ -145,6 +145,8 @@ model User {
   savedReports           SavedReport[]        @relation("SavedReportCreatedBy")
   donorOpportunitiesCreated DonorOpportunity[] @relation("DonorOpportunitiesCreatedBy")
   donorOpportunitiesAssigned DonorOpportunity[] @relation("DonorOpportunitiesAssignedTo")
+  reconciliationSessions ReconciliationSession[] @relation("ReconciliationSessionsCreated")
+  gasdsClaimsCreated     GasdsClaim[]           @relation("GasdsClaimsCreated")
 }
 
 model Department {
@@ -2300,4 +2302,87 @@ model DonorOpportunity {
   @@index([assignedToId])
   @@index([createdById])
   @@index([campaignId])
+}
+
+// ============================================
+// BANK RECONCILIATION
+// ============================================
+
+model BankTransaction {
+  id                String    @id @default(cuid())
+  date              DateTime
+  description       String
+  reference         String?
+  amount            Float
+  type              String    @default("CREDIT") // CREDIT | DEBIT
+  balance           Float?
+  bankAccount       String?
+  status            String    @default("UNMATCHED") // UNMATCHED | MATCHED | EXCLUDED
+  matchedDonationId String?
+  matchedPaymentId  String?
+  matchConfidence   String? // HIGH | MEDIUM | LOW
+  importBatch       String?
+  createdAt         DateTime  @default(now())
+
+  @@index([status])
+  @@index([date])
+  @@index([importBatch])
+}
+
+model ReconciliationSession {
+  id                String    @id @default(cuid())
+  name              String
+  bankAccount       String?
+  startDate         DateTime?
+  endDate           DateTime?
+  totalTransactions Int       @default(0)
+  matchedCount      Int       @default(0)
+  unmatchedCount    Int       @default(0)
+  excludedCount     Int       @default(0)
+  status            String    @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED | ABANDONED
+  completedAt       DateTime?
+  createdById       String
+  createdBy         User      @relation("ReconciliationSessionsCreated", fields: [createdById], references: [id])
+  createdAt         DateTime  @default(now())
+}
+
+// ============================================
+// GASDS — Gift Aid Small Donations Scheme
+// ============================================
+
+model GasdsClaim {
+  id                  String    @id @default(cuid())
+  taxYear             String
+  claimPeriodStart    DateTime
+  claimPeriodEnd      DateTime
+  totalSmallDonations Float     @default(0)
+  claimAmount         Float     @default(0)
+  status              String    @default("DRAFT") // DRAFT | READY | SUBMITTED | ACCEPTED | REJECTED
+  hmrcReference       String?
+  submittedAt         DateTime?
+  responseAt          DateTime?
+  notes               String?
+  createdById         String
+  createdBy           User      @relation("GasdsClaimsCreated", fields: [createdById], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  entries             GasdsEntry[]
+
+  @@index([taxYear])
+  @@index([status])
+}
+
+model GasdsEntry {
+  id            String    @id @default(cuid())
+  claimId       String
+  claim         GasdsClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  date          DateTime
+  source        String    @default("CASH") // CASH | CONTACTLESS | COLLECTION_TIN
+  description   String?
+  amount        Float
+  donationId    String?
+  tinLocationId String?
+  createdAt     DateTime  @default(now())
+
+  @@index([claimId])
 }
