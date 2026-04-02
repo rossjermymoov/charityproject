@@ -9,7 +9,7 @@ export type ProspectResult = {
   type: string;
   lat: number;
   lng: number;
-  rating?: number;
+
   alreadyExists: boolean;
 };
 
@@ -85,7 +85,6 @@ export async function POST(request: Request) {
       type: mapPlaceType(place.types || []),
       lat: place.geometry?.location?.lat || 0,
       lng: place.geometry?.location?.lng || 0,
-      rating: place.rating,
       alreadyExists: existingNames.has(place.name.trim().toLowerCase()),
     }));
 

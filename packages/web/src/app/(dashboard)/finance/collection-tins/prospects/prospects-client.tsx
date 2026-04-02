@@ -13,7 +13,7 @@ type ProspectResult = {
   type: string;
   lat: number;
   lng: number;
-  rating?: number;
+
   alreadyExists: boolean;
 };
 
@@ -469,7 +469,7 @@ export default function ProspectsClient({
                       <p className="text-sm font-semibold text-gray-900">{r.name}</p>
                       <p className="text-xs text-gray-500 truncate">{r.address}</p>
                     </div>
-                    {r.rating && <span className="text-xs text-yellow-600">★ {r.rating}</span>}
+
                     <Badge className="bg-green-100 text-green-800 text-xs">New</Badge>
                   </label>
                 ))}
