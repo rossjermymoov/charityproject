@@ -28,6 +28,11 @@ model SystemSettings {
   sidebarColour         String   @default("#111827") // Sidebar background colour (hex)
   sidebarTextColour     String   @default("#d1d5db") // Sidebar text colour (hex)
 
+  // ── Collection Tins Mode ──
+  // MY_ROUTES = predefined routes assigned to volunteers (larger charities)
+  // SUGGESTED_ROUTES = AI-suggested ad-hoc routes based on distance & data (smaller charities)
+  collectionMode        String   @default("SUGGESTED_ROUTES") // MY_ROUTES | SUGGESTED_ROUTES
+
   // ── HMRC Gift Aid Integration ──
   hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)
   hmrcGatewayUser       String?  // Government Gateway User ID

@@ -1,33 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, Route, MapPin, Calendar, User, Coins, Sparkles, FolderOpen } from "lucide-react";
+import { Plus, Route, MapPin, Calendar, User, Coins, Sparkles, FolderOpen, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 
-export default async function RoutesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ search?: string }>;
-}) {
-  const params = await searchParams;
-  const search = params.search || "";
-
-  // Get route templates
-  const routes = await prisma.collectionRoute.findMany({
-    where: search ? { name: { contains: search, mode: "insensitive" } } : {},
-    include: {
-      stops: true,
-      assignedTo: { include: { contact: true } },
-      runs: {
-        where: { status: "COMPLETED" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+export default async function RoutesPage() {
+  // Get the collection mode setting
+  const settings = await prisma.systemSettings.findUnique({
+    where: { id: "default" },
+    select: { collectionMode: true },
   });
+  const mode = settings?.collectionMode || "SUGGESTED_ROUTES";
 
   // Get upcoming runs (SCHEDULED or IN_PROGRESS)
   const upcomingRuns = await prisma.collectionRun.findMany({
@@ -37,8 +22,19 @@ export default async function RoutesPage({
     include: {
       route: true,
       assignedTo: { include: { contact: true } },
+      runStops: { select: { status: true } },
     },
     orderBy: { scheduledDate: "asc" },
+  });
+
+  // Get completed run count
+  const completedRunCount = await prisma.collectionRun.count({
+    where: { status: "COMPLETED" },
+  });
+
+  // Get total route count (for stats)
+  const routeCount = await prisma.collectionRoute.count({
+    where: { isActive: true, ...(mode === "MY_ROUTES" ? { source: "MANUAL" } : {}) },
   });
 
   return (
@@ -46,41 +42,50 @@ export default async function RoutesPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Collection Routes</h1>
-          <p className="text-gray-500 mt-1">Manage route templates and schedule collections</p>
+          <p className="text-gray-500 mt-1">
+            {mode === "MY_ROUTES"
+              ? "Manage predefined routes and schedule collections"
+              : "Use AI-suggested routes to optimise your collections"}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/finance/collection-tins/routes/my-routes">
-            <Button variant="outline">
-              <FolderOpen className="h-4 w-4 mr-2" />
-              My Routes
-            </Button>
-          </Link>
+          {mode === "MY_ROUTES" ? (
+            <Link href="/finance/collection-tins/routes/my-routes">
+              <Button variant="outline">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                My Routes
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/finance/collection-tins/routes/suggest">
+              <Button variant="outline">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Suggest Route
+              </Button>
+            </Link>
+          )}
           <Link href="/finance/collection-tins/routes/count">
             <Button variant="outline">
               <Coins className="h-4 w-4 mr-2" />
               Count Tins
             </Button>
           </Link>
-          <Link href="/finance/collection-tins/routes/suggest">
-            <Button variant="outline">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Suggest Route
-            </Button>
-          </Link>
-          <Link href="/finance/collection-tins/routes/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Route
-            </Button>
-          </Link>
+          {mode === "MY_ROUTES" && (
+            <Link href="/finance/collection-tins/routes/new">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Route
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
-          <p className="text-sm text-gray-500">Total Routes</p>
-          <p className="text-2xl font-bold text-gray-900">{routes.length}</p>
+          <p className="text-sm text-gray-500">{mode === "MY_ROUTES" ? "Predefined Routes" : "Total Routes"}</p>
+          <p className="text-2xl font-bold text-gray-900">{routeCount}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-500">Upcoming Runs</p>
@@ -88,75 +93,44 @@ export default async function RoutesPage({
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-500">Completed Runs</p>
-          <p className="text-2xl font-bold text-green-600">
-            {routes.reduce((sum, r) => sum + r.runs.length, 0)}
-          </p>
+          <p className="text-2xl font-bold text-green-600">{completedRunCount}</p>
         </Card>
       </div>
 
-      {/* Search */}
-      <form className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          name="search"
-          defaultValue={search}
-          placeholder="Search routes..."
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </form>
-
-      {/* Your Routes section */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Route className="h-5 w-5" />
-          Your Routes ({routes.length})
-        </h2>
-        {routes.length === 0 ? (
-          <EmptyState
-            icon={Route}
-            title="No routes found"
-            description="Create your first collection route to get started."
-            actionLabel="New Route"
-            actionHref="/finance/collection-tins/routes/new"
-          />
-        ) : (
-          <div className="space-y-3">
-            {routes.map((route) => (
-              <Link key={route.id} href={`/finance/collection-tins/routes/${route.id}`}>
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-gray-900">{route.name}</h3>
-                      </div>
-                      {route.description && (
-                        <p className="text-sm text-gray-500 mt-1">{route.description}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {route.stops.length} stops
-                        </span>
-                        {route.assignedTo && (
-                          <span className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5" />
-                            {route.assignedTo.contact.firstName} {route.assignedTo.contact.lastName}
-                          </span>
-                        )}
-                        {route.runs.length > 0 && (
-                          <span className="text-green-600 font-medium">
-                            {route.runs.length} run{route.runs.length !== 1 ? "s" : ""} completed
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+      {/* Mode indicator */}
+      <Card className="p-4 bg-gray-50 border-dashed">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {mode === "MY_ROUTES" ? (
+              <>
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <Route className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">My Routes Mode</p>
+                  <p className="text-xs text-gray-500">Predefined routes assigned to volunteers</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Suggested Routes Mode</p>
+                  <p className="text-xs text-gray-500">AI-generated routes based on distance and collection data</p>
+                </div>
+              </>
+            )}
           </div>
-        )}
-      </div>
+          <Link href="/settings/collection-tins">
+            <Button variant="ghost" size="sm">
+              <Settings className="h-4 w-4 mr-1" />
+              Change
+            </Button>
+          </Link>
+        </div>
+      </Card>
 
       {/* Upcoming Runs section */}
       <div>
@@ -167,39 +141,64 @@ export default async function RoutesPage({
         {upcomingRuns.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-gray-500">No scheduled or in-progress runs.</p>
+            {mode === "MY_ROUTES" ? (
+              <p className="text-sm text-gray-400 mt-1">Go to My Routes to schedule a run.</p>
+            ) : (
+              <p className="text-sm text-gray-400 mt-1">Use Suggest Route to create a new collection run.</p>
+            )}
           </Card>
         ) : (
           <div className="space-y-3">
-            {upcomingRuns.map((run) => (
-              <Link key={run.id} href={`/finance/collection-tins/routes/run/${run.id}`}>
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-gray-900">{run.route.name}</h3>
-                        <Badge className={run.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}>
-                          {run.status === "IN_PROGRESS" ? "In Progress" : "Scheduled"}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        {run.scheduledDate && (
+            {upcomingRuns.map((run) => {
+              const totalStops = run.runStops.length;
+              const doneStops = run.runStops.filter((rs: { status: string }) => rs.status !== "PENDING").length;
+              const pct = totalStops > 0 ? Math.round((doneStops / totalStops) * 100) : 0;
+              return (
+                <Link key={run.id} href={`/finance/collection-tins/routes/run/${run.id}`}>
+                  <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold text-gray-900">{run.route.name}</h3>
+                          <Badge className={run.status === "IN_PROGRESS" ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}>
+                            {run.status === "IN_PROGRESS" ? "In Progress" : "Scheduled"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                          {run.scheduledDate && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {formatDate(run.scheduledDate)}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {formatDate(run.scheduledDate)}
+                            <MapPin className="h-3.5 w-3.5" />
+                            {totalStops} stops
                           </span>
-                        )}
-                        {run.assignedTo && (
-                          <span className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5" />
-                            {run.assignedTo.contact.firstName} {run.assignedTo.contact.lastName}
-                          </span>
+                          {run.assignedTo && (
+                            <span className="flex items-center gap-1">
+                              <User className="h-3.5 w-3.5" />
+                              {run.assignedTo.contact.firstName} {run.assignedTo.contact.lastName}
+                            </span>
+                          )}
+                        </div>
+                        {doneStops > 0 && (
+                          <div className="mt-3">
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>{doneStops} of {totalStops} completed</span>
+                              <span>{pct}%</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-200 rounded-full">
+                              <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

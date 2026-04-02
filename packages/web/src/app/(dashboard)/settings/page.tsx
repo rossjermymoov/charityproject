@@ -12,6 +12,7 @@ import {
   Palette,
   ChevronRight,
   Target,
+  Coins,
 } from "lucide-react";
 
 export default async function SettingsPage() {
@@ -29,6 +30,12 @@ export default async function SettingsPage() {
       title: "Events Targets",
       description: "Set annual income, cost budget, and profit targets for your events programme",
       href: "/settings/events",
+    },
+    {
+      icon: Coins,
+      title: "Collection Tins",
+      description: "Choose between predefined routes or AI-suggested routes for tin collections",
+      href: "/settings/collection-tins",
     },
     {
       icon: Store,
