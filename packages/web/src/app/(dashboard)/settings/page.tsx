@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,15 @@ import {
   Target,
   Coins,
 } from "lucide-react";
+import HeadOfficeForm from "./head-office-form";
 
 export default async function SettingsPage() {
   const user = await requireAuth();
+
+  const settings = await prisma.systemSettings.findUnique({
+    where: { id: "default" },
+    select: { headOfficeAddress: true, headOfficeLat: true, headOfficeLng: true },
+  });
 
   const settingsLinks = [
     {
@@ -103,6 +110,15 @@ export default async function SettingsPage() {
             <p className="text-gray-900">{user.role}</p>
           </div>
         </div>
+      </Card>
+
+      {/* Head Office */}
+      <Card className="p-6">
+        <HeadOfficeForm
+          currentAddress={settings?.headOfficeAddress || null}
+          lat={settings?.headOfficeLat || null}
+          lng={settings?.headOfficeLng || null}
+        />
       </Card>
 
       {/* Settings sections */}

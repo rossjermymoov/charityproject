@@ -1,22 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Route, Sparkles, Check, Wand2, Plus, Building2, MapPin } from "lucide-react";
+import { ArrowLeft, Route, Sparkles, Check, Wand2, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { updateCollectionMode, updateHeadOffice } from "./actions";
+import { updateCollectionMode } from "./actions";
 
 export default async function CollectionTinsSettingsPage() {
   const settings = await prisma.systemSettings.findUnique({
     where: { id: "default" },
-    select: {
-      collectionMode: true,
-      headOfficeAddress: true,
-      headOfficeLat: true,
-      headOfficeLng: true,
-    },
+    select: { collectionMode: true },
   });
   const mode = settings?.collectionMode || "SUGGESTED_ROUTES";
-  const hasHeadOffice = !!(settings?.headOfficeLat && settings?.headOfficeLng);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -33,50 +27,25 @@ export default async function CollectionTinsSettingsPage() {
         </div>
       </div>
 
-      {/* Head Office Address */}
+      {/* CSV Import */}
       <Card className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-            <Building2 className="h-5 w-5 text-blue-600" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Upload className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Import Locations</h3>
+              <p className="text-sm text-gray-500">Upload a CSV file from your existing system</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">Head Office</h3>
-            <p className="text-sm text-gray-500">Used as the starting point for route generation and ordering</p>
-          </div>
+          <Link href="/settings/collection-tins/import">
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Import CSV
+            </Button>
+          </Link>
         </div>
-        <form action={updateHeadOffice} className="space-y-3">
-          <div>
-            <label htmlFor="headOfficeAddress" className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
-            <input
-              type="text"
-              id="headOfficeAddress"
-              name="headOfficeAddress"
-              defaultValue={settings?.headOfficeAddress || ""}
-              placeholder="e.g. 123 High Street, London, SW1A 1AA"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-          {hasHeadOffice && (
-            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
-              <MapPin className="h-4 w-4" />
-              <span>
-                Geocoded: {settings!.headOfficeLat!.toFixed(4)}, {settings!.headOfficeLng!.toFixed(4)}
-              </span>
-            </div>
-          )}
-          {settings?.headOfficeAddress && !hasHeadOffice && (
-            <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-              <MapPin className="h-4 w-4" />
-              <span>Address saved but could not be geocoded. Try a more specific address.</span>
-            </div>
-          )}
-          <Button type="submit" size="sm">
-            Save Address
-          </Button>
-        </form>
       </Card>
 
       {/* Collection mode */}
