@@ -113,11 +113,10 @@ export default async function CampaignDetailPage({
     redirect("/campaigns");
   }
 
-  const roi = campaign.budgetTarget && campaign.budgetTarget > 0
-    ? ((campaign.actualRaised / campaign.budgetTarget) * 100).toFixed(1)
-    : "—";
-
-  const roiPercentage = campaign.budgetTarget && campaign.budgetTarget > 0
+  const progress = campaign.budgetTarget && campaign.budgetTarget > 0
+    ? Math.min(Math.round((campaign.actualRaised / campaign.budgetTarget) * 100), 100)
+    : 0;
+  const progressRaw = campaign.budgetTarget && campaign.budgetTarget > 0
     ? Math.round((campaign.actualRaised / campaign.budgetTarget) * 100)
     : 0;
 
@@ -178,19 +177,19 @@ export default async function CampaignDetailPage({
               </div>
             </div>
 
-            {/* ROI Progress Bar */}
+            {/* Campaign Progress */}
             {campaign.budgetTarget && campaign.budgetTarget > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-900">ROI Progress</p>
-                  <p className="text-sm font-semibold text-gray-900">{roi}%</p>
+                  <p className="text-sm font-medium text-gray-700">Campaign Progress</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    £{campaign.actualRaised.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} of £{campaign.budgetTarget.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ({progressRaw}%)
+                  </p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{
-                      width: `${Math.min(roiPercentage, 100)}%`,
-                    }}
+                    className={`h-3 rounded-full transition-all ${progress >= 100 ? "bg-green-500" : progress >= 50 ? "bg-blue-500" : "bg-amber-500"}`}
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>

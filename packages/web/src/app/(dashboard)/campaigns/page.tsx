@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { TrendingUp, Plus, Search } from "lucide-react";
+import { TrendingUp, Plus, Search, Target, PoundSterling, Megaphone, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -49,6 +49,14 @@ export default async function CampaignsPage({
     CANCELLED: "bg-red-100 text-red-800",
   };
 
+  // Dashboard stats
+  const totalCampaigns = campaigns.length;
+  const activeCampaigns = campaigns.filter((c) => c.status === "ACTIVE").length;
+  const completedCampaigns = campaigns.filter((c) => c.status === "COMPLETED").length;
+  const totalRaised = campaigns.reduce((sum, c) => sum + c.actualRaised, 0);
+  const totalTarget = campaigns.reduce((sum, c) => sum + (c.budgetTarget || 0), 0);
+  const overallProgress = totalTarget > 0 ? Math.min(Math.round((totalRaised / totalTarget) * 100), 100) : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -63,6 +71,75 @@ export default async function CampaignsPage({
           </Button>
         </Link>
       </div>
+
+      {/* Dashboard summary cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Megaphone className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{totalCampaigns}</p>
+              <p className="text-xs text-gray-500">Total Campaigns</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{activeCampaigns}</p>
+              <p className="text-xs text-gray-500">Active</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{completedCampaigns}</p>
+              <p className="text-xs text-gray-500">Completed</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <PoundSterling className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{totalRaised > 0 ? `£${totalRaised.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "£0"}</p>
+              <p className="text-xs text-gray-500">Total Raised</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Overall progress */}
+      {totalTarget > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-gray-400" />
+              <p className="text-sm font-medium text-gray-700">Overall Campaign Progress</p>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              £{totalRaised.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} of £{totalTarget.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ({overallProgress}%)
+            </p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className={`h-3 rounded-full transition-all ${overallProgress >= 100 ? "bg-green-500" : overallProgress >= 50 ? "bg-blue-500" : "bg-amber-500"}`}
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+        </Card>
+      )}
 
       {/* Search and filters */}
       <Card className="p-4">
@@ -134,13 +211,7 @@ export default async function CampaignsPage({
                     Dates
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Budget Target
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Raised
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROI
+                    Progress
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -149,9 +220,10 @@ export default async function CampaignsPage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {campaigns.map((campaign) => {
-                  const roi = campaign.budgetTarget && campaign.budgetTarget > 0
-                    ? ((campaign.actualRaised / campaign.budgetTarget) * 100).toFixed(1)
-                    : "—";
+                  const progress = campaign.budgetTarget && campaign.budgetTarget > 0
+                    ? Math.min(Math.round((campaign.actualRaised / campaign.budgetTarget) * 100), 100)
+                    : 0;
+                  const hasTarget = campaign.budgetTarget && campaign.budgetTarget > 0;
 
                   return (
                     <tr key={campaign.id} className="hover:bg-gray-50 transition-colors">
@@ -173,14 +245,28 @@ export default async function CampaignsPage({
                           ? formatDate(campaign.startDate)
                           : "—"}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {campaign.budgetTarget ? `£${campaign.budgetTarget.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        £{campaign.actualRaised.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {roi}%
+                      <td className="px-6 py-4">
+                        {hasTarget ? (
+                          <div className="min-w-[140px]">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-gray-700">
+                                £{campaign.actualRaised.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {progress}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full ${progress >= 100 ? "bg-green-500" : progress >= 50 ? "bg-blue-500" : "bg-amber-500"}`}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">of £{campaign.budgetTarget!.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">No target set</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <Badge className={statusColors[campaign.status] || ""}>
