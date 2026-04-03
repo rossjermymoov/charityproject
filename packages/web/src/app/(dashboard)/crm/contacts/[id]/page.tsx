@@ -1160,14 +1160,46 @@ export default async function ContactDetailPage({
         contactId={id}
         relationships={[
           ...contact.relationshipsFrom.map((rel) => ({
-            ...rel,
-            fromContact: contact,
-            toContact: rel.toContact,
+            id: rel.id,
+            fromContactId: rel.fromContactId,
+            toContactId: rel.toContactId,
+            type: rel.type,
+            description: rel.description,
+            fromContact: {
+              id: contact.id,
+              firstName: contact.firstName,
+              lastName: contact.lastName,
+              email: contact.email,
+              phone: contact.phone,
+            },
+            toContact: {
+              id: rel.toContact.id,
+              firstName: rel.toContact.firstName,
+              lastName: rel.toContact.lastName,
+              email: rel.toContact.email,
+              phone: rel.toContact.phone,
+            },
           })),
           ...contact.relationshipsTo.map((rel) => ({
-            ...rel,
-            fromContact: rel.fromContact,
-            toContact: contact,
+            id: rel.id,
+            fromContactId: rel.fromContactId,
+            toContactId: rel.toContactId,
+            type: rel.type,
+            description: rel.description,
+            fromContact: {
+              id: rel.fromContact.id,
+              firstName: rel.fromContact.firstName,
+              lastName: rel.fromContact.lastName,
+              email: rel.fromContact.email,
+              phone: rel.fromContact.phone,
+            },
+            toContact: {
+              id: contact.id,
+              firstName: contact.firstName,
+              lastName: contact.lastName,
+              email: contact.email,
+              phone: contact.phone,
+            },
           })),
         ]}
         onAddRelationship={() => {
