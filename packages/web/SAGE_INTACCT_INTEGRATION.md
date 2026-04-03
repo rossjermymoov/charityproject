@@ -1,6 +1,6 @@
 # Sage Intacct Integration
 
-This document describes the Sage Intacct integration for the CharityOS CRM application, which enables syncing of donations and financial data to Sage Intacct cloud accounting.
+This document describes the Sage Intacct integration for the DeepCharity CRM application, which enables syncing of donations and financial data to Sage Intacct cloud accounting.
 
 ## Overview
 
@@ -185,7 +185,7 @@ The following items require completion for production use:
 ```typescript
 // In `/lib/sage-intacct.ts` - `syncContact()`
 // TODO:
-// 1. Fetch contact details from CharityOS
+// 1. Fetch contact details from DeepCharity
 // 2. Create customer record in Sage (for donors)
 // 3. Create vendor record in Sage (for suppliers)
 // 4. Map contact fields to Sage format
@@ -387,7 +387,7 @@ The integration uses Sage Intacct's XML-RPC API. Key operations:
 2. **Webhook Support**: Receive notifications from Sage when GL entries are updated
 3. **Reconciliation**: Auto-match Sage GL entries with bank transactions
 4. **Multi-Currency**: Support multiple currencies in journal entries
-5. **Custom Fields**: Map CharityOS custom fields to Sage custom dimensions
+5. **Custom Fields**: Map DeepCharity custom fields to Sage custom dimensions
 6. **Scheduled Sync**: Run sync on a schedule (hourly, daily, weekly)
 7. **Vendor Integration**: Sync suppliers and expenses to Sage
 8. **Cost Allocation**: Allocate indirect costs across funds/campaigns

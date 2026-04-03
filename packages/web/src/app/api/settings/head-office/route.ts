@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
-      { headers: { "User-Agent": "CharityOS/1.0" } }
+      { headers: { "User-Agent": "DeepCharity/1.0" } }
     );
     const data = await res.json();
     if (data.length > 0) {

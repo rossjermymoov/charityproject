@@ -5,7 +5,7 @@ import type { SessionUser } from "./auth";
 
 // Simple cookie-based session for MVP
 // In production, replace with NextAuth.js or similar
-const SESSION_COOKIE = "charity-os-session";
+const SESSION_COOKIE = "deep-charity-session";
 
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();

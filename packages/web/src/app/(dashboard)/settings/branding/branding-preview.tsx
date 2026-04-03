@@ -64,7 +64,7 @@ export function BrandingPreview({
     const form = document.querySelector("form");
     const input = form?.querySelector('[name="orgName"]') as HTMLInputElement;
     if (!input) return;
-    const onChange = () => setOrgName(input.value || "CharityOS");
+    const onChange = () => setOrgName(input.value || "DeepCharity");
     input.addEventListener("input", onChange);
     return () => input.removeEventListener("input", onChange);
   }, []);

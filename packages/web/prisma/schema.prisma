@@ -22,7 +22,7 @@ model SystemSettings {
   eventsProfitTarget Float?  // Annual profit target
 
   // ── White-label branding ──
-  orgName               String?  // Display name (replaces "CharityOS" in sidebar)
+  orgName               String?  // Display name (replaces "DeepCharity" in sidebar)
   logoUrl               String?  // URL or /uploads/logo.png path for the logo
   primaryColour         String   @default("#4f46e5") // Brand colour (hex) — buttons, links, accents
   sidebarColour         String   @default("#111827") // Sidebar background colour (hex)
@@ -1437,7 +1437,7 @@ model Dpia {
   id                String    @id @default(cuid())
   title             String
   description       String
-  projectOrSystem   String    // which system/project this covers (e.g. "CharityOS CRM")
+  projectOrSystem   String    // which system/project this covers (e.g. "DeepCharity CRM")
   dataController    String    // org name
   dpoName           String?   // DPO who will sign off
   dpoEmail          String?

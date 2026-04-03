@@ -402,7 +402,7 @@ export function RouteInfographic({ stats }: { stats: RouteStats }) {
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 text-xs text-gray-400 flex items-center justify-between">
-          <span>CharityOS Route Report · Generated {new Date().toLocaleDateString("en-GB")}</span>
+          <span>DeepCharity Route Report · Generated {new Date().toLocaleDateString("en-GB")}</span>
           <span>
             {stats.totalTinsCounted} tins · £{stats.totalCollected.toFixed(2)} ·{" "}
             {completionRate}% completion

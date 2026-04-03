@@ -73,7 +73,7 @@ export default async function JustGivingPage() {
         <Card className="p-5">
           <Heart className="h-6 w-6 text-indigo-600 mb-2" />
           <h4 className="font-semibold text-gray-900 text-sm">Donation Import</h4>
-          <p className="text-xs text-gray-500 mt-1">Automatically import donations and match them to donor records in CharityOS</p>
+          <p className="text-xs text-gray-500 mt-1">Automatically import donations and match them to donor records in DeepCharity</p>
         </Card>
         <Card className="p-5">
           <Link2 className="h-6 w-6 text-indigo-600 mb-2" />

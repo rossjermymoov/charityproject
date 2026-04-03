@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Tin Collections",
-  description: "CharityOS Tin Collections",
+  description: "DeepCharity Tin Collections",
 };
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {

@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CharityOS Tin Collections",
+    name: "DeepCharity Tin Collections",
     short_name: "Tin Collections",
-    description: "Tin collection management for CharityOS",
+    description: "Tin collection management for DeepCharity",
     start_url: "/mobile",
     display: "standalone",
     background_color: "#ffffff",

@@ -53,7 +53,7 @@ async function geocode(address: string): Promise<{ lat: number; lng: number } | 
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=gb`,
-      { headers: { "User-Agent": "CharityOS/1.0" } }
+      { headers: { "User-Agent": "DeepCharity/1.0" } }
     );
     const data = await res.json();
     if (data.length > 0) {

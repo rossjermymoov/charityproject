@@ -13,12 +13,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "CharityOS",
+  title: "DeepCharity",
   description: "Modular operating system for charities",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "CharityOS",
+    title: "DeepCharity",
   },
 };
 

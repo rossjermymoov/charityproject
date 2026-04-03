@@ -70,12 +70,12 @@ export async function testEmailProvider(
   try {
     const success = await sendViaProvider(provider, {
       to: provider.fromEmail,
-      subject: "CharityOS — Email Provider Test",
+      subject: "DeepCharity — Email Provider Test",
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #111827;">Email Test Successful</h2>
           <p style="color: #374151;">
-            This confirms your <strong>${provider.provider}</strong> email provider is working correctly in CharityOS.
+            This confirms your <strong>${provider.provider}</strong> email provider is working correctly in DeepCharity.
           </p>
           <p style="color: #6B7280; font-size: 14px;">
             Sent at ${new Date().toISOString()}
@@ -183,7 +183,7 @@ async function sendViaSendGridEnv(options: EmailOptions): Promise<boolean> {
     {
       apiKey,
       fromEmail: process.env.EMAIL_FROM || "noreply@charity.org",
-      fromName: process.env.EMAIL_FROM_NAME || "CharityOS",
+      fromName: process.env.EMAIL_FROM_NAME || "DeepCharity",
     },
     options
   );

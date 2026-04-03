@@ -115,7 +115,7 @@ export default async function MailchimpPage() {
               <div>
                 <h3 className="font-semibold text-gray-900">Connect Mailchimp Audiences</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Enter your Mailchimp API key to sync contacts, manage audiences, and track campaign engagement directly from CharityOS.
+                  Enter your Mailchimp API key to sync contacts, manage audiences, and track campaign engagement directly from DeepCharity.
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export default async function MailchimpPage() {
           <Card className="p-5">
             <Users className="h-6 w-6 text-indigo-600 mb-2" />
             <h4 className="font-semibold text-gray-900 text-sm">Audience Sync</h4>
-            <p className="text-xs text-gray-500 mt-1">Automatically sync CharityOS contacts to Mailchimp audiences with tags and segments</p>
+            <p className="text-xs text-gray-500 mt-1">Automatically sync DeepCharity contacts to Mailchimp audiences with tags and segments</p>
           </Card>
           <Card className="p-5">
             <RefreshCw className="h-6 w-6 text-indigo-600 mb-2" />

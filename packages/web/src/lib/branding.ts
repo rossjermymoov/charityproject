@@ -9,7 +9,7 @@ export interface Branding {
 }
 
 const DEFAULTS: Branding = {
-  orgName: "CharityOS",
+  orgName: "DeepCharity",
   logoUrl: null,
   primaryColour: "#4f46e5",
   sidebarColour: "#111827",

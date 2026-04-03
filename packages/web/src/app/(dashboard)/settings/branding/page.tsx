@@ -96,7 +96,7 @@ export default async function BrandingPage() {
               />
             </div>
             <p className="text-xs text-gray-500">
-              The organisation name replaces &quot;CharityOS&quot; in the sidebar. The logo appears next to it.
+              The organisation name replaces &quot;DeepCharity&quot; in the sidebar. The logo appears next to it.
               Upload your logo to your hosting and paste the URL, or use a relative path.
             </p>
           </CardContent>
@@ -186,7 +186,7 @@ export default async function BrandingPage() {
               defaultPrimary={settings.primaryColour}
               defaultSidebar={settings.sidebarColour}
               defaultSidebarText={settings.sidebarTextColour}
-              defaultOrgName={settings.orgName || "CharityOS"}
+              defaultOrgName={settings.orgName || "DeepCharity"}
             />
           </CardContent>
         </Card>

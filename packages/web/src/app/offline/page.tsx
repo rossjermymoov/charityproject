@@ -7,7 +7,7 @@ export default function OfflinePage() {
         <div className="text-6xl mb-4">📡</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">You're Offline</h1>
         <p className="text-gray-600 mb-6">
-          CharityOS needs an internet connection for most features.
+          DeepCharity needs an internet connection for most features.
           Please check your connection and try again.
         </p>
         <button

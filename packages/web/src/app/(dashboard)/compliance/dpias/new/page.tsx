@@ -75,7 +75,7 @@ export default async function NewDpiaPage() {
             <Input
               label="Project/System Name"
               name="projectOrSystem"
-              placeholder="e.g., CharityOS CRM, Volunteer Portal"
+              placeholder="e.g., DeepCharity CRM, Volunteer Portal"
               required
             />
             <Input
