@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,8 @@ interface GasdsClaim {
   createdAt: string;
 }
 
-export default function GasdsDetailPage({ params }: { params: { id: string } }) {
+export default function GasdsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [claim, setClaim] = useState<GasdsClaim | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     const fetchClaim = async () => {
       try {
-        const res = await fetch(`/api/gasds/claims/${params.id}`);
+        const res = await fetch(`/api/gasds/claims/${id}`);
 
         if (!res.ok) {
           throw new Error("Failed to fetch claim");
@@ -67,7 +68,7 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
     };
 
     fetchClaim();
-  }, [params.id]);
+  }, [id]);
 
   const handleDelete = async () => {
     if (!claim) return;
@@ -80,7 +81,7 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
     setError(null);
 
     try {
-      const res = await fetch(`/api/gasds/claims/${params.id}`, {
+      const res = await fetch(`/api/gasds/claims/${id}`, {
         method: "DELETE",
       });
 
@@ -108,7 +109,7 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
     setError(null);
 
     try {
-      const res = await fetch(`/api/gasds/claims/${params.id}`, {
+      const res = await fetch(`/api/gasds/claims/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

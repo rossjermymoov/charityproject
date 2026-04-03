@@ -33,3 +33,19 @@ export function CardFooter({ children, className }: CardProps) {
     </div>
   );
 }
+
+export function CardTitle({ children, className }: CardProps) {
+  return (
+    <h3 className={cn("text-lg font-semibold leading-none tracking-tight", className)}>
+      {children}
+    </h3>
+  );
+}
+
+export function CardDescription({ children, className }: CardProps) {
+  return (
+    <p className={cn("text-sm text-gray-500", className)}>
+      {children}
+    </p>
+  );
+}

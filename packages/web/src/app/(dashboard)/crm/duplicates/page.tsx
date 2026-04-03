@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import {
   AlertCircle,
-  Merge2,
+  Merge,
   RefreshCw,
   ChevronDown,
   ChevronUp,
