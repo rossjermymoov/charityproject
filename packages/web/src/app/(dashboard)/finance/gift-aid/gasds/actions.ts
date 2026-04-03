@@ -132,9 +132,10 @@ export async function getEligibleCashDonations(taxYear: string) {
         gt: 0,
         lte: 30,
       },
-      method: {
-        in: ["CASH", "ONLINE", null],
-      },
+      OR: [
+        { method: { in: ["CASH", "ONLINE"] } },
+        { method: null },
+      ],
       isGiftAidable: true,
       giftAidClaimed: false,
       // Exclude donations already in GASDS entries
