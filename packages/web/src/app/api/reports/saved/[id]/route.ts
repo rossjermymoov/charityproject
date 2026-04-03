@@ -4,16 +4,17 @@ import { getSession } from "@/lib/session";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const report = await prisma.savedReport.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -54,9 +55,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +66,7 @@ export async function PUT(
 
     // Check ownership
     const existingReport = await prisma.savedReport.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { createdById: true },
     });
 
@@ -90,7 +92,7 @@ export async function PUT(
     } = body;
 
     const report = await prisma.savedReport.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
@@ -123,9 +125,10 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -133,7 +136,7 @@ export async function DELETE(
 
     // Check ownership
     const existingReport = await prisma.savedReport.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { createdById: true },
     });
 
@@ -146,7 +149,7 @@ export async function DELETE(
     }
 
     await prisma.savedReport.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

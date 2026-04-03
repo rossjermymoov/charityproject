@@ -8,14 +8,15 @@ import { verifyApiToken, unauthorizedResponse } from "@/lib/api-auth";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await verifyApiToken(request);
     if (!auth) return unauthorizedResponse();
 
     const claim = await prisma.gasdsClaim.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
         entries: {
@@ -41,9 +42,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await verifyApiToken(request);
     if (!auth) return unauthorizedResponse();
 
@@ -52,7 +54,7 @@ export async function PUT(
 
     // Verify claim exists
     const existingClaim = await prisma.gasdsClaim.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingClaim) {
@@ -75,7 +77,7 @@ export async function PUT(
     if (responseAt !== undefined) updateData.responseAt = responseAt ? new Date(responseAt) : null;
 
     const updated = await prisma.gasdsClaim.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         createdBy: { select: { id: true, name: true, email: true } },
@@ -96,14 +98,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await verifyApiToken(request);
     if (!auth) return unauthorizedResponse();
 
     const claim = await prisma.gasdsClaim.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!claim) {
@@ -118,7 +121,7 @@ export async function DELETE(
     }
 
     await prisma.gasdsClaim.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

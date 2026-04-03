@@ -8,9 +8,10 @@ import { verifyApiToken, unauthorizedResponse } from "@/lib/api-auth";
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await verifyApiToken(request);
     if (!auth) return unauthorizedResponse();
 
@@ -19,7 +20,7 @@ export async function PUT(
 
     // Verify entry exists
     const entry = await prisma.gasdsEntry.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!entry) {
@@ -54,7 +55,7 @@ export async function PUT(
     if (description !== undefined) updateData.description = description;
 
     const updated = await prisma.gasdsEntry.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -87,15 +88,16 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await verifyApiToken(request);
     if (!auth) return unauthorizedResponse();
 
     // Verify entry exists
     const entry = await prisma.gasdsEntry.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!entry) {
@@ -118,7 +120,7 @@ export async function DELETE(
 
     // Delete entry
     await prisma.gasdsEntry.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     // Recalculate claim totals
