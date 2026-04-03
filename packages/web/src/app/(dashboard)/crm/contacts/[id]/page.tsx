@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, CheckCircle, XCircle, Edit3, Trash2, Archive, ArchiveX, Ticket } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -17,6 +17,8 @@ import { logAudit } from "@/lib/audit";
 import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
 import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
+import { ContactTabs } from "./contact-tabs";
+
 export default async function ContactDetailPage({
   params,
 }: {
@@ -65,6 +67,8 @@ export default async function ContactDetailPage({
     select: { id: true, name: true },
     take: 50,
   });
+
+  // ── Server Actions ──────────────────────────────────────────
 
   async function addFundraisingPage(formData: FormData) {
     "use server";
@@ -149,7 +153,6 @@ export default async function ContactDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
-    // Read current consent values before updating
     const currentContact = await prisma.contact.findUnique({
       where: { id },
       select: {
@@ -164,7 +167,6 @@ export default async function ContactDetailPage({
       redirect(`/crm/contacts/${id}`);
     }
 
-    // Parse new consent values from form
     const newConsent = {
       consentPost: formData.get("consentPost") === "on",
       consentEmail: formData.get("consentEmail") === "on",
@@ -172,7 +174,6 @@ export default async function ContactDetailPage({
       consentSms: formData.get("consentSms") === "on",
     };
 
-    // Create ConsentRecords for each changed consent type
     const consentChanges = [
       { type: "POST", old: currentContact.consentPost, new: newConsent.consentPost },
       { type: "EMAIL", old: currentContact.consentEmail, new: newConsent.consentEmail },
@@ -180,7 +181,6 @@ export default async function ContactDetailPage({
       { type: "SMS", old: currentContact.consentSms, new: newConsent.consentSms },
     ];
 
-    // Create audit records for each change
     for (const change of consentChanges) {
       if (change.old !== change.new) {
         await prisma.consentRecord.create({
@@ -197,7 +197,6 @@ export default async function ContactDetailPage({
       }
     }
 
-    // Update the contact
     await prisma.contact.update({
       where: { id },
       data: {
@@ -218,7 +217,6 @@ export default async function ContactDetailPage({
     const session = await getSession();
     if (!session) redirect("/login");
 
-    // Check if profile already exists
     const existing = await prisma.volunteerProfile.findUnique({
       where: { contactId: id },
     });
@@ -275,7 +273,6 @@ export default async function ContactDetailPage({
     const selectedTypes = formData.getAll("types") as string[];
     const isLotteryMember = formData.get("isLotteryMember") === "on";
 
-    // Check if lottery membership is being enabled for the first time
     const currentContact = await prisma.contact.findUnique({
       where: { id },
       select: { isLotteryMember: true },
@@ -302,7 +299,6 @@ export default async function ContactDetailPage({
     });
     await logAudit({ userId: session.id, action: "UPDATE", entityType: "Contact", entityId: id, details: { firstName: formData.get("firstName"), lastName: formData.get("lastName"), types: selectedTypes } });
 
-    // Auto-create volunteer profile if newly tagged as VOLUNTEER
     if (selectedTypes.includes("VOLUNTEER")) {
       const existing = await prisma.volunteerProfile.findUnique({
         where: { contactId: id },
@@ -359,6 +355,8 @@ export default async function ContactDetailPage({
     redirect(`/crm/contacts/${id}`);
   }
 
+  // ── Computed values ─────────────────────────────────────────
+
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
     VOLUNTEER: "bg-indigo-100 text-indigo-800",
@@ -391,122 +389,10 @@ export default async function ContactDetailPage({
     })),
   ];
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/crm/contacts" className="text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Contact Details</h1>
-      </div>
+  // ── JSX ─────────────────────────────────────────────────────
 
-      {/* Profile Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {contact.firstName} {contact.lastName}
-                    </h2>
-                    {contact.types.map((t) => (
-                      <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>{t}</Badge>
-                    ))}
-                    {contact.isLotteryMember && (
-                      <Badge className="bg-amber-100 text-amber-800">
-                        <Ticket className="h-3 w-3 mr-1" />Lottery Member
-                      </Badge>
-                    )}
-                    {contact.giftAids.some((ga) => ga.type === "STANDARD" && ga.status === "ACTIVE") && (
-                      <GiftAidShield type="S" size="md" />
-                    )}
-                    {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
-                      <GiftAidShield type="R" size="md" />
-                    )}
-                    {contact.isArchived && (
-                      <Badge className="bg-red-100 text-red-800">Archived</Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    {contact.volunteerProfile ? (
-                      <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
-                        <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
-                          View Volunteer Profile →
-                        </Badge>
-                      </Link>
-                    ) : contact.types.includes("VOLUNTEER") ? (
-                      <form action={createVolunteerProfile}>
-                        <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
-                          <Plus className="h-3 w-3" /> Create Volunteer Profile
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <form action={toggleArchive}>
-                    <Button type="submit" variant="outline" size="sm" className="gap-2">
-                      {contact.isArchived ? (
-                        <>
-                          <ArchiveX className="h-4 w-4" /> Unarchive
-                        </>
-                      ) : (
-                        <>
-                          <Archive className="h-4 w-4" /> Archive
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                  <form action={deleteContact}>
-                    <ConfirmButton message="Are you sure you want to delete this contact? This action cannot be undone." variant="destructive" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4" /> Delete
-                    </ConfirmButton>
-                  </form>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                {contact.email && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4" /> {contact.email}
-                  </div>
-                )}
-                {contact.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4" /> {contact.phone}
-                  </div>
-                )}
-                {contact.addressLine1 && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    {[contact.addressLine1, contact.city, contact.postcode].filter(Boolean).join(", ")}
-                  </div>
-                )}
-                {contact.organisation && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Building2 className="h-4 w-4" /> {contact.organisation.name}
-                  </div>
-                )}
-                {contact.dateOfBirth && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    🎂 Born: {contact.dateOfBirth}
-                  </div>
-                )}
-              </div>
-              {contact.tags.length > 0 && (
-                <div className="flex gap-1 mt-3 flex-wrap">
-                  {contact.tags.map((ct) => (
-                    <Badge key={ct.tagId} variant="outline">{ct.tag.name}</Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+  const overviewContent = (
+    <div className="space-y-6">
       {/* Edit Contact Form */}
       <Card>
         <CardHeader>
@@ -544,32 +430,15 @@ export default async function ContactDetailPage({
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact Type(s)</label>
                 <div className="flex gap-4 mt-2">
                   <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      name="types"
-                      value="VOLUNTEER"
-                      defaultChecked={contact.types.includes("VOLUNTEER")}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
+                    <input type="checkbox" name="types" value="VOLUNTEER" defaultChecked={contact.types.includes("VOLUNTEER")} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                     Volunteer
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      name="types"
-                      value="DONOR"
-                      defaultChecked={contact.types.includes("DONOR")}
-                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                    />
+                    <input type="checkbox" name="types" value="DONOR" defaultChecked={contact.types.includes("DONOR")} className="rounded border-gray-300 text-green-600 focus:ring-green-500" />
                     Donor
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      name="isLotteryMember"
-                      defaultChecked={contact.isLotteryMember}
-                      className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                    />
+                    <input type="checkbox" name="isLotteryMember" defaultChecked={contact.isLotteryMember} className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" />
                     Lottery Member
                   </label>
                 </div>
@@ -628,39 +497,19 @@ export default async function ContactDetailPage({
             <form action={updateConsent} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="consentPost"
-                    defaultChecked={contact.consentPost}
-                    className="rounded border-gray-300"
-                  />
+                  <input type="checkbox" name="consentPost" defaultChecked={contact.consentPost} className="rounded border-gray-300" />
                   Post
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="consentEmail"
-                    defaultChecked={contact.consentEmail}
-                    className="rounded border-gray-300"
-                  />
+                  <input type="checkbox" name="consentEmail" defaultChecked={contact.consentEmail} className="rounded border-gray-300" />
                   Email
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="consentPhone"
-                    defaultChecked={contact.consentPhone}
-                    className="rounded border-gray-300"
-                  />
+                  <input type="checkbox" name="consentPhone" defaultChecked={contact.consentPhone} className="rounded border-gray-300" />
                   Phone
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="consentSms"
-                    defaultChecked={contact.consentSms}
-                    className="rounded border-gray-300"
-                  />
+                  <input type="checkbox" name="consentSms" defaultChecked={contact.consentSms} className="rounded border-gray-300" />
                   SMS
                 </label>
               </div>
@@ -688,11 +537,7 @@ export default async function ContactDetailPage({
                   placeholder="Select contact..."
                   options={allContacts.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
                 />
-                <select
-                  name="relType"
-                  required
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
+                <select name="relType" required className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
                   <option value="">Relationship type...</option>
                   <option value="SPOUSE">Spouse</option>
                   <option value="PARENT">Parent</option>
@@ -717,10 +562,7 @@ export default async function ContactDetailPage({
                   <div key={rel.id} className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-gray-400" />
-                      <Link
-                        href={`/crm/contacts/${rel.contact.id}`}
-                        className="text-sm font-medium text-indigo-600 hover:underline"
-                      >
+                      <Link href={`/crm/contacts/${rel.contact.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
                         {rel.contact.firstName} {rel.contact.lastName}
                       </Link>
                       <Badge variant="outline">{rel.type}</Badge>
@@ -747,19 +589,13 @@ export default async function ContactDetailPage({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Recent Donations</h3>
-                  <Link href="/finance/donations" className="text-sm text-indigo-600 hover:underline">
-                    View All
-                  </Link>
+                  <Link href="/finance/donations" className="text-sm text-indigo-600 hover:underline">View All</Link>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {contact.donations.map((d) => (
-                    <Link
-                      key={d.id}
-                      href={`/finance/donations/${d.id}`}
-                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
-                    >
+                    <Link key={d.id} href={`/finance/donations/${d.id}`} className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{d.type}</p>
                         <p className="text-xs text-gray-500">
@@ -767,9 +603,7 @@ export default async function ContactDetailPage({
                           {d.campaign && <span className="text-indigo-600"> &middot; {d.campaign.name}</span>}
                         </p>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">
-                        £{d.amount.toFixed(2)}
-                      </span>
+                      <span className="text-sm font-semibold text-gray-900">£{d.amount.toFixed(2)}</span>
                     </Link>
                   ))}
                 </div>
@@ -781,19 +615,13 @@ export default async function ContactDetailPage({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Gift Aid Declarations</h3>
-                  <Link href="/finance/gift-aid" className="text-sm text-indigo-600 hover:underline">
-                    View All
-                  </Link>
+                  <Link href="/finance/gift-aid" className="text-sm text-indigo-600 hover:underline">View All</Link>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {contact.giftAids.map((ga) => (
-                    <Link
-                      key={ga.id}
-                      href={`/finance/gift-aid/${ga.id}`}
-                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
-                    >
+                    <Link key={ga.id} href={`/finance/gift-aid/${ga.id}`} className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
                           {formatDate(ga.startDate)} — {ga.endDate ? formatDate(ga.endDate) : "Ongoing"}
@@ -822,7 +650,6 @@ export default async function ContactDetailPage({
       {/* Event Registrations & Orders */}
       {(contact.eventAttendees.length > 0 || contact.eventOrders.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Event Registrations */}
           {contact.eventAttendees.length > 0 && (
             <Card>
               <CardHeader>
@@ -831,11 +658,7 @@ export default async function ContactDetailPage({
               <CardContent>
                 <div className="space-y-2">
                   {contact.eventAttendees.map((ea) => (
-                    <Link
-                      key={ea.id}
-                      href={`/events/${ea.event.id}`}
-                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2"
-                    >
+                    <Link key={ea.id} href={`/events/${ea.event.id}`} className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{ea.event.name}</p>
                         <p className="text-xs text-gray-500">
@@ -856,7 +679,6 @@ export default async function ContactDetailPage({
             </Card>
           )}
 
-          {/* Order History */}
           {contact.eventOrders.length > 0 && (
             <Card>
               <CardHeader>
@@ -865,10 +687,7 @@ export default async function ContactDetailPage({
               <CardContent>
                 <div className="space-y-3">
                   {contact.eventOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="p-3 bg-gray-50 rounded-lg"
-                    >
+                    <div key={order.id} className="p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-gray-900">{order.event.name}</p>
@@ -906,7 +725,7 @@ export default async function ContactDetailPage({
         </div>
       )}
 
-      {/* Fundraising Pages (JustGiving etc.) */}
+      {/* Fundraising Pages */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -917,33 +736,18 @@ export default async function ContactDetailPage({
           </div>
         </CardHeader>
         <CardContent>
-          {/* Existing fundraising pages */}
           {contact.fundraisingPages.length > 0 ? (
             <div className="space-y-4 mb-6">
               {contact.fundraisingPages.map((fp) => (
-                <div
-                  key={fp.id}
-                  className="border border-purple-200 bg-purple-50 rounded-lg p-4"
-                >
+                <div key={fp.id} className="border border-purple-200 bg-purple-50 rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <a
-                          href={fp.pageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-semibold text-purple-700 hover:underline"
-                        >
+                        <a href={fp.pageUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-purple-700 hover:underline">
                           {fp.title || fp.pageSlug}
                         </a>
-                        <Badge className="bg-purple-100 text-purple-800 text-xs">
-                          {fp.platform}
-                        </Badge>
-                        {fp.isActive && (
-                          <Badge className="bg-green-100 text-green-800 text-xs">
-                            Active
-                          </Badge>
-                        )}
+                        <Badge className="bg-purple-100 text-purple-800 text-xs">{fp.platform}</Badge>
+                        {fp.isActive && <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>}
                       </div>
                       {fp.event && (
                         <p className="text-xs text-gray-500 mt-1">
@@ -952,56 +756,37 @@ export default async function ContactDetailPage({
                       )}
                       <div className="flex items-center gap-4 mt-2">
                         <div>
-                          <p className="text-xl font-bold text-purple-700">
-                            £{fp.totalRaised.toFixed(2)}
-                          </p>
+                          <p className="text-xl font-bold text-purple-700">£{fp.totalRaised.toFixed(2)}</p>
                           <p className="text-xs text-gray-500">raised</p>
                         </div>
                         {fp.targetAmount && fp.targetAmount > 0 && (
                           <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              of £{fp.targetAmount.toFixed(2)}
-                            </p>
+                            <p className="text-sm font-medium text-gray-700">of £{fp.targetAmount.toFixed(2)}</p>
                             <div className="w-32 h-2 bg-gray-200 rounded-full mt-1">
-                              <div
-                                className="h-2 bg-purple-600 rounded-full"
-                                style={{
-                                  width: `${Math.min(100, (fp.totalRaised / fp.targetAmount) * 100)}%`,
-                                }}
-                              />
+                              <div className="h-2 bg-purple-600 rounded-full" style={{ width: `${Math.min(100, (fp.totalRaised / fp.targetAmount) * 100)}%` }} />
                             </div>
                           </div>
                         )}
                         {fp.giftAidTotal > 0 && (
                           <div>
-                            <p className="text-sm font-medium text-amber-700">
-                              +£{fp.giftAidTotal.toFixed(2)}
-                            </p>
+                            <p className="text-sm font-medium text-amber-700">+£{fp.giftAidTotal.toFixed(2)}</p>
                             <p className="text-xs text-gray-500">gift aid</p>
                           </div>
                         )}
                       </div>
                       {fp.lastSyncAt && (
-                        <p className="text-xs text-gray-400 mt-2">
-                          Last synced: {formatDate(fp.lastSyncAt)}
-                        </p>
+                        <p className="text-xs text-gray-400 mt-2">Last synced: {formatDate(fp.lastSyncAt)}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2 items-end">
                       <JustGivingSyncButton fundraisingPageId={fp.id} />
                       <form action={removeFundraisingPage}>
                         <input type="hidden" name="pageId" value={fp.id} />
-                        <button
-                          type="submit"
-                          className="text-xs text-red-500 hover:text-red-700 underline"
-                        >
-                          Remove
-                        </button>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700 underline">Remove</button>
                       </form>
                     </div>
                   </div>
 
-                  {/* Recent donations from this page */}
                   {fp.donations.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-purple-200">
                       <p className="text-xs font-medium text-gray-600 mb-2">Recent donations:</p>
@@ -1009,16 +794,10 @@ export default async function ContactDetailPage({
                         {fp.donations.slice(0, 5).map((d) => (
                           <div key={d.id} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-700">
-                                {d.donorDisplayName || "Anonymous"}
-                              </span>
-                              <span className="text-gray-400">
-                                {formatDate(d.donationDate)}
-                              </span>
+                              <span className="text-gray-700">{d.donorDisplayName || "Anonymous"}</span>
+                              <span className="text-gray-400">{formatDate(d.donationDate)}</span>
                             </div>
-                            <span className="font-bold text-purple-700">
-                              £{d.amount.toFixed(2)}
-                            </span>
+                            <span className="font-bold text-purple-700">£{d.amount.toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
@@ -1028,147 +807,242 @@ export default async function ContactDetailPage({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 mb-4">
-              No fundraising pages linked yet. Add a JustGiving page URL below.
-            </p>
+            <p className="text-sm text-gray-500 mb-4">No fundraising pages linked yet. Add a JustGiving page URL below.</p>
           )}
 
-          {/* Add new fundraising page form */}
           <div className="border-t border-gray-100 pt-4">
-            <p className="text-sm font-medium text-gray-700 mb-3">
-              Add a fundraising page
-            </p>
+            <p className="text-sm font-medium text-gray-700 mb-3">Add a fundraising page</p>
             <form action={addFundraisingPage} className="space-y-3">
-              <Input
-                name="pageUrl"
-                placeholder="Paste JustGiving URL e.g. justgiving.com/fundraising/ross-bike-ride"
-                required
-              />
+              <Input name="pageUrl" placeholder="Paste JustGiving URL e.g. justgiving.com/fundraising/ross-bike-ride" required />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
-                  name="title"
-                  placeholder="Page title (optional, fetched on sync)"
-                />
-                <select
-                  name="eventId"
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
+                <Input name="title" placeholder="Page title (optional, fetched on sync)" />
+                <select name="eventId" className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
                   <option value="">Link to event (optional)</option>
                   {allEvents.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
+                    <option key={e.id} value={e.id}>{e.name}</option>
                   ))}
                 </select>
               </div>
               <Button type="submit" size="sm" className="bg-purple-600 hover:bg-purple-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Page
+                <Plus className="h-4 w-4 mr-2" /> Add Page
               </Button>
             </form>
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Interactions */}
-        <Card>
-          <CardHeader>
+  const activityContent = (
+    <div className="space-y-6">
+      {/* Interactions */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Interactions</h3>
-          </CardHeader>
-          <CardContent>
-            <form action={addInteraction} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  name="type"
-                  required
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                >
-                  <option value="EMAIL">Email</option>
-                  <option value="CALL">Call</option>
-                  <option value="MEETING">Meeting</option>
-                  <option value="LETTER">Letter</option>
-                  <option value="EVENT">Event</option>
-                  <option value="TASK">Task</option>
-                  <option value="DONATION">Donation</option>
-                  <option value="OTHER">Other</option>
-                </select>
-                <Input name="subject" placeholder="Subject" required />
-              </div>
-              <Input name="description" placeholder="Description (optional)" />
-              <Button type="submit" size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Log Interaction
-              </Button>
-            </form>
-            <div className="space-y-3">
-              {contact.interactions.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No interactions yet</p>
-              ) : (
-                contact.interactions.map((interaction) => (
-                  <div key={interaction.id} className="flex items-start gap-3 py-2">
-                    <span className="text-lg">{interactionIcons[interaction.type] || "📋"}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{interaction.subject}</p>
-                      {interaction.description && (
-                        <p className="text-sm text-gray-500 truncate">{interaction.description}</p>
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {formatDate(interaction.date)} • {interaction.createdBy.name}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
+            <span className="text-sm text-gray-500">{contact.interactions.length} total</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form action={addInteraction} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
+            <div className="grid grid-cols-2 gap-3">
+              <select name="type" required className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="EMAIL">Email</option>
+                <option value="CALL">Call</option>
+                <option value="MEETING">Meeting</option>
+                <option value="LETTER">Letter</option>
+                <option value="EVENT">Event</option>
+                <option value="TASK">Task</option>
+                <option value="DONATION">Donation</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <Input name="subject" placeholder="Subject" required />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
-          </CardHeader>
-          <CardContent>
-            <form action={addNote} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-              <Textarea name="content" placeholder="Add a note..." required />
-              <Button type="submit" size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Add Note
-              </Button>
-            </form>
-            <div className="space-y-3">
-              {contact.notes.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No notes yet</p>
-              ) : (
-                contact.notes.map((note) => (
-                  <div key={note.id} className="py-2 border-b border-gray-50 last:border-0">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+            <Input name="description" placeholder="Description (optional)" />
+            <Button type="submit" size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Log Interaction
+            </Button>
+          </form>
+          <div className="space-y-3">
+            {contact.interactions.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No interactions yet. Log your first one above.</p>
+            ) : (
+              contact.interactions.map((interaction) => (
+                <div key={interaction.id} className="flex items-start gap-3 py-3 border-b border-gray-50 last:border-0">
+                  <span className="text-lg mt-0.5">{interactionIcons[interaction.type] || "📋"}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">{interaction.subject}</p>
+                      <Badge variant="outline" className="text-xs">{interaction.type}</Badge>
+                    </div>
+                    {interaction.description && (
+                      <p className="text-sm text-gray-500 mt-0.5">{interaction.description}</p>
+                    )}
                     <p className="text-xs text-gray-400 mt-1">
-                      {formatDate(note.createdAt)} • {note.createdBy.name}
+                      {formatDate(interaction.date)} • {interaction.createdBy.name}
                     </p>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
+            <span className="text-sm text-gray-500">{contact.notes.length} total</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form action={addNote} className="space-y-3 mb-6 pb-6 border-b border-gray-100">
+            <Textarea name="content" placeholder="Add a note..." required />
+            <Button type="submit" size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Add Note
+            </Button>
+          </form>
+          <div className="space-y-3">
+            {contact.notes.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No notes yet. Add your first one above.</p>
+            ) : (
+              contact.notes.map((note) => (
+                <div key={note.id} className="py-3 border-b border-gray-50 last:border-0">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {formatDate(note.createdAt)} • {note.createdBy.name}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/crm/contacts" className="text-gray-400 hover:text-gray-600">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Contact Details</h1>
       </div>
 
-      {/* Relationships - temporarily disabled for debugging */}
-      {relationships.length > 0 && (
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Relationships ({relationships.length})</h3>
-          </CardHeader>
-          <CardContent>
-            {relationships.map((r) => (
-              <div key={r.id} className="py-2 border-b last:border-0">
-                <span className="font-medium">{r.contact.firstName} {r.contact.lastName}</span>
-                <span className="text-gray-500 ml-2">({r.type})</span>
+      {/* Profile Card — always visible above tabs */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
+            <div className="flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {contact.firstName} {contact.lastName}
+                    </h2>
+                    {contact.types.map((t) => (
+                      <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>{t}</Badge>
+                    ))}
+                    {contact.isLotteryMember && (
+                      <Badge className="bg-amber-100 text-amber-800">
+                        <Ticket className="h-3 w-3 mr-1" />Lottery Member
+                      </Badge>
+                    )}
+                    {contact.giftAids.some((ga) => ga.type === "STANDARD" && ga.status === "ACTIVE") && (
+                      <GiftAidShield type="S" size="md" />
+                    )}
+                    {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
+                      <GiftAidShield type="R" size="md" />
+                    )}
+                    {contact.isArchived && (
+                      <Badge className="bg-red-100 text-red-800">Archived</Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {contact.volunteerProfile ? (
+                      <Link href={`/volunteers/${contact.volunteerProfile.id}`}>
+                        <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
+                          View Volunteer Profile →
+                        </Badge>
+                      </Link>
+                    ) : contact.types.includes("VOLUNTEER") ? (
+                      <form action={createVolunteerProfile}>
+                        <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+                          <Plus className="h-3 w-3" /> Create Volunteer Profile
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <form action={toggleArchive}>
+                    <Button type="submit" variant="outline" size="sm" className="gap-2">
+                      {contact.isArchived ? (
+                        <><ArchiveX className="h-4 w-4" /> Unarchive</>
+                      ) : (
+                        <><Archive className="h-4 w-4" /> Archive</>
+                      )}
+                    </Button>
+                  </form>
+                  <form action={deleteContact}>
+                    <ConfirmButton message="Are you sure you want to delete this contact? This action cannot be undone." variant="destructive" size="sm" className="gap-2">
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </ConfirmButton>
+                  </form>
+                </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              <div className="mt-3 space-y-1.5">
+                {contact.email && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Mail className="h-4 w-4" /> {contact.email}
+                  </div>
+                )}
+                {contact.phone && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Phone className="h-4 w-4" /> {contact.phone}
+                  </div>
+                )}
+                {contact.addressLine1 && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4" />
+                    {[contact.addressLine1, contact.city, contact.postcode].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                {contact.organisation && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Building2 className="h-4 w-4" /> {contact.organisation.name}
+                  </div>
+                )}
+                {contact.dateOfBirth && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    🎂 Born: {contact.dateOfBirth}
+                  </div>
+                )}
+              </div>
+              {contact.tags.length > 0 && (
+                <div className="flex gap-1 mt-3 flex-wrap">
+                  {contact.tags.map((ct) => (
+                    <Badge key={ct.tagId} variant="outline">{ct.tag.name}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabbed content */}
+      <ContactTabs
+        overviewContent={overviewContent}
+        activityContent={activityContent}
+        interactionCount={contact.interactions.length}
+        noteCount={contact.notes.length}
+      />
     </div>
   );
 }
