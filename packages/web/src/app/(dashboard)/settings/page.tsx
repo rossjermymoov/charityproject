@@ -15,6 +15,7 @@ import {
   Target,
   Activity,
   Coins,
+  Clock,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
 import LetterheadForm from "./letterhead-form";
@@ -88,7 +89,13 @@ export default async function SettingsPage() {
       description: "Run automated tests on all data entry flows and monitor pass/fail",
       href: "/settings/test-agent",
     },
-  ];
+    {
+      icon: Clock,
+      title: "Scheduled Jobs",
+      description: "Configure and manage automated scheduled tasks and reminders",
+      href: "/settings/scheduled-jobs",
+    },
+];
 
   return (
     <div className="space-y-6">

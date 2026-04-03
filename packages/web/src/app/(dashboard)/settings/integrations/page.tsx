@@ -111,6 +111,15 @@ function XeroLogo({ className }: { className?: string }) {
   );
 }
 
+function LoqateLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#003D82" />
+      <text x="24" y="31" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#fff">Lq</text>
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default async function IntegrationsPage() {
@@ -236,6 +245,14 @@ export default async function IntegrationsPage() {
       href: "/settings/integrations/xero",
       status: "not configured",
       category: "Accounting & Finance",
+    },
+    {
+      logo: LoqateLogo,
+      title: "Loqate",
+      description: "Real-time address lookup and verification with UK address database",
+      href: "/settings/integrations/loqate",
+      status: "not configured",
+      category: "Data & Verification",
     },
   ];
 

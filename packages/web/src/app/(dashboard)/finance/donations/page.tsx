@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { DollarSign, Plus, Search } from "lucide-react";
+import { DollarSign, Plus, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -65,13 +65,22 @@ export default async function DonationsPage({
           <h1 className="text-2xl font-bold text-gray-900">Donations</h1>
           <p className="text-gray-500 mt-1">Track donations, payments, and gifts</p>
         </div>
-        <Link href="/finance/donations/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Donation
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/finance/donations/import">
+            <Button variant="outline" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          </Link>
+          <Link href="/finance/donations/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Donation
+            </Button>
+          </Link>
+        </div>
       </div>
+
 
       {/* Search and filters */}
       <Card className="p-4">

@@ -6,10 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowUp,
-  ArrowDown,
   Trash2,
-  Plus,
   Copy,
   ExternalLink,
   Play,
@@ -20,18 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
-const fieldTypeLabels: Record<string, string> = {
-  TEXT: "Text",
-  EMAIL: "Email",
-  PHONE: "Phone",
-  TEXTAREA: "Long Text",
-  SELECT: "Dropdown",
-  CHECKBOX: "Checkbox",
-  NUMBER: "Number",
-  DATE: "Date",
-  AMOUNT: "Amount (£)",
-};
+import BuilderPage from "./builder-page";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800",
@@ -82,69 +68,6 @@ export default async function FormDetailPage({
         notifyEmail: notifyEmail || null,
       },
     });
-    revalidatePath(`/settings/forms/${id}`);
-  }
-
-  async function addField(formData: FormData) {
-    "use server";
-    const label = formData.get("label") as string;
-    const type = formData.get("type") as string;
-    const placeholder = formData.get("placeholder") as string;
-    const isRequired = formData.get("isRequired") === "true";
-
-    const maxOrder = await prisma.formField.findFirst({
-      where: { formId: id },
-      orderBy: { sortOrder: "desc" },
-      select: { sortOrder: true },
-    });
-
-    await prisma.formField.create({
-      data: {
-        formId: id,
-        label,
-        type,
-        placeholder: placeholder || null,
-        isRequired,
-        isSystem: false,
-        sortOrder: (maxOrder?.sortOrder ?? -1) + 1,
-      },
-    });
-    revalidatePath(`/settings/forms/${id}`);
-  }
-
-  async function removeField(formData: FormData) {
-    "use server";
-    const fieldId = formData.get("fieldId") as string;
-    await prisma.formField.delete({ where: { id: fieldId } });
-    revalidatePath(`/settings/forms/${id}`);
-  }
-
-  async function moveField(formData: FormData) {
-    "use server";
-    const fieldId = formData.get("fieldId") as string;
-    const direction = formData.get("direction") as string;
-
-    const fields = await prisma.formField.findMany({
-      where: { formId: id },
-      orderBy: { sortOrder: "asc" },
-    });
-
-    const idx = fields.findIndex((f) => f.id === fieldId);
-    if (idx < 0) return;
-
-    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= fields.length) return;
-
-    await prisma.$transaction([
-      prisma.formField.update({
-        where: { id: fields[idx].id },
-        data: { sortOrder: fields[swapIdx].sortOrder },
-      }),
-      prisma.formField.update({
-        where: { id: fields[swapIdx].id },
-        data: { sortOrder: fields[idx].sortOrder },
-      }),
-    ]);
     revalidatePath(`/settings/forms/${id}`);
   }
 
@@ -239,14 +162,37 @@ export default async function FormDetailPage({
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Settings */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-gray-900">Form Settings</h2>
-          </CardHeader>
-          <CardContent>
-            <form action={updateForm} className="space-y-4">
+      {/* Enhanced Form Builder */}
+      <BuilderPage
+        formId={id}
+        initialForm={{
+          id: form.id,
+          name: form.name,
+          title: form.title,
+          description: form.description,
+          primaryColor: form.primaryColor,
+          thankYouMessage: form.thankYouMessage,
+          fields: form.fields.map((f) => ({
+            id: f.id,
+            label: f.label,
+            type: f.type,
+            placeholder: f.placeholder,
+            helpText: f.helpText,
+            isRequired: f.isRequired,
+            options: f.options,
+            sortOrder: f.sortOrder,
+          })),
+        }}
+      />
+
+      {/* Form Settings Card */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-900">General Settings</h2>
+        </CardHeader>
+        <CardContent>
+          <form action={updateForm} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
@@ -263,167 +209,72 @@ export default async function FormDetailPage({
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                name="description"
+                defaultValue={form.description || ""}
+                rows={2}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  name="description"
-                  defaultValue={form.description || ""}
-                  rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Colour</label>
+                <div className="flex items-center gap-2">
                   <input
+                    type="color"
                     name="primaryColor"
                     defaultValue={form.primaryColor}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="h-10 w-14 rounded-lg border border-gray-300 cursor-pointer"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notify Email
-                  </label>
                   <input
-                    name="notifyEmail"
-                    defaultValue={form.notifyEmail || ""}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    type="text"
+                    name="primaryColor"
+                    defaultValue={form.primaryColor}
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Thank You Message
+                  Notification Email
                 </label>
                 <input
-                  name="thankYouMessage"
-                  defaultValue={form.thankYouMessage}
+                  name="notifyEmail"
+                  type="email"
+                  defaultValue={form.notifyEmail || ""}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Consent Text
-                </label>
-                <input
-                  name="consentText"
-                  defaultValue={form.consentText || ""}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
-              <Button type="submit" size="sm">
-                Save Settings
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Fields */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Form Fields ({form.fields.length})
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 mb-4">
-              {form.fields.map((field, idx) => (
-                <div
-                  key={field.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-900">{field.label}</span>
-                    <Badge className="bg-gray-200 text-gray-600">
-                      {fieldTypeLabels[field.type] || field.type}
-                    </Badge>
-                    {field.isRequired && (
-                      <Badge className="bg-red-100 text-red-700">Required</Badge>
-                    )}
-                    {field.isSystem && (
-                      <Badge className="bg-indigo-100 text-indigo-700">System</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {idx > 0 && (
-                      <form action={moveField}>
-                        <input type="hidden" name="fieldId" value={field.id} />
-                        <input type="hidden" name="direction" value="up" />
-                        <Button variant="ghost" size="icon" type="submit">
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                      </form>
-                    )}
-                    {idx < form.fields.length - 1 && (
-                      <form action={moveField}>
-                        <input type="hidden" name="fieldId" value={field.id} />
-                        <input type="hidden" name="direction" value="down" />
-                        <Button variant="ghost" size="icon" type="submit">
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
-                      </form>
-                    )}
-                    {!field.isSystem && (
-                      <form action={removeField}>
-                        <input type="hidden" name="fieldId" value={field.id} />
-                        <Button variant="ghost" size="icon" type="submit">
-                          <Trash2 className="h-3 w-3 text-red-500" />
-                        </Button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
-
-            {/* Add Field */}
-            <form action={addField} className="p-3 rounded-lg border-2 border-dashed border-gray-300">
-              <p className="text-sm font-medium text-gray-700 mb-2">Add Field</p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <input
-                  name="label"
-                  placeholder="Field label"
-                  required
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
-                />
-                <select
-                  name="type"
-                  defaultValue="TEXT"
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
-                >
-                  {Object.entries(fieldTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-3 mb-2">
-                <input
-                  name="placeholder"
-                  placeholder="Placeholder text (optional)"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
-                />
-                <label className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <input type="hidden" name="isRequired" value="false" />
-                  <input
-                    type="checkbox"
-                    name="isRequired"
-                    value="true"
-                    className="rounded border-gray-300 text-indigo-600"
-                  />
-                  Required
-                </label>
-              </div>
-              <Button type="submit" size="sm" variant="outline">
-                <Plus className="h-3 w-3 mr-1" />
-                Add
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Thank You Message
+              </label>
+              <input
+                name="thankYouMessage"
+                defaultValue={form.thankYouMessage}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Consent Text
+              </label>
+              <input
+                name="consentText"
+                defaultValue={form.consentText || ""}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <Button type="submit" size="sm">
+              Save Settings
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Embed Code */}
       <Card>

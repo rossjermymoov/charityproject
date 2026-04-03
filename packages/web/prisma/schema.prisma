@@ -61,6 +61,9 @@ model SystemSettings {
   sageUserPassword      String?  // User Password (encrypted)
   sageEnabled           Boolean  @default(false)
 
+  // ── Loqate Integration ──
+  loqateApiKey          String?  // Loqate API key for address verification
+
   updatedAt             DateTime @updatedAt
 }
 
@@ -147,6 +150,17 @@ model User {
   donorOpportunitiesAssigned DonorOpportunity[] @relation("DonorOpportunitiesAssignedTo")
   reconciliationSessions ReconciliationSession[] @relation("ReconciliationSessionsCreated")
   gasdsClaimsCreated     GasdsClaim[]           @relation("GasdsClaimsCreated")
+  partnershipActivities  PartnershipActivity[]  @relation("PartnershipActivityUser")
+  savedSegments          SavedSegment[]         @relation("SavedSegmentCreatedBy")
+  donationImports        DonationImport[]       @relation("DonationImportCreatedBy")
+  pledgesCreated         Pledge[]               @relation("PledgeCreatedBy")
+  boardReportsGenerated  BoardReport[]           @relation("BoardReportGeneratedBy")
+  financialReportsGenerated FinancialReport[] @relation("FinancialReportGeneratedBy")
+  fundTransactionsCreated FundTransaction[]     @relation("FundTransactionCreatedBy")
+  fundTransfersApproved  FundTransfer[]         @relation("FundTransferApprovedBy")
+  webhooksCreated        Webhook[]              @relation("WebhookCreatedBy")
+  taskRulesAssignee      TaskRule[]             @relation("TaskRuleAssignee")
+  autoTasksAssigned      AutoTask[]             @relation("AutoTaskAssignee")
 }
 
 model Department {
@@ -219,6 +233,12 @@ model Contact {
   consentPhone   Boolean  @default(false)
   consentSms     Boolean  @default(false)
   consentUpdatedAt DateTime?
+  emailOptIn     Boolean  @default(true)
+  smsOptIn       Boolean  @default(false)
+  postOptIn      Boolean  @default(true)
+  phoneOptIn     Boolean  @default(false)
+  communicationFrequency String? @default("WEEKLY") // DAILY | WEEKLY | MONTHLY
+  interestCategories String[] @default([]) // JSON array of interest categories
   isLotteryMember  Boolean  @default(false)
   lotteryMemberSince DateTime?
   isArchived     Boolean  @default(false)
@@ -249,6 +269,12 @@ model Contact {
   legacies       Legacy[]
   cases          CaseRecord[]
   donorOpportunities DonorOpportunity[]   @relation("DonorOpportunitiesContact")
+  pledges        Pledge[]               @relation("PledgeContact")
+  corporatePartnerships CorporatePartnership[] @relation("PartnershipContact")
+  preferenceTokens   PreferenceToken[]
+  smsMessages    SmsMessage[]           @relation("ContactSmsMessages")
+  memberPortalTokens MemberPortalToken[]
+  autoTasks      AutoTask[]             @relation("AutoTaskContact")
 }
 
 model Organisation {
@@ -273,6 +299,7 @@ model Organisation {
   children Organisation[] @relation("OrgHierarchy")
   contacts Contact[]
   grants         Grant[]
+  partnerships   CorporatePartnership[] @relation("CorporatePartnerships")
   eventIncomeLines EventIncomeLine[] @relation("IncomeLineOrg")
   eventCostLines   EventCostLine[]   @relation("CostLineOrg")
   eventSponsors    EventSponsor[] @relation("SponsorOrg")
@@ -704,11 +731,13 @@ model Donation {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  contact    Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  ledgerCode LedgerCode? @relation(fields: [ledgerCodeId], references: [id])
-  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
-  event      Event?      @relation(fields: [eventId], references: [id])
-  createdBy  User        @relation("DonationCreatedBy", fields: [createdById], references: [id])
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  ledgerCode    LedgerCode? @relation(fields: [ledgerCodeId], references: [id])
+  campaign      Campaign?   @relation(fields: [campaignId], references: [id])
+  event         Event?      @relation(fields: [eventId], references: [id])
+  createdBy     User        @relation("DonationCreatedBy", fields: [createdById], references: [id])
+  pledgePayment PledgePayment? @relation("PledgePayment")
+  fundTransaction FundTransaction? @relation("DonationFundTransaction")
 }
 
 // ============================================
@@ -1066,6 +1095,7 @@ model Campaign {
   donations  Donation[]
   segments   CampaignSegment[]
   donorOpportunities DonorOpportunity[] @relation("DonorOpportunitiesCampaign")
+  pledges        Pledge[]               @relation("PledgeCampaign")
 }
 
 model CampaignSegment {
@@ -1078,6 +1108,20 @@ model CampaignSegment {
   tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, tagId])
+}
+
+model SavedSegment {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  filters     String   // JSON object with filter criteria
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation("SavedSegmentCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdById])
 }
 
 // ============================================
@@ -1795,6 +1839,9 @@ model MembershipType {
   benefits    String?
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
+  renewalPeriodMonths Int @default(12) // Renewal period in months
+  renewalGraceDays Int @default(30) // Grace period after expiration before marking as lapsed
+  autoRenewEnabled Boolean @default(true) // Whether auto-renewal is enabled for this membership type
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -1810,6 +1857,7 @@ model Membership {
   startDate        DateTime
   endDate          DateTime
   renewalDate      DateTime?
+  lastRenewalDate  DateTime? // Date of the last successful renewal
   autoRenew        Boolean   @default(false)
   amountPaid       Float?
   paymentMethod    String?
@@ -1820,9 +1868,10 @@ model Membership {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  contact        Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  membershipType MembershipType    @relation(fields: [membershipTypeId], references: [id])
-  renewals       MembershipRenewal[]
+  contact          Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  membershipType   MembershipType    @relation(fields: [membershipTypeId], references: [id])
+  renewals         MembershipRenewal[]
+  renewalReminders RenewalReminder[]
 
   @@index([contactId])
   @@index([status])
@@ -1840,6 +1889,21 @@ model MembershipRenewal {
   renewedAt        DateTime @default(now())
 
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+}
+
+model RenewalReminder {
+  id           String   @id @default(cuid())
+  membershipId String
+  type         String   // FIRST_REMINDER | SECOND_REMINDER | FINAL_REMINDER | EXPIRY_NOTICE | LAPSED_NOTICE
+  sentAt       DateTime
+  emailId      String?  // Track which email was sent for audit purposes
+  createdAt    DateTime @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([membershipId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -2141,6 +2205,50 @@ model SageSyncLog {
 }
 
 // ============================================
+// EMAIL MARKETING INTEGRATION (DOTDIGITAL & MAILCHIMP)
+// ============================================
+
+model EmailMarketingSync {
+  id              String   @id @default(cuid())
+  provider        String   // DOTDIGITAL | MAILCHIMP
+  status          String   @default("DISCONNECTED") // CONNECTED | DISCONNECTED | ERROR
+  apiKey          String?  // encrypted at application layer
+  apiEndpoint     String?  // nullable, mainly for Dotdigital
+  lastSyncAt      DateTime?
+  syncFrequency   String   @default("MANUAL") // MANUAL | HOURLY | DAILY | WEEKLY
+  settings        Json     @default("{}") // Provider-specific settings (list mappings, field mappings, etc)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  logs SyncLog[]
+
+  @@index([provider])
+  @@index([status])
+  @@index([lastSyncAt])
+}
+
+model SyncLog {
+  id              String   @id @default(cuid())
+  syncId          String   // FK to EmailMarketingSync
+  direction       String   // PUSH | PULL
+  recordsProcessed Int     @default(0)
+  recordsCreated  Int      @default(0)
+  recordsUpdated  Int      @default(0)
+  recordsFailed   Int      @default(0)
+  errors          Json     @default("[]") // Array of error details
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  status          String   @default("RUNNING") // RUNNING | COMPLETED | FAILED
+
+  emailMarketingSync EmailMarketingSync @relation(fields: [syncId], references: [id], onDelete: Cascade)
+
+  @@index([syncId])
+  @@index([direction])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// ============================================
 // AUTOMATION & EMAIL TEMPLATES
 // ============================================
 
@@ -2385,4 +2493,455 @@ model GasdsEntry {
   createdAt     DateTime  @default(now())
 
   @@index([claimId])
+}
+
+// ============================================
+// CORPORATE PARTNERSHIPS
+// ============================================
+
+model CorporatePartnership {
+  id             String   @id @default(cuid())
+  organisationId String
+  type           String   // SPONSOR | PARTNER | PATRON | CORPORATE_DONOR
+  status         String   @default("PROSPECT") // PROSPECT | ACTIVE | LAPSED | ENDED
+  startDate      DateTime?
+  endDate        DateTime?
+  annualValue    Decimal?
+  totalValue     Decimal?
+  contactId      String?
+  notes          String?
+  benefits       Json     @default("[]") // Array of benefit objects
+  renewalDate    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation   Organisation          @relation("CorporatePartnerships", fields: [organisationId], references: [id], onDelete: Cascade)
+  contact        Contact?              @relation("PartnershipContact", fields: [contactId], references: [id], onDelete: SetNull)
+  activities     PartnershipActivity[]
+
+  @@index([organisationId])
+  @@index([contactId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PartnershipActivity {
+  id            String   @id @default(cuid())
+  partnershipId String
+  type          String   // MEETING | EMAIL | CALL | EVENT | PAYMENT | NOTE
+  date          DateTime
+  description   String?
+  userId        String?
+  createdAt     DateTime @default(now())
+
+  partnership   CorporatePartnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  user          User?                @relation("PartnershipActivityUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([partnershipId])
+  @@index([userId])
+  @@index([type])
+  @@index([date])
+}
+
+// ============================================
+// DONATION BATCH IMPORT
+// ============================================
+
+model DonationImport {
+  id              String   @id @default(cuid())
+  filename        String
+  status          String   @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
+  totalRows       Int      @default(0)
+  processedRows   Int      @default(0)
+  successRows     Int      @default(0)
+  errorRows       Int      @default(0)
+  errors          Json     @default("[]") // Array of {row: number, field: string, message: string}
+  userId          String
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  user            User     @relation("DonationImportCreatedBy", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// PLEDGE MANAGEMENT
+// ============================================
+
+model Pledge {
+  id                 String   @id @default(cuid())
+  contactId          String
+  campaignId         String?
+  amount             Decimal
+  currency           String   @default("GBP")
+  frequency          String   @default("ONE_TIME") // ONE_TIME | MONTHLY | QUARTERLY | ANNUALLY
+  startDate          DateTime
+  endDate            DateTime?
+  status             String   @default("ACTIVE") // ACTIVE | FULFILLED | PARTIALLY_FULFILLED | CANCELLED | OVERDUE
+  totalPledged       Decimal  @default(0)
+  totalFulfilled     Decimal  @default(0)
+  nextReminderDate   DateTime?
+  reminderFrequency  String?  // WEEKLY | MONTHLY | QUARTERLY (how often to remind)
+  notes              String?
+  createdById        String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  contact    Contact         @relation("PledgeContact", fields: [contactId], references: [id], onDelete: Cascade)
+  campaign   Campaign?       @relation("PledgeCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
+  createdBy  User            @relation("PledgeCreatedBy", fields: [createdById], references: [id])
+  payments   PledgePayment[]
+
+  @@index([contactId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([startDate])
+  @@index([nextReminderDate])
+  @@index([createdAt])
+}
+
+model PledgePayment {
+  id        String   @id @default(cuid())
+  pledgeId  String
+  donationId String?  @unique
+  amount    Decimal
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+
+  pledge   Pledge     @relation(fields: [pledgeId], references: [id], onDelete: Cascade)
+  donation Donation?  @relation("PledgePayment", fields: [donationId], references: [id], onDelete: SetNull)
+
+  @@index([pledgeId])
+  @@index([donationId])
+  @@index([date])
+}
+
+// ============================================
+// SMS MESSAGING
+// ============================================
+
+model SmsMessage {
+  id            String   @id @default(cuid())
+  contactId     String?
+  to            String   // recipient phone number (E.164 format)
+  from          String?  // sender phone number (nullable, from system settings)
+  body          String   // message body text
+  status        String   @default("QUEUED") // QUEUED | SENT | DELIVERED | FAILED
+  direction     String   @default("OUTBOUND") // INBOUND | OUTBOUND
+  externalId    String?  // Twilio Message SID
+  errorMessage  String?  // error details if status is FAILED
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  contact Contact? @relation("ContactSmsMessages", fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([contactId])
+  @@index([status])
+  @@index([direction])
+  @@index([to])
+  @@index([createdAt])
+}
+
+model SmsTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  body        String   // template body with {{variable}} placeholders
+  variables   Json     @default("[]") // list of variable names, e.g. ["firstName", "eventDate"]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// ============================================
+// DONOR PREFERENCE CENTRE
+// ============================================
+
+model PreferenceToken {
+  id        String   @id @default(cuid())
+  contactId String
+  token     String   @unique // randomly generated token for the preference link
+  expiresAt DateTime? // nullable = no expiry
+  createdAt DateTime @default(now())
+
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([contactId])
+  @@index([expiresAt])
+}
+
+// ============================================
+// BOARD / TRUSTEE REPORT GENERATION
+// ============================================
+
+model BoardReport {
+  id            String   @id @default(cuid())
+  title         String
+  type          String   @default("QUARTERLY_SUMMARY") // QUARTERLY_SUMMARY | ANNUAL_REVIEW | FUNDRAISING_UPDATE | MEMBERSHIP_REPORT | COMPLIANCE_REPORT | CUSTOM
+  period        String   // e.g. "Q1 2025", "2024-25"
+  startDate     DateTime
+  endDate       DateTime
+  data          Json     @default("{}")
+  narrative     String?
+  status        String   @default("DRAFT") // DRAFT | REVIEWED | APPROVED
+  generatedById String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  generatedBy User @relation("BoardReportGeneratedBy", fields: [generatedById], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([generatedById])
+  @@index([createdAt])
+}
+
+// ============================================
+// MEMBER SELF-SERVICE PORTAL
+// ============================================
+
+model MemberPortalToken {
+  id        String   @id @default(cuid())
+  contactId String
+  token     String   @unique
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([contactId])
+}
+
+// ============================================
+// SORP-COMPLIANT FINANCIAL REPORTING
+// ============================================
+
+model FinancialReport {
+  id             String   @id @default(cuid())
+  name           String
+  type           String   @default("SOFA")
+  financialYear  String
+  startDate      DateTime
+  endDate        DateTime
+  data           Json     @default("{}")
+  status         String   @default("DRAFT")
+  generatedAt    DateTime @default(now())
+  generatedById  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  generatedBy    User     @relation("FinancialReportGeneratedBy", fields: [generatedById], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([generatedById])
+}
+
+// ============================================
+// FUND ACCOUNTING
+// ============================================
+
+model Fund {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   @default("UNRESTRICTED") // UNRESTRICTED | RESTRICTED | ENDOWMENT
+  description   String?
+  isActive      Boolean  @default(true)
+  balance       Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  FundTransaction[]
+  transfersFrom FundTransfer[]    @relation("FromFund")
+  transfersTo   FundTransfer[]    @relation("ToFund")
+
+  @@index([type])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model FundTransaction {
+  id            String   @id @default(cuid())
+  fundId        String
+  type          String   // DEPOSIT | WITHDRAWAL | ADJUSTMENT | TRANSFER_IN | TRANSFER_OUT
+  amount        Float
+  description   String?
+  reference     String?
+  donationId    String?  @unique
+  date          DateTime
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  fund          Fund      @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  donation      Donation? @relation("DonationFundTransaction", fields: [donationId], references: [id], onDelete: SetNull)
+  createdBy     User      @relation("FundTransactionCreatedBy", fields: [createdById], references: [id])
+
+  @@index([fundId])
+  @@index([type])
+  @@index([date])
+  @@index([createdById])
+}
+
+model FundTransfer {
+  id            String   @id @default(cuid())
+  fromFundId    String
+  toFundId      String
+  amount        Float
+  reason        String?
+  approvedById  String?
+  date          DateTime
+  createdAt     DateTime @default(now())
+
+  fromFund      Fund     @relation("FromFund", fields: [fromFundId], references: [id], onDelete: Restrict)
+  toFund        Fund     @relation("ToFund", fields: [toFundId], references: [id], onDelete: Restrict)
+  approvedBy    User?    @relation("FundTransferApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([fromFundId])
+  @@index([toFundId])
+  @@index([date])
+}
+
+// ============================================
+// SCHEDULED JOBS/REMINDERS
+// ============================================
+
+model ScheduledJob {
+  id               String   @id @default(cuid())
+  name             String
+  type             String   // AUTO_RENEWAL | SEND_REMINDERS | SYNC_EMAIL_MARKETING | PROCESS_WEBHOOKS | GENERATE_REPORTS | CLEANUP_EXPIRED_TOKENS
+  description      String?
+  schedule         String?  // cron expression
+  isActive         Boolean  @default(true)
+  lastRunAt        DateTime?
+  lastRunStatus    String?  // SUCCESS | FAILED | ERROR
+  lastRunDuration  Int?     // milliseconds
+  nextRunAt        DateTime?
+  config           Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  runs             JobRun[]
+
+  @@index([type])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([nextRunAt])
+}
+
+model JobRun {
+  id               String   @id @default(cuid())
+  jobId            String
+  status           String   @default("RUNNING") // RUNNING | SUCCESS | FAILED | ERROR
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+  duration         Int?     // milliseconds
+  result           Json?
+  error            String?
+
+  job              ScheduledJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// ============================================
+// WEBHOOKS & INTEGRATIONS
+// ============================================
+
+model Webhook {
+  id               String   @id @default(cuid())
+  name             String
+  url              String
+  events           Json     @default("[]") // array of event types: CONTACT_CREATED, CONTACT_UPDATED, etc
+  secret           String?
+  isActive         Boolean  @default(true)
+  lastTriggeredAt  DateTime?
+  failCount        Int      @default(0)
+  createdById      String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  createdBy        User     @relation("WebhookCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  logs             WebhookLog[] @relation("WebhookLogs")
+
+  @@index([createdById])
+  @@index([isActive])
+}
+
+model WebhookLog {
+  id               String   @id @default(cuid())
+  webhookId        String
+  event            String
+  payload          Json
+  statusCode       Int?
+  response         String?
+  success          Boolean
+  createdAt        DateTime @default(now())
+
+  webhook          Webhook  @relation("WebhookLogs", fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+}
+
+// ============================================
+// TASK ASSIGNMENT AUTOMATION
+// ============================================
+
+model TaskRule {
+  id               String   @id @default(cuid())
+  name             String
+  triggerEvent     String   // CONTACT_CREATED, DONATION_CREATED, etc
+  conditions       Json     @default("{}") // flexible JSON conditions
+  assignToUserId   String?
+  assignToRole     String?
+  taskTitle        String
+  taskDescription  String?
+  dueDays          Int      @default(7)
+  priority         String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  assignToUser     User?    @relation("TaskRuleAssignee", fields: [assignToUserId], references: [id], onDelete: SetNull)
+  autoTasks        AutoTask[] @relation("TaskRuleAutoTasks")
+
+  @@index([triggerEvent])
+  @@index([isActive])
+}
+
+model AutoTask {
+  id               String   @id @default(cuid())
+  ruleId           String?
+  title            String
+  description      String?
+  assignedToId     String
+  status           String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | CANCELLED
+  priority         String   @default("MEDIUM")
+  dueDate          DateTime?
+  completedAt      DateTime?
+  relatedContactId String?
+  relatedDonationId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  rule             TaskRule? @relation("TaskRuleAutoTasks", fields: [ruleId], references: [id], onDelete: SetNull)
+  assignedTo       User     @relation("AutoTaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  relatedContact   Contact? @relation("AutoTaskContact", fields: [relatedContactId], references: [id], onDelete: SetNull)
+
+  @@index([ruleId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([relatedContactId])
 }

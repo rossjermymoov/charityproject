@@ -17,6 +17,7 @@ import { logAudit } from "@/lib/audit";
 import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
 import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
+import { RelationshipTree } from "@/components/crm/relationship-tree";
 
 export default async function ContactDetailPage({
   params,
@@ -1153,6 +1154,27 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Relationships */}
+      <RelationshipTree
+        contactId={id}
+        relationships={[
+          ...contact.relationshipsFrom.map((rel) => ({
+            ...rel,
+            fromContact: contact,
+            toContact: rel.toContact,
+          })),
+          ...contact.relationshipsTo.map((rel) => ({
+            ...rel,
+            fromContact: rel.fromContact,
+            toContact: contact,
+          })),
+        ]}
+        onAddRelationship={() => {
+          // This would open a dialog in a real implementation
+          // For now, relationships can be added via the API
+        }}
+      />
     </div>
   );
 }
