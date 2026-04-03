@@ -98,8 +98,8 @@ export default async function SettingsPage() {
           const Icon = link.icon;
           const [textColor, bgColor] = link.color.split(" ");
           return (
-            <Link key={link.title} href={link.href}>
-              <Card className="p-4 h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer group relative">
+            <Link key={link.title} href={link.href} className="relative group">
+              <Card className="p-4 h-full transition-all group-hover:shadow-md group-hover:-translate-y-0.5 cursor-pointer overflow-visible">
                 <div className="flex flex-col items-center text-center gap-2.5">
                   <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <Icon className={`h-5 w-5 ${textColor}`} />
@@ -108,12 +108,12 @@ export default async function SettingsPage() {
                     {link.title}
                   </span>
                 </div>
-                {/* Tooltip on hover */}
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-10 shadow-lg">
-                  {link.desc}
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-900" />
-                </div>
               </Card>
+              {/* Tooltip on hover */}
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 shadow-lg">
+                {link.desc}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-900" />
+              </div>
             </Link>
           );
         })}
