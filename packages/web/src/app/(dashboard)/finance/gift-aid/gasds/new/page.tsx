@@ -6,10 +6,9 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Download, Trash2, AlertCircle } from "lucide-react";
-import { useUser } from "@/lib/auth";
+// Auth handled by API routes via cookies
 
 interface GasdsEntry {
   id: string;
@@ -21,7 +20,6 @@ interface GasdsEntry {
 
 export default function NewGasdsPage() {
   const router = useRouter();
-  const user = useUser();
 
   const [taxYear, setTaxYear] = useState(() => {
     const now = new Date();
@@ -53,11 +51,8 @@ export default function NewGasdsPage() {
   // Fetch eligibility when tax year changes
   useEffect(() => {
     const fetchEligibility = async () => {
-      if (!user) return;
       try {
-        const res = await fetch(`/api/gasds/eligible?taxYear=${taxYear}`, {
-          headers: { Authorization: `Bearer ${user.id}` },
-        });
+        const res = await fetch(`/api/gasds/eligible?taxYear=${taxYear}`);
         if (res.ok) {
           setEligibility(await res.json());
         }
@@ -66,7 +61,7 @@ export default function NewGasdsPage() {
       }
     };
     fetchEligibility();
-  }, [user, taxYear]);
+  }, [taxYear]);
 
   const handleAddEntry = () => {
     if (!newEntry.date || !newEntry.amount || isNaN(parseFloat(newEntry.amount))) {
@@ -112,8 +107,6 @@ export default function NewGasdsPage() {
   };
 
   const handleSubmit = async (action: "draft" | "ready") => {
-    if (!user) return;
-
     if (!taxYear || !claimPeriodStart || !claimPeriodEnd) {
       setError("Please fill in all claim details");
       return;
@@ -134,7 +127,6 @@ export default function NewGasdsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user.id}`,
         },
         body: JSON.stringify({
           taxYear,
@@ -158,7 +150,6 @@ export default function NewGasdsPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.id}`,
           },
           body: JSON.stringify({
             claimId: claim.id,
@@ -182,7 +173,6 @@ export default function NewGasdsPage() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.id}`,
           },
           body: JSON.stringify({ status: "READY" }),
         });
@@ -201,8 +191,6 @@ export default function NewGasdsPage() {
 
   const totalAmount = entries.reduce((sum, e) => sum + e.amount, 0);
   const claimValue = Math.round(totalAmount * 0.25 * 100) / 100;
-
-  if (!user) return <div>Loading...</div>;
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -260,11 +248,15 @@ export default function NewGasdsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tax Year
               </label>
-              <Select value={taxYear} onValueChange={setTaxYear}>
+              <select
+                value={taxYear}
+                onChange={(e) => setTaxYear(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
                 <option value="2024-25">2024-25</option>
                 <option value="2025-26">2025-26</option>
                 <option value="2026-27">2026-27</option>
-              </Select>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -327,14 +319,15 @@ export default function NewGasdsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Source
               </label>
-              <Select
+              <select
                 value={newEntry.source}
-                onValueChange={(value) => setNewEntry({ ...newEntry, source: value })}
+                onChange={(e) => setNewEntry({ ...newEntry, source: e.target.value })}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="CASH">Cash</option>
                 <option value="CONTACTLESS">Contactless</option>
                 <option value="COLLECTION_TIN">Collection Tin</option>
-              </Select>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

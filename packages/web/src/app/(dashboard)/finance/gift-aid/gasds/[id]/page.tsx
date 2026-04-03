@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader,
 } from "lucide-react";
-import { useUser } from "@/lib/auth";
+// Auth handled by API routes via cookies
 
 interface GasdsClaim {
   id: string;
@@ -43,7 +43,6 @@ interface GasdsClaim {
 
 export default function GasdsDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const user = useUser();
   const [claim, setClaim] = useState<GasdsClaim | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +51,8 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     const fetchClaim = async () => {
-      if (!user) return;
-
       try {
-        const res = await fetch(`/api/gasds/claims/${params.id}`, {
-          headers: { Authorization: `Bearer ${user.id}` },
-        });
+        const res = await fetch(`/api/gasds/claims/${params.id}`);
 
         if (!res.ok) {
           throw new Error("Failed to fetch claim");
@@ -72,10 +67,10 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
     };
 
     fetchClaim();
-  }, [user, params.id]);
+  }, [params.id]);
 
   const handleDelete = async () => {
-    if (!user || !claim) return;
+    if (!claim) return;
 
     if (!window.confirm("Are you sure you want to delete this claim? This action cannot be undone.")) {
       return;
@@ -87,7 +82,6 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
     try {
       const res = await fetch(`/api/gasds/claims/${params.id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${user.id}` },
       });
 
       if (!res.ok) {
@@ -104,7 +98,7 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
   };
 
   const handleSubmit = async () => {
-    if (!user || !claim) return;
+    if (!claim) return;
 
     if (!window.confirm("Submit this claim to HMRC? This action cannot be undone.")) {
       return;
@@ -118,7 +112,6 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user.id}`,
         },
         body: JSON.stringify({
           status: "SUBMITTED",
@@ -174,8 +167,6 @@ export default function GasdsDetailPage({ params }: { params: { id: string } }) 
 
     return events;
   };
-
-  if (!user) return <div>Loading...</div>;
 
   if (loading) {
     return (

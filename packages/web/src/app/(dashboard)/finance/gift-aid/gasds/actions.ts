@@ -1,14 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { currentUser } from "@/lib/auth";
+import { requireAuth } from "@/lib/session";
 
 /**
  * Server action to import tin returns as GASDS entries
  */
 export async function importTinReturnsToGasds(claimId: string, periodStart: Date, periodEnd: Date) {
-  const user = await currentUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireAuth();
 
   // Verify claim exists and belongs to user
   const claim = await prisma.gasdsClaim.findUnique({
@@ -107,8 +106,7 @@ export async function importTinReturnsToGasds(claimId: string, periodStart: Date
  * Server action to get small cash donations not yet in GASDS
  */
 export async function getEligibleCashDonations(taxYear: string) {
-  const user = await currentUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireAuth();
 
   // Parse tax year
   const [startYear, endYearStr] = taxYear.split("-");
@@ -163,8 +161,7 @@ export async function getEligibleCashDonations(taxYear: string) {
  * Server action to export claim as PDF (placeholder)
  */
 export async function exportClaimAsPdf(claimId: string): Promise<Buffer> {
-  const user = await currentUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireAuth();
 
   const claim = await prisma.gasdsClaim.findUnique({
     where: { id: claimId },

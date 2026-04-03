@@ -3,13 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Using native <select> elements for compatibility
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -366,23 +360,23 @@ export default function ReportBuilderPage() {
               <CardTitle className="text-lg">Entity</CardTitle>
             </CardHeader>
             <CardContent>
-              <Select value={entity} onValueChange={(v) => {
-                setEntity(v as Entity);
-                setSelectedColumns([ENTITY_FIELDS[v as Entity][0]]);
-                setFilters([]);
-              }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CONTACTS">Contacts</SelectItem>
-                  <SelectItem value="DONATIONS">Donations</SelectItem>
-                  <SelectItem value="EVENTS">Events</SelectItem>
-                  <SelectItem value="CAMPAIGNS">Campaigns</SelectItem>
-                  <SelectItem value="VOLUNTEERS">Volunteers</SelectItem>
-                  <SelectItem value="MEMBERSHIPS">Memberships</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={entity}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEntity(v as Entity);
+                  setSelectedColumns([ENTITY_FIELDS[v as Entity][0]]);
+                  setFilters([]);
+                }}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="CONTACTS">Contacts</option>
+                <option value="DONATIONS">Donations</option>
+                <option value="EVENTS">Events</option>
+                <option value="CAMPAIGNS">Campaigns</option>
+                <option value="VOLUNTEERS">Volunteers</option>
+                <option value="MEMBERSHIPS">Memberships</option>
+              </select>
             </CardContent>
           </Card>
 
@@ -416,27 +410,26 @@ export default function ReportBuilderPage() {
               <CardTitle className="text-lg">Sort</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose field..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableFields.map((field) => (
-                    <SelectItem key={field} value={field}>
-                      {FIELD_LABELS[field] || field}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={sortDir} onValueChange={(v) => setSortDir(v as "asc" | "desc")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Ascending</SelectItem>
-                  <SelectItem value="desc">Descending</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Choose field...</option>
+                {availableFields.map((field) => (
+                  <option key={field} value={field}>
+                    {FIELD_LABELS[field] || field}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortDir}
+                onChange={(e) => setSortDir(e.target.value as "asc" | "desc")}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
             </CardContent>
           </Card>
 
@@ -446,18 +439,18 @@ export default function ReportBuilderPage() {
               <CardTitle className="text-lg">Group By (Optional)</CardTitle>
             </CardHeader>
             <CardContent>
-              <Select value={groupBy} onValueChange={setGroupBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableFields.map((field) => (
-                    <SelectItem key={field} value={field}>
-                      {FIELD_LABELS[field] || field}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={groupBy}
+                onChange={(e) => setGroupBy(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">None</option>
+                {availableFields.map((field) => (
+                  <option key={field} value={field}>
+                    {FIELD_LABELS[field] || field}
+                  </option>
+                ))}
+              </select>
             </CardContent>
           </Card>
         </div>
@@ -486,36 +479,28 @@ export default function ReportBuilderPage() {
                 {filters.map((filter, idx) => (
                   <div key={idx} className="flex gap-2 items-end">
                     <div className="flex-1 grid grid-cols-3 gap-2">
-                      <Select
+                      <select
                         value={filter.field}
-                        onValueChange={(v) => updateFilter(idx, "field", v)}
+                        onChange={(e) => updateFilter(idx, "field", e.target.value)}
+                        className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableFields.map((field) => (
-                            <SelectItem key={field} value={field}>
-                              {FIELD_LABELS[field] || field}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
+                        {availableFields.map((field) => (
+                          <option key={field} value={field}>
+                            {FIELD_LABELS[field] || field}
+                          </option>
+                        ))}
+                      </select>
+                      <select
                         value={filter.operator}
-                        onValueChange={(v) => updateFilter(idx, "operator", v)}
+                        onChange={(e) => updateFilter(idx, "operator", e.target.value)}
+                        className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OPERATORS.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>
-                              {op.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        {OPERATORS.map((op) => (
+                          <option key={op.value} value={op.value}>
+                            {op.label}
+                          </option>
+                        ))}
+                      </select>
                       {!["isNull", "isNotNull"].includes(filter.operator) && (
                         <Input
                           placeholder="Value"
