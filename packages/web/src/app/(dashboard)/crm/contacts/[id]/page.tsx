@@ -24,6 +24,7 @@ export default async function ContactDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  try {
   const { id } = await params;
   const contact = await prisma.contact.findUnique({
     where: { id },
@@ -1209,4 +1210,14 @@ export default async function ContactDetailPage({
       />
     </div>
   );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : '';
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <h2 className="text-xl font-bold text-red-600 mb-4">Contact Page Error (debug)</h2>
+        <pre className="bg-red-50 border border-red-200 p-4 rounded text-sm overflow-auto whitespace-pre-wrap">{message}{"\n\n"}{stack}</pre>
+      </div>
+    );
+  }
 }
