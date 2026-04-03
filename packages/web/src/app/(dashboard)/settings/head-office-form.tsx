@@ -41,7 +41,7 @@ export default function HeadOfficeForm({
         setSavedLat(data.lat);
         setSavedLng(data.lng);
         setSuccess(true);
-        if (!data.lat) setError("Address saved but could not be geocoded. Try a more specific address.");
+        if (!data.lat) setError("Saved but could not geocode.");
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (e) {
@@ -52,43 +52,37 @@ export default function HeadOfficeForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-          <Building2 className="h-5 w-5 text-blue-600" />
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+          <Building2 className="h-4 w-4 text-blue-600" />
         </div>
-        <div>
-          <h3 className="font-semibold text-gray-900">Head Office Address</h3>
-          <p className="text-sm text-gray-500">Used as the starting point for route generation and other features</p>
-        </div>
+        <h3 className="font-semibold text-gray-900 text-sm">Head Office</h3>
       </div>
       <div className="flex gap-2">
         <input
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="e.g. 123 High Street, London, SW1A 1AA"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="e.g. 123 High Street, London"
+          className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         />
         <Button type="submit" disabled={saving} size="sm">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
         </Button>
       </div>
       {savedLat && savedLng && (
-        <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
-          <MapPin className="h-4 w-4" />
-          <span>Geocoded: {savedLat.toFixed(4)}, {savedLng.toFixed(4)}</span>
+        <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2.5 py-1.5 rounded-lg">
+          <MapPin className="h-3 w-3" />
+          <span>{savedLat.toFixed(4)}, {savedLng.toFixed(4)}</span>
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-          <MapPin className="h-4 w-4" />
-          <span>{error}</span>
-        </div>
+        <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg">{error}</p>
       )}
       {success && !error && (
-        <p className="text-sm text-green-600">Address saved successfully</p>
+        <p className="text-xs text-green-600">Saved</p>
       )}
     </form>
   );

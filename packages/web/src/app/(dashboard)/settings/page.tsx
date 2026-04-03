@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Shield,
   FileText,
@@ -11,11 +11,13 @@ import {
   Calendar,
   Store,
   Palette,
-  ChevronRight,
   Target,
   Activity,
   Coins,
   Clock,
+  User,
+  Building2,
+  FileImage,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
 import LetterheadForm from "./letterhead-form";
@@ -29,158 +31,94 @@ export default async function SettingsPage() {
   });
 
   const settingsLinks = [
-    {
-      icon: Calendar,
-      title: "Financial Year End",
-      description: "Set your organisation's financial year end date for reporting and forecasting",
-      href: "/settings/financial-year",
-    },
-    {
-      icon: Target,
-      title: "Events Targets",
-      description: "Set annual income, cost budget, and profit targets for your events programme",
-      href: "/settings/events",
-    },
-    {
-      icon: Coins,
-      title: "Collection Tins",
-      description: "Choose between predefined routes (manual or AI-generated) or AI-suggested ad-hoc routes",
-      href: "/settings/collection-tins",
-    },
-    {
-      icon: Store,
-      title: "Shops & Locations",
-      description: "Manage shop locations and generate QR codes for Retail Gift Aid",
-      href: "/settings/shops",
-    },
-    {
-      icon: Palette,
-      title: "Branding",
-      description: "White-label the system with your logo, colours, and organisation name",
-      href: "/settings/branding",
-    },
-    {
-      icon: Shield,
-      title: "Audit Log",
-      description: "Review all system activities and changes",
-      href: "/settings/audit-log",
-    },
-    {
-      icon: FileText,
-      title: "Data Retention Policies",
-      description: "Manage how long data is kept before archiving or deletion",
-      href: "/settings/data-retention",
-    },
-    {
-      icon: Zap,
-      title: "Integrations",
-      description: "Email providers, API connections, and third-party services",
-      href: "/settings/integrations",
-    },
-    {
-      icon: Users,
-      title: "User Management",
-      description: "Manage user accounts, roles, and permissions",
-      href: "/settings/users",
-    },
-    {
-      icon: Activity,
-      title: "System Test Agent",
-      description: "Run automated tests on all data entry flows and monitor pass/fail",
-      href: "/settings/test-agent",
-    },
-    {
-      icon: Clock,
-      title: "Scheduled Jobs",
-      description: "Configure and manage automated scheduled tasks and reminders",
-      href: "/settings/scheduled-jobs",
-    },
-];
+    { icon: Calendar, title: "Financial Year", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
+    { icon: Target, title: "Event Targets", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
+    { icon: Coins, title: "Collection Tins", href: "/settings/collection-tins", color: "text-amber-600 bg-amber-50" },
+    { icon: Store, title: "Shops", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
+    { icon: Palette, title: "Branding", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
+    { icon: Shield, title: "Audit Log", href: "/settings/audit-log", color: "text-slate-600 bg-slate-50" },
+    { icon: FileText, title: "Data Retention", href: "/settings/data-retention", color: "text-violet-600 bg-violet-50" },
+    { icon: Zap, title: "Integrations", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },
+    { icon: Users, title: "Users", href: "/settings/users", color: "text-indigo-600 bg-indigo-50" },
+    { icon: Activity, title: "Test Agent", href: "/settings/test-agent", color: "text-rose-600 bg-rose-50" },
+    { icon: Clock, title: "Scheduled Jobs", href: "/settings/scheduled-jobs", color: "text-cyan-600 bg-cyan-50" },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">
-          Manage your organization's configuration and policies
-        </p>
+        <p className="text-gray-500 mt-1">Manage your organization&apos;s configuration and policies</p>
       </div>
 
-      {/* Current user info */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Current User
-        </h2>
-        <div className="space-y-2">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Name</p>
-            <p className="text-gray-900">{user.name}</p>
+      {/* Top row: Current User + Head Office + Letterhead */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Current User — compact */}
+        <Card className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center">
+              <User className="h-4 w-4 text-teal-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">Current User</h3>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Email</p>
-            <p className="text-gray-900">{user.email}</p>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Name</span>
+              <span className="font-medium text-gray-900">{user.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Email</span>
+              <span className="font-medium text-gray-900 truncate ml-2">{user.email}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Role</span>
+              <Badge className="bg-teal-100 text-teal-800 text-xs">{user.role}</Badge>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Role</p>
-            <p className="text-gray-900">{user.role}</p>
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Head Office */}
-      <Card className="p-6">
-        <HeadOfficeForm
-          currentAddress={settings?.headOfficeAddress || null}
-          lat={settings?.headOfficeLat || null}
-          lng={settings?.headOfficeLng || null}
-        />
-      </Card>
+        {/* Head Office — compact */}
+        <Card className="p-4">
+          <HeadOfficeForm
+            currentAddress={settings?.headOfficeAddress || null}
+            lat={settings?.headOfficeLat || null}
+            lng={settings?.headOfficeLng || null}
+          />
+        </Card>
 
-      {/* Letterhead */}
-      <Card className="p-6">
-        <LetterheadForm currentImage={settings?.letterheadImage || null} />
-      </Card>
+        {/* Letterhead — compact */}
+        <Card className="p-4">
+          <LetterheadForm currentImage={settings?.letterheadImage || null} />
+        </Card>
+      </div>
 
-      {/* Settings sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Settings grid — compact tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         {settingsLinks.map((link) => {
           const Icon = link.icon;
+          const [textColor, bgColor] = link.color.split(" ");
           return (
-            <Card
-              key={link.title}
-              className="p-6 transition-colors hover:bg-gray-50"
-            >
-              <Link href={link.href}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <Icon className="h-6 w-6 text-indigo-600 mt-1" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {link.title}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {link.description}
-                      </p>
-                    </div>
+            <Link key={link.title} href={link.href}>
+              <Card className="p-4 h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer group">
+                <div className="flex flex-col items-center text-center gap-2.5">
+                  <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <Icon className={`h-5 w-5 ${textColor}`} />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 leading-tight">
+                    {link.title}
+                  </span>
                 </div>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
           );
         })}
       </div>
 
-      {/* Help section */}
-      <Card className="p-6 bg-indigo-50 border border-indigo-100">
-        <h2 className="text-lg font-semibold text-indigo-900 mb-2">
-          Need help?
-        </h2>
-        <p className="text-sm text-indigo-800 mb-4">
-          For questions about data retention, GDPR compliance, or account settings,
-          please contact your system administrator.
-        </p>
-      </Card>
+      {/* Help — compact inline */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm">
+        <span className="text-indigo-600 font-medium">Need help?</span>
+        <span className="text-indigo-700">Contact your system administrator for GDPR, data retention, or account queries.</span>
+      </div>
     </div>
   );
 }
