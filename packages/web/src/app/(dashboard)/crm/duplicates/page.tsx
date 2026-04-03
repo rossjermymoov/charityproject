@@ -354,7 +354,7 @@ export default function DuplicatesPage() {
                                   contact
                                 </p>
                               </div>
-                              <Merge2 className="h-4 w-4 text-gray-400 ml-auto" />
+                              <Merge className="h-4 w-4 text-gray-400 ml-auto" />
                             </button>
                           ))}
                         </div>
