@@ -65,10 +65,10 @@ export default async function NewDonationPage() {
     await executeAutomations("DONATION_RECEIVED", {
       contactId: donation.contactId,
       amount: donation.amount,
-      campaignId: donation.campaignId,
+      campaignId: donation.campaignId ?? undefined,
       donationType: donation.type,
       donationId: donation.id,
-      eventId: donation.eventId,
+      eventId: donation.eventId ?? undefined,
     });
 
     revalidatePath("/finance/donations");
