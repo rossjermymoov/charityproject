@@ -17,7 +17,7 @@ import { logAudit } from "@/lib/audit";
 import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
 import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
-import { RelationshipTree } from "@/components/crm/relationship-tree";
+// import { RelationshipTree } from "@/components/crm/relationship-tree";
 
 export default async function ContactDetailPage({
   params,
@@ -1156,58 +1156,22 @@ export default async function ContactDetailPage({
         </Card>
       </div>
 
-      {/* Relationships */}
-      <RelationshipTree
-        contactId={id}
-        relationships={[
-          ...contact.relationshipsFrom.map((rel) => ({
-            id: rel.id,
-            fromContactId: rel.fromContactId,
-            toContactId: rel.toContactId,
-            type: rel.type,
-            description: rel.description,
-            fromContact: {
-              id: contact.id,
-              firstName: contact.firstName,
-              lastName: contact.lastName,
-              email: contact.email,
-              phone: contact.phone,
-            },
-            toContact: {
-              id: rel.toContact.id,
-              firstName: rel.toContact.firstName,
-              lastName: rel.toContact.lastName,
-              email: rel.toContact.email,
-              phone: rel.toContact.phone,
-            },
-          })),
-          ...contact.relationshipsTo.map((rel) => ({
-            id: rel.id,
-            fromContactId: rel.fromContactId,
-            toContactId: rel.toContactId,
-            type: rel.type,
-            description: rel.description,
-            fromContact: {
-              id: rel.fromContact.id,
-              firstName: rel.fromContact.firstName,
-              lastName: rel.fromContact.lastName,
-              email: rel.fromContact.email,
-              phone: rel.fromContact.phone,
-            },
-            toContact: {
-              id: contact.id,
-              firstName: contact.firstName,
-              lastName: contact.lastName,
-              email: contact.email,
-              phone: contact.phone,
-            },
-          })),
-        ]}
-        onAddRelationship={() => {
-          // This would open a dialog in a real implementation
-          // For now, relationships can be added via the API
-        }}
-      />
+      {/* Relationships - temporarily disabled for debugging */}
+      {relationships.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">Relationships ({relationships.length})</h3>
+          </CardHeader>
+          <CardContent>
+            {relationships.map((r) => (
+              <div key={r.id} className="py-2 border-b last:border-0">
+                <span className="font-medium">{r.contact.firstName} {r.contact.lastName}</span>
+                <span className="text-gray-500 ml-2">({r.type})</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
   } catch (err: unknown) {
