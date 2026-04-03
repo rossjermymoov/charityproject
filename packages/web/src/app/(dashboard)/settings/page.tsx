@@ -31,17 +31,17 @@ export default async function SettingsPage() {
   });
 
   const settingsLinks = [
-    { icon: Calendar, title: "Financial Year", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
-    { icon: Target, title: "Event Targets", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
-    { icon: Coins, title: "Collection Tins", href: "/settings/collection-tins", color: "text-amber-600 bg-amber-50" },
-    { icon: Store, title: "Shops", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
-    { icon: Palette, title: "Branding", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
-    { icon: Shield, title: "Audit Log", href: "/settings/audit-log", color: "text-slate-600 bg-slate-50" },
-    { icon: FileText, title: "Data Retention", href: "/settings/data-retention", color: "text-violet-600 bg-violet-50" },
-    { icon: Zap, title: "Integrations", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },
-    { icon: Users, title: "Users", href: "/settings/users", color: "text-indigo-600 bg-indigo-50" },
-    { icon: Activity, title: "Test Agent", href: "/settings/test-agent", color: "text-rose-600 bg-rose-50" },
-    { icon: Clock, title: "Scheduled Jobs", href: "/settings/scheduled-jobs", color: "text-cyan-600 bg-cyan-50" },
+    { icon: Calendar, title: "Financial Year", desc: "Set your organisation's financial year end date for reporting", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
+    { icon: Target, title: "Event Targets", desc: "Set annual income, cost budget, and profit targets for events", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
+    { icon: Coins, title: "Collection Tins", desc: "Configure predefined or AI-suggested collection tin routes", href: "/settings/collection-tins", color: "text-amber-600 bg-amber-50" },
+    { icon: Store, title: "Shops", desc: "Manage shop locations and generate QR codes for Retail Gift Aid", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
+    { icon: Palette, title: "Branding", desc: "White-label with your logo, colours, and organisation name", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
+    { icon: Shield, title: "Audit Log", desc: "Review all system activities and changes", href: "/settings/audit-log", color: "text-slate-600 bg-slate-50" },
+    { icon: FileText, title: "Data Retention", desc: "Manage how long data is kept before archiving or deletion", href: "/settings/data-retention", color: "text-violet-600 bg-violet-50" },
+    { icon: Zap, title: "Integrations", desc: "Email providers, API connections, and third-party services", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },
+    { icon: Users, title: "Users", desc: "Manage user accounts, roles, and permissions", href: "/settings/users", color: "text-indigo-600 bg-indigo-50" },
+    { icon: Activity, title: "Test Agent", desc: "Run automated tests on all data entry flows", href: "/settings/test-agent", color: "text-rose-600 bg-rose-50" },
+    { icon: Clock, title: "Scheduled Jobs", desc: "Configure automated scheduled tasks and reminders", href: "/settings/scheduled-jobs", color: "text-cyan-600 bg-cyan-50" },
   ];
 
   return (
@@ -92,14 +92,14 @@ export default async function SettingsPage() {
         </Card>
       </div>
 
-      {/* Settings grid — compact tiles */}
+      {/* Settings grid — compact tiles with hover descriptions */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         {settingsLinks.map((link) => {
           const Icon = link.icon;
           const [textColor, bgColor] = link.color.split(" ");
           return (
             <Link key={link.title} href={link.href}>
-              <Card className="p-4 h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer group">
+              <Card className="p-4 h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer group relative">
                 <div className="flex flex-col items-center text-center gap-2.5">
                   <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <Icon className={`h-5 w-5 ${textColor}`} />
@@ -107,6 +107,11 @@ export default async function SettingsPage() {
                   <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 leading-tight">
                     {link.title}
                   </span>
+                </div>
+                {/* Tooltip on hover */}
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-10 shadow-lg">
+                  {link.desc}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-900" />
                 </div>
               </Card>
             </Link>
