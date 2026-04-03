@@ -63,7 +63,7 @@ export async function executeAutomations(
         }
 
         // Execute actions
-        const actions = rule.actions as AutomationAction[];
+        const actions = rule.actions as unknown as AutomationAction[];
         for (const action of actions) {
           await executeAction(action, context);
         }

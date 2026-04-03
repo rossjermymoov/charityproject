@@ -328,15 +328,9 @@ async function getEventsReport(
     prisma.event.count({ where }),
     prisma.event.findMany({
       where,
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        status: true,
-        startDate: true,
-        endDate: true,
-        eventAttendees: true,
-        donations: true,
+      include: {
+        _count: { select: { attendees: true } },
+        donations: { select: { amount: true } },
       },
       orderBy: sortBy
         ? { [sortBy]: sortDir }
@@ -346,14 +340,14 @@ async function getEventsReport(
     }),
   ]);
 
-  const data = events.map((event) => ({
+  const data = events.map((event: any) => ({
     name: event.name,
     type: event.type || "",
     status: event.status,
     startDate: event.startDate.toISOString().split("T")[0],
     endDate: event.endDate ? event.endDate.toISOString().split("T")[0] : "",
-    attendeeCount: event.eventAttendees.length,
-    totalIncome: event.donations.reduce((sum, d) => sum + d.amount, 0),
+    attendeeCount: event._count?.attendees || 0,
+    totalIncome: event.donations?.reduce((sum: number, d: any) => sum + d.amount, 0) || 0,
   }));
 
   return { data, total };

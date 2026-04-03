@@ -87,6 +87,10 @@ export async function POST(req: NextRequest) {
     const matched = createdTransactions.filter((t) => t.status === "MATCHED").length;
     const unmatched = createdTransactions.filter((t) => t.status === "UNMATCHED").length;
 
+    if (!reconciliationSession) {
+      return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
+    }
+
     await prisma.reconciliationSession.update({
       where: { id: reconciliationSession.id },
       data: {

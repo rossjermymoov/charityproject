@@ -226,7 +226,7 @@ export async function POST(request: Request) {
               currency: donation.currency,
               date: donation.date,
               donorName: donorFullName || "Unnamed Donor",
-              donorEmail: donation.contact.email,
+              donorEmail: donation.contact.email ?? undefined,
               donationType: donation.type,
               xeroAccountCode: accountCode,
               reference: donation.reference || undefined,

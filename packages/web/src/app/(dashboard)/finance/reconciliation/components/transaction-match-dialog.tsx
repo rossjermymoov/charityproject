@@ -57,17 +57,18 @@ export function TransactionMatchDialog({
   const fetchCandidates = async () => {
     setLoading(true);
     try {
+      if (!transaction) return;
       const response = await fetch('/api/reconciliation/auto-match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: 'temp',
-          transactionIds: [transaction?.id],
+          transactionIds: [transaction.id],
         }),
       });
 
       const data = await response.json();
-      if (data.matches && transaction?.id in data.matches) {
+      if (data.matches && transaction.id in data.matches) {
         setCandidates(data.matches[transaction.id]);
       }
     } catch (error) {

@@ -228,6 +228,12 @@ export interface XeroAPIResponse<T> {
   Id?: string;
   DateTime?: string;
   Items?: T[];
+  // Xero returns results under named keys depending on the endpoint
+  Contacts?: T[];
+  Invoices?: T[];
+  Payments?: T[];
+  Accounts?: T[];
+  Organisations?: T[];
   Exceptions?: XeroException[];
   ValidationErrors?: XeroValidationError[];
 }

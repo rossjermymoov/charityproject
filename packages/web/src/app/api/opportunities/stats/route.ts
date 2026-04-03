@@ -73,11 +73,11 @@ export async function GET(req: NextRequest) {
       totalOpenPipeline: totalPipeline,
       totalWeightedPipeline: totalWeighted,
       countByStage: Object.entries(statsPerStage).reduce(
-        (acc, [stage, stats]: any) => {
+        (acc: Record<string, number>, [stage, stats]: [string, any]) => {
           acc[stage] = stats.count;
           return acc;
         },
-        {}
+        {} as Record<string, number>
       ),
       averageDealSize: opportunities.length > 0
         ? opportunities.reduce((sum, opp) => sum + opp.amount, 0) / opportunities.length

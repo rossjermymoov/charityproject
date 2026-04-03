@@ -138,7 +138,6 @@ const FIELD_LABELS: Record<string, string> = {
   department: "Department",
   skills: "Skills",
   membershipType: "Membership Type",
-  amount: "Amount",
   expiryDate: "Expiry Date",
 };
 
@@ -459,9 +458,9 @@ export default function ReportBuilderPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Filters */}
           <Card>
-            <CardHeader className="cursor-pointer" onClick={() => setExpandedFilters(!expandedFilters)}>
+            <div className="cursor-pointer px-6 py-4 border-b border-gray-100" onClick={() => setExpandedFilters(!expandedFilters)}>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Filters</CardTitle>
+                <h3 className="text-lg font-semibold">Filters</h3>
                 <div className="flex items-center gap-2">
                   {filters.length > 0 && (
                     <Badge variant="secondary">{filters.length}</Badge>
@@ -473,7 +472,7 @@ export default function ReportBuilderPage() {
                   )}
                 </div>
               </div>
-            </CardHeader>
+            </div>
             {expandedFilters && (
               <CardContent className="space-y-3">
                 {filters.map((filter, idx) => (

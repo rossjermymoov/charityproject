@@ -7,8 +7,8 @@ interface MatchCandidate {
   type: "DONATION" | "PAYMENT";
   amount: number;
   date: Date;
-  description?: string;
-  contact?: { id: string; firstName: string; lastName: string };
+  description?: string | null;
+  contact?: { id: string; firstName: string; lastName: string } | null;
   confidence: "HIGH" | "MEDIUM" | "LOW";
 }
 
