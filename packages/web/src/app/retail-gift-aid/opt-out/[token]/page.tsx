@@ -124,12 +124,28 @@ export default async function RetailGiftAidOptOutPage({
 
             <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
               <li>You have not paid enough Income Tax or Capital Gains Tax to cover the Gift Aid claimed</li>
-              <li>Your name or address has changed and you need to update your details</li>
               <li>You no longer wish to Gift Aid proceeds from donated goods</li>
               <li>Any other reason you wish to withdraw from this claim</li>
             </ul>
 
             <OptOutForm token={token} contactName={notification.contactName} />
+
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">Need to update your details?</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                If your name or address has changed, you don&apos;t need to opt out — you can update
+                your details instead so we have the correct information for your Gift Aid declaration.
+              </p>
+              <a
+                href={`/retail-gift-aid/update-details/${token}`}
+                className="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Update my details
+              </a>
+              <p className="text-xs text-gray-500 mt-2">
+                You can also call {charityName} directly to update your details over the phone.
+              </p>
+            </div>
           </div>
         </div>
 

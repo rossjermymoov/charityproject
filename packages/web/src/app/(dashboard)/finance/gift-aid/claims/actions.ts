@@ -53,16 +53,25 @@ export async function createClaim(formData: FormData) {
   const eligibleContactIds = [...new Set(activeDeclarations.map((d) => d.contactId))];
 
   // Find all unclaimed donations from these contacts
+  // For RETAIL claims, only include donations marked as retail (from charity shop EPOS)
+  const donationFilter: Record<string, unknown> = {
+    contactId: { in: eligibleContactIds },
+    giftAidClaimed: false,
+    status: "RECEIVED",
+    type: { notIn: NON_ELIGIBLE_TYPES },
+    date: { gte: periodStart, lte: periodEnd },
+  };
+  if (claimType === "RETAIL") {
+    donationFilter.isRetail = true;
+  } else {
+    // Standard claims should exclude retail donations
+    donationFilter.isRetail = false;
+  }
+
   const eligibleDonations =
     eligibleContactIds.length > 0
       ? await prisma.donation.findMany({
-          where: {
-            contactId: { in: eligibleContactIds },
-            giftAidClaimed: false,
-            status: "RECEIVED",
-            type: { notIn: NON_ELIGIBLE_TYPES },
-            date: { gte: periodStart, lte: periodEnd },
-          },
+          where: donationFilter,
           include: {
             contact: {
               select: {
@@ -299,6 +308,7 @@ export async function sendRetailNotifications(formData: FormData) {
     const charityName = settings?.orgName || "Our Charity";
     const charityNumber = "";
     const charityAddress = settings?.headOfficeAddress || "";
+    const charityPhone = ""; // TODO: add phone field to SystemSettings
 
     const now = new Date();
     const deadline = new Date(now);
@@ -360,6 +370,7 @@ export async function sendRetailNotifications(formData: FormData) {
         charityName,
         charityAddress,
         charityNumber,
+        charityPhone,
         claimReference: claim.claimReference,
         taxYearStart,
         taxYearEnd,

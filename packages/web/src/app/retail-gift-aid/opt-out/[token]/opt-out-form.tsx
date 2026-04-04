@@ -4,8 +4,6 @@ import { useState } from "react";
 
 const OPT_OUT_REASONS = [
   { value: "INSUFFICIENT_TAX", label: "I have not paid enough tax to cover the Gift Aid" },
-  { value: "NAME_CHANGE", label: "My name has changed" },
-  { value: "ADDRESS_CHANGE", label: "My address has changed" },
   { value: "NO_LONGER_WISH", label: "I no longer wish to Gift Aid donated goods" },
   { value: "OTHER", label: "Other reason" },
 ];

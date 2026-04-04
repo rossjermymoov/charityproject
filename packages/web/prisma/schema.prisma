@@ -727,6 +727,7 @@ model Donation {
   eventId        String?
   isGiftAidable  Boolean  @default(false)
   giftAidClaimed Boolean  @default(false)
+  isRetail       Boolean  @default(false) // true for goods sold via charity shops (EPOS)
   notes          String?
   status         String   @default("RECEIVED") // RECEIVED | PENDING | REFUNDED | CANCELLED
   createdById    String

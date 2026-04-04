@@ -157,6 +157,7 @@ export async function GET(request: Request) {
       charityName,
       charityAddress,
       charityNumber,
+      charityPhone: "",
       claimReference: claim.claimReference,
       taxYearStart,
       taxYearEnd,

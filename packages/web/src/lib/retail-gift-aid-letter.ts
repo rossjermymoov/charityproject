@@ -18,6 +18,7 @@ export interface RetailGiftAidLetterData {
   charityName: string;
   charityAddress: string;
   charityNumber: string;
+  charityPhone: string;
   claimReference: string;
   taxYearStart: string; // e.g. "6 April 2025"
   taxYearEnd: string; // e.g. "5 April 2026"
@@ -39,6 +40,7 @@ export function buildRetailGiftAidEmailHtml(
 ): string {
   const optOutUrl = `${APP_URL}/retail-gift-aid/opt-out/${data.optOutToken}`;
   const emailConsentUrl = `${APP_URL}/retail-gift-aid/email-consent/${data.emailConsentToken}`;
+  const updateDetailsUrl = `${APP_URL}/retail-gift-aid/update-details/${data.optOutToken}`;
 
   return `
 <!DOCTYPE html>
@@ -120,8 +122,7 @@ export function buildRetailGiftAidEmailHtml(
                     <p style="margin: 0 0 8px; color: #78350f; font-size: 13px; line-height: 1.5;">
                       If you have not paid enough Income Tax and/or Capital Gains Tax to cover the Gift Aid
                       claimed on all your donations (to all charities and Community Amateur Sports Clubs) in
-                      the tax year, it is your responsibility to pay any difference. If your circumstances
-                      have changed — for example your name, address, or tax status — please let us know.
+                      the tax year, it is your responsibility to pay any difference.
                     </p>
                     <p style="margin: 0; color: #78350f; font-size: 13px; line-height: 1.5;">
                       <strong>You have until ${data.notificationDeadline}</strong> (28 days from this notification)
@@ -145,6 +146,30 @@ export function buildRetailGiftAidEmailHtml(
               <p style="margin: 0 0 24px; color: #6B7280; font-size: 13px; text-align: center;">
                 Only use this if you need to opt out. No action is needed if everything is correct.
               </p>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr><td style="border-top: 1px solid #e5e7eb;"></td></tr>
+              </table>
+
+              <!-- Update Details Section -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0 0 8px; color: #1e40af; font-size: 14px; font-weight: 600;">Has your name or address changed?</p>
+                    <p style="margin: 0 0 12px; color: #1e3a5f; font-size: 13px; line-height: 1.5;">
+                      If your name or address has changed since your Gift Aid declaration, please update
+                      your details so your declaration remains valid. You do not need to opt out for this.
+                    </p>
+                    <a href="${updateDetailsUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                      Update my details
+                    </a>
+                    <p style="margin: 8px 0 0; color: #6b7280; font-size: 12px;">
+                      You can also call us${data.charityPhone ? ` on ${data.charityPhone}` : ""} to update your details over the phone.
+                    </p>
+                  </td>
+                </tr>
+              </table>
 
               ${
                 !data.hasEmail
@@ -204,6 +229,7 @@ export function buildRetailGiftAidLetterText(
 ): string {
   const optOutUrl = `${APP_URL}/retail-gift-aid/opt-out/${data.optOutToken}`;
   const emailConsentUrl = `${APP_URL}/retail-gift-aid/email-consent/${data.emailConsentToken}`;
+  const updateDetailsUrl = `${APP_URL}/retail-gift-aid/update-details/${data.optOutToken}`;
 
   return `${data.charityName}
 ${data.charityAddress || ""}
@@ -230,14 +256,19 @@ Number of donations: ${data.donationCount}
 IMPORTANT INFORMATION
 If you have not paid enough Income Tax and/or Capital Gains Tax to cover the Gift Aid claimed on all your donations (to all charities and Community Amateur Sports Clubs) in the tax year, it is your responsibility to pay any difference.
 
-If your circumstances have changed — for example your name, address, or tax status — please let us know.
-
 You have until ${data.notificationDeadline} (28 days from this notification) to opt out of this claim if you wish.
 
 TO OPT OUT
 Visit: ${optOutUrl}
 
 Or contact us directly to let us know.
+
+HAS YOUR NAME OR ADDRESS CHANGED?
+If your name or address has changed, you do not need to opt out — simply update your details so your Gift Aid declaration remains valid.
+
+Visit: ${updateDetailsUrl}
+
+You can also call us${data.charityPhone ? ` on ${data.charityPhone}` : ""} to update your details over the phone.
 
 GO PAPERLESS
 Help us save on printing and postage costs by switching to email notifications for future Gift Aid claims. Every penny saved goes directly to our charitable work.
