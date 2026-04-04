@@ -137,6 +137,9 @@ export default async function GiftAidClaimsPage({
                     Reference
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Period
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -168,6 +171,15 @@ export default async function GiftAidClaimsPage({
                       </Link>
                       {claim.isTestMode && (
                         <FlaskConical className="h-3 w-3 text-amber-500 inline ml-2" />
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      {claim.notes === "RETAIL" ? (
+                        <Badge className="bg-purple-100 text-purple-800 text-xs">Retail</Badge>
+                      ) : claim.notes === "STANDARD" ? (
+                        <Badge className="bg-indigo-100 text-indigo-800 text-xs">Standard</Badge>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-600">

@@ -26,6 +26,7 @@ interface ClaimableTableProps {
   claimReference: string;
   periodStart: string;
   periodEnd: string;
+  claimType: "STANDARD" | "RETAIL";
   createAction: (formData: FormData) => Promise<void>;
 }
 
@@ -34,6 +35,7 @@ export function ClaimableTable({
   claimReference,
   periodStart,
   periodEnd,
+  claimType,
   createAction,
 }: ClaimableTableProps) {
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
@@ -279,6 +281,7 @@ export function ClaimableTable({
             <input type="hidden" name="reference" value={claimReference} />
             <input type="hidden" name="periodStart" value={periodStart} />
             <input type="hidden" name="periodEnd" value={periodEnd} />
+            <input type="hidden" name="claimType" value={claimType} />
             <input
               type="hidden"
               name="excludedIds"

@@ -163,14 +163,26 @@ export default async function DashboardPage({
       }),
 
       // ── Static: Gift Aid (unclaimed to date) ─────────────
+      // Count active declarations
       prisma.giftAid.count({ where: { status: "ACTIVE" } }),
-      prisma.donation.aggregate({
-        _sum: { amount: true },
-        where: {
-          isGiftAidable: true,
-          giftAidClaimed: false,
-          status: "RECEIVED",
-        },
+      // Find unclaimed donation total from contacts with active declarations
+      // First get contact IDs, then aggregate their donations
+      prisma.giftAid.findMany({
+        where: { status: "ACTIVE" },
+        select: { contactId: true },
+        distinct: ["contactId"],
+      }).then(async (decls) => {
+        const contactIds = decls.map((d) => d.contactId);
+        if (contactIds.length === 0) return { _sum: { amount: 0 } };
+        return prisma.donation.aggregate({
+          _sum: { amount: true },
+          where: {
+            contactId: { in: contactIds },
+            giftAidClaimed: false,
+            status: "RECEIVED",
+            type: { notIn: ["IN_KIND", "GRANT", "LEGACY"] },
+          },
+        });
       }),
 
       // ── Date-filtered: Volunteer hours in range ──────────

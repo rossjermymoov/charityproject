@@ -7,9 +7,13 @@ import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { calculateGiftAid, isValidUKPostcode, buildGovTalkXml } from "@/lib/hmrc";
 
+// Donation types NOT eligible for Gift Aid
+const NON_ELIGIBLE_TYPES = ["IN_KIND", "GRANT", "LEGACY"];
+
 /**
  * Create a new Gift Aid claim with eligible donations.
- * Supports excluding specific donation IDs and test mode.
+ * Eligibility: contact has an active declaration of the claim type,
+ * donation is received, not already claimed, and is an eligible type.
  */
 export async function createClaim(formData: FormData) {
   const session = await requireAuth();
@@ -17,55 +21,59 @@ export async function createClaim(formData: FormData) {
   const reference = (formData.get("reference") as string) || "";
   const periodStartStr = formData.get("periodStart") as string;
   const periodEndStr = formData.get("periodEnd") as string;
+  const claimType = (formData.get("claimType") as string) || "STANDARD";
   const excludedIdsJson = formData.get("excludedIds") as string;
   const isTestMode = formData.get("isTestMode") === "true";
 
   if (!periodStartStr || !periodEndStr) {
-    redirect("/finance/gift-aid/claims/new?error=missing-dates");
+    redirect(`/finance/gift-aid/claims/new?type=${claimType}&error=missing-dates`);
   }
 
   const periodStart = new Date(periodStartStr);
   const periodEnd = new Date(periodEndStr + "T23:59:59.999Z");
   const excludedIds: string[] = excludedIdsJson ? JSON.parse(excludedIdsJson) : [];
 
-  // Find eligible donations
-  const eligibleDonations = await prisma.donation.findMany({
+  // Find contacts with active declarations of this type
+  const activeDeclarations = await prisma.giftAid.findMany({
     where: {
-      AND: [
-        { isGiftAidable: true },
-        { giftAidClaimed: false },
-        { status: "RECEIVED" },
-        { date: { gte: periodStart } },
-        { date: { lte: periodEnd } },
-        {
-          contact: {
-            giftAids: {
-              some: {
-                status: "ACTIVE",
-                startDate: { lte: periodEnd },
-                OR: [{ endDate: null }, { endDate: { gte: periodStart } }],
+      status: "ACTIVE",
+      type: claimType,
+      startDate: { lte: periodEnd },
+      OR: [{ endDate: null }, { endDate: { gte: periodStart } }],
+    },
+    select: { contactId: true },
+  });
+
+  const eligibleContactIds = [...new Set(activeDeclarations.map((d) => d.contactId))];
+
+  // Find all unclaimed donations from these contacts
+  const eligibleDonations =
+    eligibleContactIds.length > 0
+      ? await prisma.donation.findMany({
+          where: {
+            contactId: { in: eligibleContactIds },
+            giftAidClaimed: false,
+            status: "RECEIVED",
+            type: { notIn: NON_ELIGIBLE_TYPES },
+            date: { gte: periodStart, lte: periodEnd },
+          },
+          include: {
+            contact: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                postcode: true,
+                addressLine1: true,
+                city: true,
               },
             },
           },
-        },
-      ],
-    },
-    include: {
-      contact: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          postcode: true,
-          addressLine1: true,
-          city: true,
-        },
-      },
-    },
-  });
+        })
+      : [];
 
   if (eligibleDonations.length === 0) {
-    redirect("/finance/gift-aid/claims/new?error=no-eligible-donations");
+    redirect(`/finance/gift-aid/claims/new?type=${claimType}&error=no-eligible-donations`);
   }
 
   // Calculate totals only for included items
@@ -120,7 +128,7 @@ export async function createClaim(formData: FormData) {
     };
   });
 
-  // Create claim with items
+  // Create claim with items (store claim type in notes for filtering)
   const claim = await prisma.giftAidClaim.create({
     data: {
       claimReference: reference,
@@ -131,6 +139,7 @@ export async function createClaim(formData: FormData) {
       totalClaimable,
       donationCount: includedCount,
       isTestMode,
+      notes: claimType, // STANDARD or RETAIL
       createdById: session.id,
       items: {
         createMany: { data: items },
@@ -157,6 +166,7 @@ export async function createClaim(formData: FormData) {
     entityId: claim.id,
     details: {
       reference: claim.claimReference,
+      claimType,
       donationCount: includedCount,
       excludedCount: excludedIds.length,
       totalClaimable: claim.totalClaimable,

@@ -111,6 +111,11 @@ export default async function GiftAidClaimDetailPage({
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{claim.claimReference}</h1>
               <Badge className={statusColors[claim.status]}>{claim.status}</Badge>
+              {claim.notes === "RETAIL" ? (
+                <Badge className="bg-purple-100 text-purple-800">Retail</Badge>
+              ) : claim.notes === "STANDARD" ? (
+                <Badge className="bg-indigo-100 text-indigo-800">Standard</Badge>
+              ) : null}
               {claim.isTestMode && (
                 <Badge className="bg-amber-100 text-amber-800">
                   <FlaskConical className="h-3 w-3 mr-1 inline" />
