@@ -258,176 +258,182 @@ export async function sendRetailNotifications(formData: FormData) {
   const session = await requireAuth();
   const claimId = formData.get("claimId") as string;
 
-  const claim = await prisma.giftAidClaim.findUnique({
-    where: { id: claimId },
-    include: {
-      items: {
-        where: { status: "INCLUDED" },
-        select: { contactId: true, donationAmount: true, giftAidAmount: true },
-      },
-    },
-  });
-
-  if (!claim || claim.status !== "DRAFT" || (claim.claimType || claim.notes) !== "RETAIL") return;
-
-  // Get unique contacts with their details
-  const contactIds = [...new Set(claim.items.map((i) => i.contactId))];
-  const contacts = await prisma.contact.findMany({
-    where: { id: { in: contactIds } },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      addressLine1: true,
-      addressLine2: true,
-      city: true,
-      postcode: true,
-      consentEmail: true,
-    },
-  });
-
-  const settings = await prisma.systemSettings.findUnique({
-    where: { id: "default" },
-    select: {
-      orgName: true,
-      headOfficeAddress: true,
-    },
-  });
-
-  const charityName = settings?.orgName || "Our Charity";
-  const charityNumber = "";
-  const charityAddress = settings?.headOfficeAddress || "";
-
-  const now = new Date();
-  const deadline = new Date(now);
-  deadline.setDate(deadline.getDate() + 28);
-
-  const taxYearStart = new Date(claim.periodStart).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const taxYearEnd = new Date(claim.periodEnd).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const deadlineStr = deadline.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  let emailsSent = 0;
-  let postalNeeded = 0;
-
-  for (const contact of contacts) {
-    const contactName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
-    const contactAddress = [
-      contact.addressLine1,
-      contact.addressLine2,
-      contact.city,
-      contact.postcode,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    // Calculate this contact's totals
-    const contactItems = claim.items.filter((i) => i.contactId === contact.id);
-    const totalProceeds = contactItems.reduce((s, i) => s + i.donationAmount, 0);
-    const giftAidAmount = contactItems.reduce((s, i) => s + i.giftAidAmount, 0);
-
-    const hasEmail = !!contact.email;
-    const method = hasEmail ? "EMAIL" : "POST";
-
-    // Create notification record with unique token
-    const notification = await prisma.retailGiftAidNotification.create({
-      data: {
-        claimId: claim.id,
-        contactId: contact.id,
-        contactName,
-        contactEmail: contact.email,
-        method,
-        status: "PENDING",
+  try {
+    const claim = await prisma.giftAidClaim.findUnique({
+      where: { id: claimId },
+      include: {
+        items: {
+          where: { status: "INCLUDED" },
+          select: { contactId: true, donationAmount: true, giftAidAmount: true },
+        },
       },
     });
 
-    const letterData: RetailGiftAidLetterData = {
-      contactName,
-      contactAddress,
-      charityName,
-      charityAddress,
-      charityNumber,
-      claimReference: claim.claimReference,
-      taxYearStart,
-      taxYearEnd,
-      totalProceeds: formatCurrency(totalProceeds),
-      giftAidClaimed: formatCurrency(giftAidAmount),
-      donationCount: contactItems.length,
-      optOutToken: notification.token,
-      emailConsentToken: notification.token,
-      notificationDeadline: deadlineStr,
-      hasEmail,
-    };
+    if (!claim || claim.status !== "DRAFT" || (claim.claimType || claim.notes) !== "RETAIL") return;
 
-    if (hasEmail && contact.email) {
-      // Send HTML email
-      try {
-        const html = buildRetailGiftAidEmailHtml(letterData);
-        const sent = await sendEmail({
-          to: contact.email,
-          subject: `Retail Gift Aid Notification — ${charityName} (${claim.claimReference})`,
-          html,
-        });
+    // Get unique contacts with their details
+    const contactIds = [...new Set(claim.items.map((i) => i.contactId))];
+    const contacts = await prisma.contact.findMany({
+      where: { id: { in: contactIds } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        postcode: true,
+        consentEmail: true,
+      },
+    });
 
-        await prisma.retailGiftAidNotification.update({
-          where: { id: notification.id },
-          data: {
-            status: sent ? "SENT" : "FAILED",
-            sentAt: sent ? new Date() : undefined,
-          },
-        });
+    const settings = await prisma.systemSettings.findUnique({
+      where: { id: "default" },
+      select: {
+        orgName: true,
+        headOfficeAddress: true,
+      },
+    });
 
-        if (sent) emailsSent++;
-      } catch {
-        await prisma.retailGiftAidNotification.update({
-          where: { id: notification.id },
-          data: { status: "FAILED" },
-        });
+    const charityName = settings?.orgName || "Our Charity";
+    const charityNumber = "";
+    const charityAddress = settings?.headOfficeAddress || "";
+
+    const now = new Date();
+    const deadline = new Date(now);
+    deadline.setDate(deadline.getDate() + 28);
+
+    const taxYearStart = new Date(claim.periodStart).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const taxYearEnd = new Date(claim.periodEnd).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const deadlineStr = deadline.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    let emailsSent = 0;
+    let postalNeeded = 0;
+
+    for (const contact of contacts) {
+      const contactName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
+      const contactAddress = [
+        contact.addressLine1,
+        contact.addressLine2,
+        contact.city,
+        contact.postcode,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      // Calculate this contact's totals
+      const contactItems = claim.items.filter((i) => i.contactId === contact.id);
+      const totalProceeds = contactItems.reduce((s, i) => s + i.donationAmount, 0);
+      const giftAidAmount = contactItems.reduce((s, i) => s + i.giftAidAmount, 0);
+
+      const hasEmail = !!contact.email;
+      const method = hasEmail ? "EMAIL" : "POST";
+
+      // Create notification record with unique token
+      const notification = await prisma.retailGiftAidNotification.create({
+        data: {
+          claimId: claim.id,
+          contactId: contact.id,
+          contactName,
+          contactEmail: contact.email,
+          method,
+          status: "PENDING",
+        },
+      });
+
+      const letterData: RetailGiftAidLetterData = {
+        contactName,
+        contactAddress,
+        charityName,
+        charityAddress,
+        charityNumber,
+        claimReference: claim.claimReference,
+        taxYearStart,
+        taxYearEnd,
+        totalProceeds: formatCurrency(totalProceeds),
+        giftAidClaimed: formatCurrency(giftAidAmount),
+        donationCount: contactItems.length,
+        optOutToken: notification.token,
+        emailConsentToken: notification.token,
+        notificationDeadline: deadlineStr,
+        hasEmail,
+      };
+
+      if (hasEmail && contact.email) {
+        // Send HTML email
+        try {
+          const html = buildRetailGiftAidEmailHtml(letterData);
+          const sent = await sendEmail({
+            to: contact.email,
+            subject: `Retail Gift Aid Notification — ${charityName} (${claim.claimReference})`,
+            html,
+          });
+
+          await prisma.retailGiftAidNotification.update({
+            where: { id: notification.id },
+            data: {
+              status: sent ? "SENT" : "FAILED",
+              sentAt: sent ? new Date() : undefined,
+            },
+          });
+
+          if (sent) emailsSent++;
+        } catch {
+          await prisma.retailGiftAidNotification.update({
+            where: { id: notification.id },
+            data: { status: "FAILED" },
+          });
+        }
+      } else {
+        // Mark as POST — PDF will be generated separately
+        postalNeeded++;
       }
-    } else {
-      // Mark as POST — PDF will be generated separately
-      postalNeeded++;
     }
+
+    // Update claim status and set deadline
+    await prisma.giftAidClaim.update({
+      where: { id: claimId },
+      data: {
+        status: "NOTIFICATIONS_SENT",
+        notificationsSentAt: now,
+        notificationDeadline: deadline,
+        notificationsSentById: session.id,
+      },
+    });
+
+    await logAudit({
+      userId: session.id,
+      action: "UPDATE",
+      entityType: "GiftAidClaim",
+      entityId: claimId,
+      details: {
+        action: "send_retail_notifications",
+        emailsSent,
+        postalNeeded,
+        totalContacts: contacts.length,
+        deadline: deadline.toISOString(),
+      },
+    });
+
+    revalidatePath(`/finance/gift-aid/claims/${claimId}`);
+  } catch (error) {
+    console.error("sendRetailNotifications error:", error);
+    redirect(`/finance/gift-aid/claims/${claimId}?error=notification-failed&msg=${encodeURIComponent(String(error))}`);
   }
 
-  // Update claim status and set deadline
-  await prisma.giftAidClaim.update({
-    where: { id: claimId },
-    data: {
-      status: "NOTIFICATIONS_SENT",
-      notificationsSentAt: now,
-      notificationDeadline: deadline,
-      notificationsSentById: session.id,
-    },
-  });
-
-  await logAudit({
-    userId: session.id,
-    action: "UPDATE",
-    entityType: "GiftAidClaim",
-    entityId: claimId,
-    details: {
-      action: "send_retail_notifications",
-      emailsSent,
-      postalNeeded,
-      totalContacts: contacts.length,
-      deadline: deadline.toISOString(),
-    },
-  });
-
-  revalidatePath(`/finance/gift-aid/claims/${claimId}`);
   redirect(`/finance/gift-aid/claims/${claimId}`);
 }
 

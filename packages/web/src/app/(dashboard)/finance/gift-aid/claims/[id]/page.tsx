@@ -39,7 +39,7 @@ export default async function GiftAidClaimDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; status?: string }>;
+  searchParams: Promise<{ error?: string; status?: string; msg?: string }>;
 }) {
   await requireAuth();
   const { id } = await params;
@@ -165,6 +165,18 @@ export default async function GiftAidClaimDetailPage({
       </div>
 
       {/* Error messages */}
+      {sp.error === "notification-failed" && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-red-900">Failed to send notifications</p>
+            <p className="text-red-700 text-sm mt-1">
+              An error occurred while sending notifications. Please try again or contact support.
+              {sp.msg && <span className="block text-xs text-red-500 mt-1 font-mono">{decodeURIComponent(sp.msg)}</span>}
+            </p>
+          </div>
+        </div>
+      )}
       {sp.error === "deadline-not-passed" && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
