@@ -326,14 +326,6 @@ export default async function DashboardPage({
   const tinCollections = filteredTinCollections._sum.amount || 0;
 
   // ── Range label for filtered cards ────────────────────────
-  const rangeLabels: Record<string, string> = {
-    "7d": "last 7 days",
-    "30d": "last 30 days",
-    ytd: "this year",
-    custom: `${params.from || ""} – ${params.to || ""}`,
-  };
-  const rangeLabel = rangeLabels[range] || "this year";
-
   return (
     <div className="space-y-6">
       {/* Header with date filter */}
@@ -367,7 +359,7 @@ export default async function DashboardPage({
           title={`Volunteer Hours`}
           value={`${totalVolunteerHours.toFixed(0)} hrs`}
           icon={Clock}
-          trend={`${activeVolunteers} active · ${rangeLabel}`}
+          trend={`${activeVolunteers} active volunteers`}
           trendUp={true}
           href="/volunteers/hours"
         />
@@ -375,7 +367,7 @@ export default async function DashboardPage({
           title={`Tin Collections`}
           value={`£${tinCollections.toFixed(2)}`}
           icon={Package}
-          trend={`${deployedTins}/${totalTins} deployed · ${rangeLabel}`}
+          trend={`${deployedTins}/${totalTins} deployed`}
           trendUp={true}
           href="/finance/collection-tins"
         />
