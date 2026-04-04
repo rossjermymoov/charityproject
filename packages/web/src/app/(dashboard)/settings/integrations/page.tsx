@@ -138,17 +138,6 @@ function FacebookLogo({ className }: { className?: string }) {
   );
 }
 
-function WooCommerceLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="10" fill="#96588A" />
-      <path d="M14 20c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z" fill="#fff" />
-      <path d="M30 20c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z" fill="#fff" />
-      <path d="M16 30c0 2 1 4 2.5 4.5M30 30c0 2-1 4-2.5 4.5" stroke="#fff" strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
-
 function BIConnectorLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -318,14 +307,6 @@ export default async function IntegrationsPage() {
       href: "/settings/integrations/xero",
       status: "not configured",
       category: "Accounting & Finance",
-    },
-    {
-      logo: WooCommerceLogo,
-      title: "WooCommerce & Shopify",
-      description: "Sync online store orders and track product-based fundraising",
-      href: "/settings/integrations/ecommerce",
-      status: "not configured",
-      category: "E-commerce",
     },
     {
       logo: BIConnectorLogo,
