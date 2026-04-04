@@ -129,6 +129,7 @@ const sections: NavSection[] = [
       { name: "Renewal Dashboard", href: "/finance/memberships/renewals", icon: RefreshCw },
       { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
       { name: "Gift Aid Claims", href: "/finance/gift-aid/claims", icon: FileText },
+      { name: "Retail Gift Aid", href: "/finance/retail-gift-aid", icon: Package },
       { name: "Grants", href: "/finance/grants", icon: Landmark },
       { name: "Partnerships", href: "/finance/partnerships", icon: Handshake },
       { name: "Pledges", href: "/finance/pledges", icon: PoundSterling },
