@@ -268,7 +268,7 @@ export async function sendRetailNotifications(formData: FormData) {
     },
   });
 
-  if (!claim || claim.status !== "DRAFT" || claim.claimType !== "RETAIL") return;
+  if (!claim || claim.status !== "DRAFT" || (claim.claimType || claim.notes) !== "RETAIL") return;
 
   // Get unique contacts with their details
   const contactIds = [...new Set(claim.items.map((i) => i.contactId))];
@@ -459,7 +459,7 @@ export async function markClaimReady(formData: FormData) {
 
   // Standard claims: DRAFT → READY
   // Retail claims: NOTIFICATIONS_SENT → READY (with 28-day check)
-  if (claim.claimType === "RETAIL") {
+  if ((claim.claimType || claim.notes) === "RETAIL") {
     if (claim.status !== "NOTIFICATIONS_SENT") return;
 
     // Hard block: 28 days must have passed

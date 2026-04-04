@@ -59,7 +59,8 @@ export default async function GiftAidClaimDetailPage({
 
   if (!claim) notFound();
 
-  const isRetail = claim.claimType === "RETAIL";
+  // Use claimType column, fall back to notes for backward compat
+  const isRetail = (claim.claimType || claim.notes) === "RETAIL";
 
   // Get audit trail
   const auditLogs = await prisma.auditLog.findMany({
