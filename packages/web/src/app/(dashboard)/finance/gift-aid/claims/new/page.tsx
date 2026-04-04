@@ -1,22 +1,36 @@
 import { requireAuth } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Plus } from "lucide-react";
-import { getNextClaimReference } from "@/lib/hmrc";
+import { ArrowLeft, Info } from "lucide-react";
+import { getNextClaimReference, calculateGiftAid, isValidUKPostcode } from "@/lib/hmrc";
 import { createClaim } from "../actions";
+import { ClaimableTable } from "./claimable-table";
 
 export default async function NewGiftAidClaimPage() {
-  await requireAuth();
+  const session = await requireAuth();
 
   const now = new Date();
   const currentYear = now.getFullYear();
-  const defaultPeriodStart = new Date(currentYear, 3, 1); // 1 April (UK tax year)
-  const defaultPeriodEnd = new Date(currentYear, now.getMonth(), now.getDate());
 
-  // Get count of claims in current year for reference generation
+  // Get the last submitted/accepted claim to determine period start
+  const lastClaim = await prisma.giftAidClaim.findFirst({
+    where: {
+      status: { in: ["SUBMITTED", "ACCEPTED", "PARTIAL"] },
+    },
+    orderBy: { periodEnd: "desc" },
+  });
+
+  // Default period: day after last claim's end, or start of current tax year
+  const defaultStart = lastClaim
+    ? new Date(new Date(lastClaim.periodEnd).getTime() + 86400000)
+    : new Date(currentYear, 0, 1); // Jan 1 if no previous claim
+  const defaultEnd = now;
+
+  const periodStart = defaultStart.toISOString().split("T")[0];
+  const periodEnd = defaultEnd.toISOString().split("T")[0];
+
+  // Count claims in year for reference generation
   const claimsInYear = await prisma.giftAidClaim.count({
     where: {
       createdAt: {
@@ -25,25 +39,72 @@ export default async function NewGiftAidClaimPage() {
       },
     },
   });
-
   const nextReference = getNextClaimReference(currentYear, claimsInYear);
 
+  // Find all eligible donations (gift-aidable, not already claimed, with active declaration)
+  const eligibleDonations = await prisma.donation.findMany({
+    where: {
+      AND: [
+        { isGiftAidable: true },
+        { giftAidClaimed: false },
+        { status: "RECEIVED" },
+        { date: { gte: defaultStart } },
+        { date: { lte: defaultEnd } },
+        {
+          contact: {
+            giftAids: {
+              some: {
+                status: "ACTIVE",
+                startDate: { lte: defaultEnd },
+                OR: [
+                  { endDate: null },
+                  { endDate: { gte: defaultStart } },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+    include: {
+      contact: {
+        select: {
+          firstName: true,
+          lastName: true,
+          postcode: true,
+          addressLine1: true,
+          city: true,
+        },
+      },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  // Map to client-safe format
+  const donations = eligibleDonations.map((d) => ({
+    id: d.id,
+    contactId: d.contactId,
+    contactName: `${d.contact.firstName || ""} ${d.contact.lastName || ""}`.trim(),
+    postcode: d.contact.postcode,
+    amount: d.amount,
+    date: d.date.toISOString(),
+    type: d.type,
+    method: d.method,
+    reference: d.reference,
+    giftAidAmount: calculateGiftAid(d.amount),
+    hasValidPostcode: d.contact.postcode ? isValidUKPostcode(d.contact.postcode) : false,
+  }));
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <Link href="/finance" className="hover:text-gray-700">
-            Finance
-          </Link>
+          <Link href="/finance" className="hover:text-gray-700">Finance</Link>
           <span>/</span>
-          <Link href="/finance/gift-aid" className="hover:text-gray-700">
-            Gift Aid
-          </Link>
+          <Link href="/finance/gift-aid" className="hover:text-gray-700">Gift Aid</Link>
           <span>/</span>
-          <Link href="/finance/gift-aid/claims" className="hover:text-gray-700">
-            Claims
-          </Link>
+          <Link href="/finance/gift-aid/claims" className="hover:text-gray-700">Claims</Link>
           <span>/</span>
           <span>New Claim</span>
         </div>
@@ -52,101 +113,45 @@ export default async function NewGiftAidClaimPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">New Gift Aid Claim</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              New Gift Aid Claim — {nextReference}
+            </h1>
             <p className="text-gray-500 mt-1">
-              Create a new claim and find eligible donations
+              {lastClaim
+                ? `Covering donations since ${new Date(lastClaim.periodEnd).toLocaleDateString("en-GB")}`
+                : "Covering all unclaimed eligible donations this year"}
+              {" · "}
+              {donations.length} eligible donation{donations.length !== 1 ? "s" : ""} found
             </p>
           </div>
         </div>
       </div>
 
-      {/* Create Claim Form */}
-      <Card>
-        <CardContent className="pt-6">
-          <form action={createClaim} className="space-y-6">
-            {/* Auto-generated Reference */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Claim Reference
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <code className="font-mono font-bold text-lg text-gray-900">
-                  {nextReference}
-                </code>
-              </div>
-              <input type="hidden" name="reference" value={nextReference} />
-              <p className="text-xs text-gray-500 mt-2">
-                Auto-generated in the format GA-YYYY-NNN
+      {donations.length === 0 ? (
+        <Card className="border-gray-200">
+          <CardContent className="pt-6 pb-6">
+            <div className="text-center py-8">
+              <Info className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No eligible donations found
+              </h3>
+              <p className="text-gray-500 max-w-md mx-auto text-sm">
+                There are no unclaimed gift-aidable donations from donors with active
+                declarations in the period {new Date(periodStart).toLocaleDateString("en-GB")}{" "}
+                to {new Date(periodEnd).toLocaleDateString("en-GB")}.
               </p>
             </div>
-
-            {/* Period Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Period Start"
-                name="periodStart"
-                type="date"
-                defaultValue={defaultPeriodStart.toISOString().split("T")[0]}
-                required
-              />
-              <Input
-                label="Period End"
-                name="periodEnd"
-                type="date"
-                defaultValue={defaultPeriodEnd.toISOString().split("T")[0]}
-                required
-              />
-            </div>
-
-            {/* Submit */}
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Link href="/finance/gift-aid/claims">
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 gap-1">
-                <Plus className="h-4 w-4" /> Create Claim
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Information */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            <div className="flex gap-3">
-              <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-blue-900">How to create a claim:</p>
-                <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1 mt-2">
-                  <li>Set the period start and end dates</li>
-                  <li>Click "Create Claim" to generate the reference</li>
-                  <li>
-                    The system will automatically find all eligible donations in that period
-                  </li>
-                  <li>
-                    Review the eligible donations and make any adjustments if needed
-                  </li>
-                  <li>Mark as "Ready" to prepare for submission</li>
-                  <li>Submit to HMRC when you're ready</li>
-                </ol>
-              </div>
-            </div>
-            <div className="text-xs text-blue-800 pt-3 border-t border-blue-200">
-              <p className="font-medium mb-1">Eligible donations must have:</p>
-              <ul className="list-disc list-inside space-y-0.5">
-                <li>isGiftAidable = true</li>
-                <li>Donation date within the selected period</li>
-                <li>Donor with an active Gift Aid declaration</li>
-                <li>Not already included in another claim</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <ClaimableTable
+          donations={donations}
+          claimReference={nextReference}
+          periodStart={periodStart}
+          periodEnd={periodEnd}
+          createAction={createClaim}
+        />
+      )}
     </div>
   );
 }

@@ -138,6 +138,7 @@ model User {
   casesCreated            CaseRecord[]     @relation("CaseCreatedBy")
   casesAssigned           CaseRecord[]     @relation("CaseAssignedTo")
   giftAidClaimsCreated    GiftAidClaim[]   @relation("GiftAidClaimCreatedBy")
+  giftAidClaimsSubmitted  GiftAidClaim[]   @relation("GiftAidClaimSubmittedBy")
   shopsCreated            Shop[]           @relation("ShopCreatedBy")
   routesCreated          CollectionRoute[]    @relation("RouteCreatedBy")
   runsCreated            CollectionRun[]      @relation("RunCreatedBy")
@@ -1931,13 +1932,16 @@ model GiftAidClaim {
   submissionXml   String?   // Stored XML for audit
   responseXml     String?   // HMRC response XML
   gasdsAmount     Float?    // Small Donations Scheme amount if applicable
+  isTestMode      Boolean   @default(false) // true = test submission, not sent to real HMRC
+  submittedById   String?   // User who submitted to HMRC
   notes           String?
   createdById     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  createdBy User             @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
-  items     GiftAidClaimItem[]
+  createdBy   User              @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy User?             @relation("GiftAidClaimSubmittedBy", fields: [submittedById], references: [id])
+  items       GiftAidClaimItem[]
 
   @@index([status])
 }

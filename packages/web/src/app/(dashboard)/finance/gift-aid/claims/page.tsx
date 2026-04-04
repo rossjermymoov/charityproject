@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
-import { Plus, FileText } from "lucide-react";
-import { formatDate } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
+import { Plus, FileText, FlaskConical } from "lucide-react";
+import { formatDate, formatCurrency } from "@/lib/utils";
 
 export default async function GiftAidClaimsPage({
   searchParams,
@@ -23,6 +22,7 @@ export default async function GiftAidClaimsPage({
     include: {
       items: true,
       createdBy: { select: { name: true } },
+      submittedBy: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -36,19 +36,24 @@ export default async function GiftAidClaimsPage({
     PARTIAL: "bg-orange-100 text-orange-800",
   };
 
+  // Summary stats
+  const totalClaims = claims.length;
+  const totalClaimed = claims
+    .filter((c) => c.status === "ACCEPTED")
+    .reduce((sum, c) => sum + (c.amountReceived || c.totalClaimable), 0);
+  const pendingAmount = claims
+    .filter((c) => ["DRAFT", "READY", "SUBMITTED"].includes(c.status))
+    .reduce((sum, c) => sum + c.totalClaimable, 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <Link href="/finance" className="hover:text-gray-700">
-              Finance
-            </Link>
+            <Link href="/finance" className="hover:text-gray-700">Finance</Link>
             <span>/</span>
-            <Link href="/finance/gift-aid" className="hover:text-gray-700">
-              Gift Aid
-            </Link>
+            <Link href="/finance/gift-aid" className="hover:text-gray-700">Gift Aid</Link>
             <span>/</span>
             <span>Claims</span>
           </div>
@@ -64,6 +69,24 @@ export default async function GiftAidClaimsPage({
         </Link>
       </div>
 
+      {/* Summary */}
+      {claims.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4">
+            <p className="text-xs font-medium text-gray-500 uppercase">Total Claims</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{totalClaims}</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs font-medium text-gray-500 uppercase">Total Claimed (Accepted)</p>
+            <p className="text-2xl font-bold text-green-600 mt-1">{formatCurrency(totalClaimed)}</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs font-medium text-gray-500 uppercase">Pending / In Progress</p>
+            <p className="text-2xl font-bold text-indigo-600 mt-1">{formatCurrency(pendingAmount)}</p>
+          </Card>
+        </div>
+      )}
+
       {/* Status Filter */}
       {claims.length > 0 && (
         <Card className="p-4">
@@ -75,9 +98,9 @@ export default async function GiftAidClaimsPage({
               variant={!statusFilter ? "default" : "outline"}
               size="sm"
             >
-              All Claims
+              All
             </Button>
-            {(["DRAFT", "READY", "SUBMITTED", "ACCEPTED", "REJECTED", "PARTIAL"] as const).map(
+            {(["DRAFT", "READY", "SUBMITTED", "ACCEPTED", "REJECTED"] as const).map(
               (status) => (
                 <Button
                   key={status}
@@ -95,7 +118,7 @@ export default async function GiftAidClaimsPage({
         </Card>
       )}
 
-      {/* Claims List */}
+      {/* Claims Table */}
       {claims.length === 0 ? (
         <EmptyState
           icon={FileText}
@@ -110,54 +133,60 @@ export default async function GiftAidClaimsPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Reference
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Period
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Donations
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Claimable Amount
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Claimable
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Submitted By
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Date
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {claims.map((claim) => (
                   <tr key={claim.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <Link
                         href={`/finance/gift-aid/claims/${claim.id}`}
                         className="font-mono font-semibold text-indigo-600 hover:text-indigo-700"
                       >
                         {claim.claimReference}
                       </Link>
+                      {claim.isTestMode && (
+                        <FlaskConical className="h-3 w-3 text-amber-500 inline ml-2" />
+                      )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(claim.periodStart)} to {formatDate(claim.periodEnd)}
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {formatDate(claim.periodStart)} – {formatDate(claim.periodEnd)}
                     </td>
-                    <td className="px-6 py-4">
-                      <Badge className={statusColors[claim.status]}>
-                        {claim.status}
-                      </Badge>
+                    <td className="px-4 py-4">
+                      <Badge className={statusColors[claim.status]}>{claim.status}</Badge>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <span className="font-medium">{claim.donationCount}</span>
-                      <span className="text-gray-500"> donations</span>
+                    <td className="px-4 py-4 text-sm text-gray-900 text-right">
+                      {claim.donationCount}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900 text-right">
                       {formatCurrency(claim.totalClaimable)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(claim.createdAt)}
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {claim.submittedBy?.name || claim.createdBy.name}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {claim.submittedAt ? formatDate(claim.submittedAt) : formatDate(claim.createdAt)}
                     </td>
                   </tr>
                 ))}

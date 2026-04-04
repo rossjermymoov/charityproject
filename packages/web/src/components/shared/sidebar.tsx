@@ -128,6 +128,7 @@ const sections: NavSection[] = [
       { name: "Memberships", href: "/finance/memberships", icon: BadgeCheck },
       { name: "Renewal Dashboard", href: "/finance/memberships/renewals", icon: RefreshCw },
       { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
+      { name: "Gift Aid Claims", href: "/finance/gift-aid/claims", icon: FileText },
       { name: "Grants", href: "/finance/grants", icon: Landmark },
       { name: "Partnerships", href: "/finance/partnerships", icon: Handshake },
       { name: "Pledges", href: "/finance/pledges", icon: PoundSterling },

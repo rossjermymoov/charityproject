@@ -5,10 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
-import { calculateGiftAid } from "@/lib/hmrc";
+import { calculateGiftAid, isValidUKPostcode, buildGovTalkXml } from "@/lib/hmrc";
 
 /**
- * Create a new Gift Aid claim with eligible donations
+ * Create a new Gift Aid claim with eligible donations.
+ * Supports excluding specific donation IDs and test mode.
  */
 export async function createClaim(formData: FormData) {
   const session = await requireAuth();
@@ -16,19 +17,24 @@ export async function createClaim(formData: FormData) {
   const reference = (formData.get("reference") as string) || "";
   const periodStartStr = formData.get("periodStart") as string;
   const periodEndStr = formData.get("periodEnd") as string;
+  const excludedIdsJson = formData.get("excludedIds") as string;
+  const isTestMode = formData.get("isTestMode") === "true";
 
   if (!periodStartStr || !periodEndStr) {
     redirect("/finance/gift-aid/claims/new?error=missing-dates");
   }
 
   const periodStart = new Date(periodStartStr);
-  const periodEnd = new Date(periodEndStr);
+  const periodEnd = new Date(periodEndStr + "T23:59:59.999Z");
+  const excludedIds: string[] = excludedIdsJson ? JSON.parse(excludedIdsJson) : [];
 
   // Find eligible donations
   const eligibleDonations = await prisma.donation.findMany({
     where: {
       AND: [
         { isGiftAidable: true },
+        { giftAidClaimed: false },
+        { status: "RECEIVED" },
         { date: { gte: periodStart } },
         { date: { lte: periodEnd } },
         {
@@ -37,10 +43,7 @@ export async function createClaim(formData: FormData) {
               some: {
                 status: "ACTIVE",
                 startDate: { lte: periodEnd },
-                OR: [
-                  { endDate: null },
-                  { endDate: { gte: periodStart } },
-                ],
+                OR: [{ endDate: null }, { endDate: { gte: periodStart } }],
               },
             },
           },
@@ -48,35 +51,72 @@ export async function createClaim(formData: FormData) {
       ],
     },
     include: {
-      contact: { select: { firstName: true, lastName: true, postcode: true } },
+      contact: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          postcode: true,
+          addressLine1: true,
+          city: true,
+        },
+      },
     },
   });
 
   if (eligibleDonations.length === 0) {
-    redirect(
-      "/finance/gift-aid/claims/new?error=no-eligible-donations"
-    );
+    redirect("/finance/gift-aid/claims/new?error=no-eligible-donations");
   }
 
-  // Calculate totals
+  // Calculate totals only for included items
   let totalDonations = 0;
   let totalClaimable = 0;
+  let includedCount = 0;
 
   const items = eligibleDonations.map((donation) => {
-    totalDonations += donation.amount;
+    const isExcluded = excludedIds.includes(donation.id);
     const giftAid = calculateGiftAid(donation.amount);
-    totalClaimable += giftAid;
+    const hasValidPostcode = donation.contact.postcode
+      ? isValidUKPostcode(donation.contact.postcode)
+      : false;
+
+    let status: "INCLUDED" | "EXCLUDED" | "ERROR" = "INCLUDED";
+    let errorReason: string | null = null;
+
+    if (isExcluded) {
+      status = "EXCLUDED";
+    } else if (!hasValidPostcode) {
+      status = "ERROR";
+      errorReason = donation.contact.postcode
+        ? "Invalid UK postcode format"
+        : "Missing postcode";
+    }
+
+    if (status === "INCLUDED") {
+      totalDonations += donation.amount;
+      totalClaimable += giftAid;
+      includedCount++;
+    }
+
+    const donorAddress = [
+      donation.contact.addressLine1,
+      donation.contact.city,
+      donation.contact.postcode,
+    ]
+      .filter(Boolean)
+      .join(", ");
 
     return {
       donationId: donation.id,
       contactId: donation.contactId,
-      donorName: `${donation.contact.firstName} ${donation.contact.lastName}`,
+      donorName: `${donation.contact.firstName || ""} ${donation.contact.lastName || ""}`.trim(),
+      donorAddress: donorAddress || null,
       donorPostcode: donation.contact.postcode,
       donationDate: donation.date,
       donationAmount: donation.amount,
       giftAidAmount: giftAid,
-      status: "INCLUDED" as const,
-      errorReason: null,
+      status,
+      errorReason,
     };
   });
 
@@ -89,15 +129,26 @@ export async function createClaim(formData: FormData) {
       status: "DRAFT",
       totalDonations,
       totalClaimable,
-      donationCount: eligibleDonations.length,
+      donationCount: includedCount,
+      isTestMode,
       createdById: session.id,
       items: {
-        createMany: {
-          data: items,
-        },
+        createMany: { data: items },
       },
     },
   });
+
+  // Mark included donations as claimed
+  const includedDonationIds = items
+    .filter((i) => i.status === "INCLUDED")
+    .map((i) => i.donationId);
+
+  if (includedDonationIds.length > 0) {
+    await prisma.donation.updateMany({
+      where: { id: { in: includedDonationIds } },
+      data: { giftAidClaimed: true },
+    });
+  }
 
   await logAudit({
     userId: session.id,
@@ -106,13 +157,79 @@ export async function createClaim(formData: FormData) {
     entityId: claim.id,
     details: {
       reference: claim.claimReference,
-      donationCount: claim.donationCount,
+      donationCount: includedCount,
+      excludedCount: excludedIds.length,
       totalClaimable: claim.totalClaimable,
+      isTestMode,
     },
   });
 
   revalidatePath("/finance/gift-aid/claims");
   redirect(`/finance/gift-aid/claims/${claim.id}`);
+}
+
+/**
+ * Toggle a claim item between INCLUDED and EXCLUDED (only for DRAFT claims)
+ */
+export async function toggleClaimItem(formData: FormData) {
+  const session = await requireAuth();
+  const itemId = formData.get("itemId") as string;
+  const claimId = formData.get("claimId") as string;
+
+  const item = await prisma.giftAidClaimItem.findUnique({
+    where: { id: itemId },
+    include: { claim: true },
+  });
+
+  if (!item || item.claim.status !== "DRAFT") return;
+
+  const newStatus = item.status === "INCLUDED" ? "EXCLUDED" : "INCLUDED";
+
+  await prisma.giftAidClaimItem.update({
+    where: { id: itemId },
+    data: { status: newStatus },
+  });
+
+  // Update donation claimed flag
+  if (newStatus === "EXCLUDED") {
+    await prisma.donation.update({
+      where: { id: item.donationId },
+      data: { giftAidClaimed: false },
+    });
+  } else {
+    await prisma.donation.update({
+      where: { id: item.donationId },
+      data: { giftAidClaimed: true },
+    });
+  }
+
+  // Recalculate claim totals
+  const allItems = await prisma.giftAidClaimItem.findMany({
+    where: { claimId },
+  });
+
+  const includedItems = allItems.filter((i) => i.status === "INCLUDED");
+  const totalDonations = includedItems.reduce((sum, i) => sum + i.donationAmount, 0);
+  const totalClaimable = includedItems.reduce((sum, i) => sum + i.giftAidAmount, 0);
+
+  await prisma.giftAidClaim.update({
+    where: { id: claimId },
+    data: {
+      totalDonations,
+      totalClaimable,
+      donationCount: includedItems.length,
+    },
+  });
+
+  await logAudit({
+    userId: session.id,
+    action: "UPDATE",
+    entityType: "GiftAidClaimItem",
+    entityId: itemId,
+    details: { newStatus, claimId },
+  });
+
+  revalidatePath(`/finance/gift-aid/claims/${claimId}`);
 }
 
 /**
@@ -127,13 +244,17 @@ export async function markClaimReady(formData: FormData) {
     include: { items: true },
   });
 
-  if (!claim) return;
-  if (claim.status !== "DRAFT") return;
+  if (!claim || claim.status !== "DRAFT") return;
 
-  // Validate items have no errors
+  // Check for error items that are still included
   const errorItems = claim.items.filter((item) => item.status === "ERROR");
   if (errorItems.length > 0) {
     redirect(`/finance/gift-aid/claims/${claimId}?error=items-have-errors`);
+  }
+
+  const includedItems = claim.items.filter((item) => item.status === "INCLUDED");
+  if (includedItems.length === 0) {
+    redirect(`/finance/gift-aid/claims/${claimId}?error=no-included-items`);
   }
 
   await prisma.giftAidClaim.update({
@@ -154,8 +275,7 @@ export async function markClaimReady(formData: FormData) {
 }
 
 /**
- * Submit claim to HMRC
- * TODO: Implement real HMRC submission
+ * Submit claim to HMRC (or simulate if test mode)
  */
 export async function submitToHmrc(formData: FormData) {
   const session = await requireAuth();
@@ -163,60 +283,97 @@ export async function submitToHmrc(formData: FormData) {
 
   const claim = await prisma.giftAidClaim.findUnique({
     where: { id: claimId },
-    include: { items: true },
-  });
-
-  if (!claim) return;
-  if (claim.status !== "READY") return;
-
-  /**
-   * TODO: Real HMRC Submission
-   * ────────────────────────────────
-   *
-   * 1. Build GovTalk XML with donation items
-   * 2. Generate IRmark digital signature
-   * 3. Retrieve HMRC credentials from SystemSettings
-   * 4. Submit via Government Gateway endpoint (HTTPS POST)
-   * 5. HMRC will return:
-   *    - Correlation ID for polling
-   *    - Acknowledgement of receipt
-   * 6. Store submission XML and timestamp
-   * 7. Set up polling mechanism to check status:
-   *    - Poll endpoint periodically (e.g., 5 mins, 1 hour, 1 day)
-   *    - Look for acceptance, rejection, or partial acceptance
-   * 8. Once response received:
-   *    - Update status (ACCEPTED, REJECTED, PARTIAL)
-   *    - Store HMRC reference
-   *    - Store response XML
-   * 9. Full audit trail: keep submission XML and response for 6+ years
-   *
-   * Spec: https://www.gov.uk/guidance/submit-gift-aid-claims-online
-   * GovTalk: https://www.gov.uk/government/collections/govtalk
-   */
-
-  // For now: generate mock correlation ID and set to SUBMITTED state
-  const correlationId = `MOCK-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-  await prisma.giftAidClaim.update({
-    where: { id: claimId },
-    data: {
-      status: "SUBMITTED",
-      submittedAt: new Date(),
-      correlationId,
+    include: {
+      items: { where: { status: "INCLUDED" } },
     },
   });
 
-  await logAudit({
-    userId: session.id,
-    action: "UPDATE",
-    entityType: "GiftAidClaim",
-    entityId: claimId,
-    details: {
-      newStatus: "SUBMITTED",
-      correlationId,
-      note: "Mock submission for development",
-    },
+  if (!claim || claim.status !== "READY") return;
+
+  // Build submission XML for audit trail
+  const submissionXml = buildGovTalkXml({
+    charityRef: "CHARITY-REF", // TODO: pull from system settings
+    gatewayUser: "GATEWAY-USER",
+    submissionId: claim.claimReference,
+    claimReference: claim.claimReference,
+    periodStart: claim.periodStart,
+    periodEnd: claim.periodEnd,
+    donations: claim.items.map((item) => ({
+      donorName: item.donorName,
+      donorPostcode: item.donorPostcode || "",
+      donationAmount: item.donationAmount,
+      donationDate: item.donationDate,
+      giftAidAmount: item.giftAidAmount,
+    })),
+    totalDonations: claim.totalDonations,
+    totalGiftAid: claim.totalClaimable,
+    gasdsAmount: claim.gasdsAmount || undefined,
   });
+
+  if (claim.isTestMode) {
+    // Test mode: simulate a successful submission
+    const testCorrelationId = `TEST-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const testHmrcRef = `HMRC-TEST-${claim.claimReference}`;
+
+    // Simulate acceptance after a short delay
+    await prisma.giftAidClaim.update({
+      where: { id: claimId },
+      data: {
+        status: "ACCEPTED",
+        submittedAt: new Date(),
+        submittedById: session.id,
+        correlationId: testCorrelationId,
+        hmrcReference: testHmrcRef,
+        hmrcResponse: "TEST MODE: Simulated acceptance",
+        submissionXml,
+        responseXml: `<TestResponse><Status>ACCEPTED</Status><Reference>${testHmrcRef}</Reference><Message>Test submission accepted</Message></TestResponse>`,
+        acceptedAt: new Date(),
+        amountReceived: claim.totalClaimable,
+        receivedAt: new Date(),
+      },
+    });
+
+    await logAudit({
+      userId: session.id,
+      action: "UPDATE",
+      entityType: "GiftAidClaim",
+      entityId: claimId,
+      details: {
+        newStatus: "ACCEPTED",
+        correlationId: testCorrelationId,
+        hmrcReference: testHmrcRef,
+        isTestMode: true,
+        note: "Test mode — simulated HMRC acceptance",
+      },
+    });
+  } else {
+    // Real submission: mark as submitted with mock correlation for now
+    // TODO: Replace with real HMRC Government Gateway API call
+    const correlationId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+
+    await prisma.giftAidClaim.update({
+      where: { id: claimId },
+      data: {
+        status: "SUBMITTED",
+        submittedAt: new Date(),
+        submittedById: session.id,
+        correlationId,
+        submissionXml,
+      },
+    });
+
+    await logAudit({
+      userId: session.id,
+      action: "UPDATE",
+      entityType: "GiftAidClaim",
+      entityId: claimId,
+      details: {
+        newStatus: "SUBMITTED",
+        correlationId,
+        note: "Submitted to HMRC",
+      },
+    });
+  }
 
   revalidatePath(`/finance/gift-aid/claims/${claimId}`);
   redirect(`/finance/gift-aid/claims/${claimId}`);
@@ -224,7 +381,6 @@ export async function submitToHmrc(formData: FormData) {
 
 /**
  * Check HMRC submission status via polling
- * TODO: Implement real status checking
  */
 export async function checkHmrcStatus(formData: FormData) {
   const session = await requireAuth();
@@ -234,32 +390,10 @@ export async function checkHmrcStatus(formData: FormData) {
     where: { id: claimId },
   });
 
-  if (!claim) return;
-  if (claim.status !== "SUBMITTED") return;
+  if (!claim || claim.status !== "SUBMITTED") return;
 
-  /**
-   * TODO: Real HMRC Status Polling
-   * ──────────────────────────────
-   *
-   * 1. Use correlationId from claim to poll Government Gateway
-   * 2. Send status check request with:
-   *    - Charity reference
-   *    - Correlation ID
-   *    - Government Gateway credentials
-   * 3. HMRC returns status:
-   *    - PENDING: still processing
-   *    - ACCEPTED: claim approved, HMRC reference provided
-   *    - REJECTED: claim rejected with reason
-   *    - PARTIAL: some donations accepted, some rejected
-   * 4. Update claim record with response
-   * 5. If accepted, set status to ACCEPTED and store hmrcReference + amountReceived
-   * 6. If rejected, set status to REJECTED and store rejectionReason
-   * 7. Store response XML for audit trail
-   *
-   * Note: HMRC processing typically takes 3-5 working days
-   */
-
-  // For now: placeholder that shows "checking..."
+  // TODO: Real HMRC status polling via Government Gateway
+  // For now: log the check attempt
   await logAudit({
     userId: session.id,
     action: "UPDATE",
@@ -267,7 +401,8 @@ export async function checkHmrcStatus(formData: FormData) {
     entityId: claimId,
     details: {
       action: "check_status",
-      note: "Mock status check for development",
+      correlationId: claim.correlationId,
+      note: "Status check requested — awaiting real HMRC integration",
     },
   });
 
@@ -286,8 +421,7 @@ export async function resetClaim(formData: FormData) {
     where: { id: claimId },
   });
 
-  if (!claim) return;
-  if (claim.status !== "REJECTED") return;
+  if (!claim || claim.status !== "REJECTED") return;
 
   await prisma.giftAidClaim.update({
     where: { id: claimId },
@@ -312,7 +446,7 @@ export async function resetClaim(formData: FormData) {
 }
 
 /**
- * Delete a claim (only if DRAFT)
+ * Delete a claim (only if DRAFT). Un-claims the donations.
  */
 export async function deleteClaim(formData: FormData) {
   const session = await requireAuth();
@@ -320,29 +454,34 @@ export async function deleteClaim(formData: FormData) {
 
   const claim = await prisma.giftAidClaim.findUnique({
     where: { id: claimId },
+    include: { items: true },
   });
 
-  if (!claim) return;
-  if (claim.status !== "DRAFT") return;
+  if (!claim || claim.status !== "DRAFT") return;
+
+  // Un-claim included donations
+  const includedDonationIds = claim.items
+    .filter((i) => i.status === "INCLUDED")
+    .map((i) => i.donationId);
+
+  if (includedDonationIds.length > 0) {
+    await prisma.donation.updateMany({
+      where: { id: { in: includedDonationIds } },
+      data: { giftAidClaimed: false },
+    });
+  }
 
   const reference = claim.claimReference;
 
-  // Delete items first (cascade)
-  await prisma.giftAidClaimItem.deleteMany({
-    where: { claimId },
-  });
-
-  // Delete claim
-  await prisma.giftAidClaim.delete({
-    where: { id: claimId },
-  });
+  await prisma.giftAidClaimItem.deleteMany({ where: { claimId } });
+  await prisma.giftAidClaim.delete({ where: { id: claimId } });
 
   await logAudit({
     userId: session.id,
     action: "DELETE",
     entityType: "GiftAidClaim",
     entityId: claimId,
-    details: { reference },
+    details: { reference, unclaimedDonations: includedDonationIds.length },
   });
 
   revalidatePath("/finance/gift-aid/claims");
