@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Ticket,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -119,6 +121,8 @@ export default async function DashboardPage({
   let recentDonations: any[] = [];
   let recentBroadcasts: any[] = [];
   let upcomingAssignments: any[] = [];
+  let contactsWithPhone = 0;
+  let contactsWithEmail = 0;
 
   try {
     [
@@ -144,6 +148,8 @@ export default async function DashboardPage({
       recentDonations,
       recentBroadcasts,
       upcomingAssignments,
+      contactsWithPhone,
+      contactsWithEmail,
     ] = await Promise.all([
       // ── Always-current counts ────────────────────────────
       prisma.contact.count(),
@@ -277,6 +283,14 @@ export default async function DashboardPage({
           department: true,
         },
       }),
+
+      // Contact data capture stats
+      prisma.contact.count({
+        where: { status: "ACTIVE", phone: { not: null }, NOT: { phone: "" } },
+      }),
+      prisma.contact.count({
+        where: { status: "ACTIVE", email: { not: null }, NOT: { email: "" } },
+      }),
     ]);
   } catch (err) {
     console.error("Dashboard data fetch error:", err);
@@ -336,6 +350,11 @@ export default async function DashboardPage({
   const unclaimedGiftAid = (giftAidableUnclaimed._sum.amount || 0) * 0.25;
   const totalVolunteerHours = filteredVolunteerHours._sum.hours || 0;
   const tinCollections = filteredTinCollections._sum.amount || 0;
+  const activeContactCount = await prisma.contact.count({ where: { status: "ACTIVE" } });
+  const phonePct = activeContactCount > 0 ? Math.round((contactsWithPhone / activeContactCount) * 100) : 0;
+  const emailPct = activeContactCount > 0 ? Math.round((contactsWithEmail / activeContactCount) * 100) : 0;
+  const missingPhone = activeContactCount - contactsWithPhone;
+  const missingEmail = activeContactCount - contactsWithEmail;
 
   // ── Range label for filtered cards ────────────────────────
   return (
@@ -397,6 +416,80 @@ export default async function DashboardPage({
           icon={Calendar}
           href="/events"
         />
+      </div>
+
+      {/* Data Capture */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link href="/crm/contacts?missing=phone">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5" />
+                    Mobile Phone Capture
+                  </p>
+                  <p className="text-2xl font-bold mt-1">
+                    <span className={phonePct === 100 ? "text-green-600" : phonePct >= 75 ? "text-amber-600" : "text-red-600"}>
+                      {phonePct}%
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {contactsWithPhone} of {activeContactCount} contacts
+                  </p>
+                </div>
+                <div className="h-14 w-14">
+                  <svg viewBox="0 0 36 36" className="h-14 w-14 transform -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="15.9155" fill="none"
+                      stroke={phonePct === 100 ? "#16a34a" : phonePct >= 75 ? "#d97706" : "#dc2626"}
+                      strokeWidth="3" strokeDasharray={`${phonePct} ${100 - phonePct}`} strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+              {missingPhone > 0 && (
+                <p className="text-xs text-indigo-600 mt-1.5 font-medium">
+                  {missingPhone} contact{missingPhone !== 1 ? "s" : ""} missing a phone number →
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/crm/contacts?missing=email">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" />
+                    Email Capture
+                  </p>
+                  <p className="text-2xl font-bold mt-1">
+                    <span className={emailPct === 100 ? "text-green-600" : emailPct >= 75 ? "text-amber-600" : "text-red-600"}>
+                      {emailPct}%
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {contactsWithEmail} of {activeContactCount} contacts
+                  </p>
+                </div>
+                <div className="h-14 w-14">
+                  <svg viewBox="0 0 36 36" className="h-14 w-14 transform -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="15.9155" fill="none"
+                      stroke={emailPct === 100 ? "#16a34a" : emailPct >= 75 ? "#d97706" : "#dc2626"}
+                      strokeWidth="3" strokeDasharray={`${emailPct} ${100 - emailPct}`} strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+              {missingEmail > 0 && (
+                <p className="text-xs text-indigo-600 mt-1.5 font-medium">
+                  {missingEmail} contact{missingEmail !== 1 ? "s" : ""} missing an email →
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Charts Row — date filtered */}
