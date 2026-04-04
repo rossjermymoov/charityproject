@@ -74,13 +74,14 @@ export function CsvImportForm() {
     setHeaders(hdrs);
 
     // Auto-detect column mappings
+    // Check date columns BEFORE amount to avoid "sale" in "Sale Date" matching amount
     for (const h of hdrs) {
       const lower = h.toLowerCase().trim();
       if (lower.includes("first") && lower.includes("name")) setFirstNameCol(h);
       else if (lower.includes("last") && lower.includes("name")) setLastNameCol(h);
       else if (lower === "name" || lower === "donor" || lower === "donor name" || lower === "customer" || lower === "customer name") setNameCol(h);
+      else if (lower.includes("date") || lower.includes("sold")) setDateCol(h);
       else if (lower.includes("amount") || lower.includes("total") || lower.includes("proceeds") || lower.includes("price") || lower.includes("sale")) setAmountCol(h);
-      else if (lower.includes("date") || lower.includes("sold") || lower.includes("sale date")) setDateCol(h);
     }
 
     // Check if there are separate first/last name columns
