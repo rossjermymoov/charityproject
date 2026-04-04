@@ -85,24 +85,13 @@ export async function GET(request: Request) {
       orgName: true,
       primaryColour: true,
       letterheadImage: true,
-      addressLine1: true,
-      addressLine2: true,
-      city: true,
-      postcode: true,
-      charityNumber: true,
+      headOfficeAddress: true,
     },
   });
 
   const charityName = settings?.orgName || "Our Charity";
-  const charityNumber = settings?.charityNumber || "";
-  const charityAddress = [
-    settings?.addressLine1,
-    settings?.addressLine2,
-    settings?.city,
-    settings?.postcode,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const charityNumber = "";
+  const charityAddress = settings?.headOfficeAddress || "";
 
   const colour = settings?.primaryColour || "#7c3aed";
   const [rf, gf, bf] = hexToRgb(colour);
