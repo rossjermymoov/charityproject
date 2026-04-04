@@ -141,6 +141,8 @@ const sections: NavSection[] = [
       { name: "Tin Locations", href: "/finance/collection-tins/locations", icon: MapPin },
       { name: "Tin Reports", href: "/finance/collection-tins/reports", icon: BarChart3 },
       { name: "Tribute Funds", href: "/finance/tribute-funds", icon: Flower2 },
+      { name: "Donor Scoring", href: "/finance/donor-scoring", icon: Target },
+      { name: "BACS Payments", href: "/finance/bacs", icon: CreditCard },
     ],
   },
   {

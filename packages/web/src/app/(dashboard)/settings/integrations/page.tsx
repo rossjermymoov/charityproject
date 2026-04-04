@@ -120,6 +120,55 @@ function LoqateLogo({ className }: { className?: string }) {
   );
 }
 
+function EventbriteLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#F05537" />
+      <text x="24" y="31" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#fff">EB</text>
+    </svg>
+  );
+}
+
+function FacebookLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#1877F2" />
+      <path d="M26 38v-9h3l0.5-3.5h-3.5v-2c0-1 0.3-1.7 1.7-1.7h1.8v-3c-0.3 0-1.5-0.1-2.8-0.1-2.8 0-4.7 1.7-4.7 4.8v2.6h-3v3.5h3v9h3.5z" fill="#fff" />
+    </svg>
+  );
+}
+
+function WooCommerceLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#96588A" />
+      <path d="M14 20c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z" fill="#fff" />
+      <path d="M30 20c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z" fill="#fff" />
+      <path d="M16 30c0 2 1 4 2.5 4.5M30 30c0 2-1 4-2.5 4.5" stroke="#fff" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+function BIConnectorLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#4285F4" />
+      <rect x="12" y="16" width="8" height="16" fill="#fff" />
+      <rect x="22" y="12" width="8" height="20" fill="#fff" />
+      <rect x="32" y="20" width="8" height="12" fill="#fff" />
+    </svg>
+  );
+}
+
+function EnthuseLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#00B67A" />
+      <text x="24" y="31" textAnchor="middle" fontSize="18" fontWeight="bold" fill="#fff">ES</text>
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default async function IntegrationsPage() {
@@ -223,6 +272,30 @@ export default async function IntegrationsPage() {
       category: "Fundraising",
     },
     {
+      logo: FacebookLogo,
+      title: "Facebook & Instagram Giving",
+      description: "Import donations from Facebook Fundraisers and Instagram Giving",
+      href: "/settings/integrations/social-giving",
+      status: "not configured",
+      category: "Fundraising",
+    },
+    {
+      logo: EnthuseLogo,
+      title: "Enthuse",
+      description: "Import fundraising donations and campaign details from Enthuse",
+      href: "/settings/integrations/enthuse",
+      status: "not configured",
+      category: "Fundraising",
+    },
+    {
+      logo: EventbriteLogo,
+      title: "Eventbrite",
+      description: "Sync events, ticket sales, and attendee information",
+      href: "/settings/integrations/eventbrite",
+      status: "not configured",
+      category: "Events & Ticketing",
+    },
+    {
       logo: HMRCLogo,
       title: "HMRC Gift Aid",
       description: "Submit Gift Aid claims directly to HMRC Charities Online and track status",
@@ -245,6 +318,22 @@ export default async function IntegrationsPage() {
       href: "/settings/integrations/xero",
       status: "not configured",
       category: "Accounting & Finance",
+    },
+    {
+      logo: WooCommerceLogo,
+      title: "WooCommerce & Shopify",
+      description: "Sync online store orders and track product-based fundraising",
+      href: "/settings/integrations/ecommerce",
+      status: "not configured",
+      category: "E-commerce",
+    },
+    {
+      logo: BIConnectorLogo,
+      title: "BI Connector (OData API)",
+      description: "Connect Power BI, Tableau, and other analytics tools via OData",
+      href: "/settings/integrations/bi-connector",
+      status: "not configured",
+      category: "Analytics & Reporting",
     },
     {
       logo: LoqateLogo,
