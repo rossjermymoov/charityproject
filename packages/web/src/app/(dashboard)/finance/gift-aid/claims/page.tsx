@@ -29,6 +29,7 @@ export default async function GiftAidClaimsPage({
 
   const statusColors: Record<string, string> = {
     DRAFT: "bg-gray-100 text-gray-800",
+    NOTIFICATIONS_SENT: "bg-purple-100 text-purple-800",
     READY: "bg-blue-100 text-blue-800",
     SUBMITTED: "bg-yellow-100 text-yellow-800",
     ACCEPTED: "bg-green-100 text-green-800",
@@ -42,7 +43,7 @@ export default async function GiftAidClaimsPage({
     .filter((c) => c.status === "ACCEPTED")
     .reduce((sum, c) => sum + (c.amountReceived || c.totalClaimable), 0);
   const pendingAmount = claims
-    .filter((c) => ["DRAFT", "READY", "SUBMITTED"].includes(c.status))
+    .filter((c) => ["DRAFT", "NOTIFICATIONS_SENT", "READY", "SUBMITTED"].includes(c.status))
     .reduce((sum, c) => sum + c.totalClaimable, 0);
 
   return (
@@ -100,7 +101,7 @@ export default async function GiftAidClaimsPage({
             >
               All
             </Button>
-            {(["DRAFT", "READY", "SUBMITTED", "ACCEPTED", "REJECTED"] as const).map(
+            {(["DRAFT", "NOTIFICATIONS_SENT", "READY", "SUBMITTED", "ACCEPTED", "REJECTED"] as const).map(
               (status) => (
                 <Button
                   key={status}
@@ -174,9 +175,9 @@ export default async function GiftAidClaimsPage({
                       )}
                     </td>
                     <td className="px-4 py-4">
-                      {claim.notes === "RETAIL" ? (
+                      {(claim.claimType || claim.notes) === "RETAIL" ? (
                         <Badge className="bg-purple-100 text-purple-800 text-xs">Retail</Badge>
-                      ) : claim.notes === "STANDARD" ? (
+                      ) : (claim.claimType || claim.notes) === "STANDARD" ? (
                         <Badge className="bg-indigo-100 text-indigo-800 text-xs">Standard</Badge>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
@@ -186,7 +187,9 @@ export default async function GiftAidClaimsPage({
                       {formatDate(claim.periodStart)} – {formatDate(claim.periodEnd)}
                     </td>
                     <td className="px-4 py-4">
-                      <Badge className={statusColors[claim.status]}>{claim.status}</Badge>
+                      <Badge className={statusColors[claim.status]}>
+                        {claim.status === "NOTIFICATIONS_SENT" ? "Notified" : claim.status}
+                      </Badge>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900 text-right">
                       {claim.donationCount}

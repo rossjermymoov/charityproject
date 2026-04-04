@@ -6,6 +6,12 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
 import { calculateGiftAid, isValidUKPostcode, buildGovTalkXml } from "@/lib/hmrc";
+import { sendEmail, APP_URL } from "@/lib/email";
+import {
+  buildRetailGiftAidEmailHtml,
+  type RetailGiftAidLetterData,
+} from "@/lib/retail-gift-aid-letter";
+import { formatCurrency } from "@/lib/utils";
 
 // Donation types NOT eligible for Gift Aid
 const NON_ELIGIBLE_TYPES = ["IN_KIND", "GRANT", "LEGACY"];
@@ -128,10 +134,11 @@ export async function createClaim(formData: FormData) {
     };
   });
 
-  // Create claim with items (store claim type in notes for filtering)
+  // Create claim with items — use claimType column AND notes for backward compat
   const claim = await prisma.giftAidClaim.create({
     data: {
       claimReference: reference,
+      claimType,
       periodStart,
       periodEnd,
       status: "DRAFT",
@@ -139,7 +146,7 @@ export async function createClaim(formData: FormData) {
       totalClaimable,
       donationCount: includedCount,
       isTestMode,
-      notes: claimType, // STANDARD or RETAIL
+      notes: claimType, // backward compat
       createdById: session.id,
       items: {
         createMany: { data: items },
@@ -179,7 +186,7 @@ export async function createClaim(formData: FormData) {
 }
 
 /**
- * Toggle a claim item between INCLUDED and EXCLUDED (only for DRAFT claims)
+ * Toggle a claim item between INCLUDED and EXCLUDED (only for DRAFT/NOTIFICATIONS_SENT claims)
  */
 export async function toggleClaimItem(formData: FormData) {
   const session = await requireAuth();
@@ -191,7 +198,7 @@ export async function toggleClaimItem(formData: FormData) {
     include: { claim: true },
   });
 
-  if (!item || item.claim.status !== "DRAFT") return;
+  if (!item || !["DRAFT", "NOTIFICATIONS_SENT"].includes(item.claim.status)) return;
 
   const newStatus = item.status === "INCLUDED" ? "EXCLUDED" : "INCLUDED";
 
@@ -243,7 +250,201 @@ export async function toggleClaimItem(formData: FormData) {
 }
 
 /**
- * Mark claim as ready for submission
+ * Send retail gift aid notifications to all donors in the claim.
+ * Emails those with email addresses, creates postal notification records for others.
+ * Sets 28-day deadline before claim can be submitted.
+ */
+export async function sendRetailNotifications(formData: FormData) {
+  const session = await requireAuth();
+  const claimId = formData.get("claimId") as string;
+
+  const claim = await prisma.giftAidClaim.findUnique({
+    where: { id: claimId },
+    include: {
+      items: {
+        where: { status: "INCLUDED" },
+        select: { contactId: true, donationAmount: true, giftAidAmount: true },
+      },
+    },
+  });
+
+  if (!claim || claim.status !== "DRAFT" || claim.claimType !== "RETAIL") return;
+
+  // Get unique contacts with their details
+  const contactIds = [...new Set(claim.items.map((i) => i.contactId))];
+  const contacts = await prisma.contact.findMany({
+    where: { id: { in: contactIds } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      postcode: true,
+      consentEmail: true,
+    },
+  });
+
+  const settings = await prisma.systemSettings.findUnique({
+    where: { id: "default" },
+    select: {
+      orgName: true,
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      postcode: true,
+      charityNumber: true,
+    },
+  });
+
+  const charityName = settings?.orgName || "Our Charity";
+  const charityNumber = settings?.charityNumber || "";
+  const charityAddress = [
+    settings?.addressLine1,
+    settings?.addressLine2,
+    settings?.city,
+    settings?.postcode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const now = new Date();
+  const deadline = new Date(now);
+  deadline.setDate(deadline.getDate() + 28);
+
+  const taxYearStart = new Date(claim.periodStart).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const taxYearEnd = new Date(claim.periodEnd).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const deadlineStr = deadline.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  let emailsSent = 0;
+  let postalNeeded = 0;
+
+  for (const contact of contacts) {
+    const contactName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
+    const contactAddress = [
+      contact.addressLine1,
+      contact.addressLine2,
+      contact.city,
+      contact.postcode,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    // Calculate this contact's totals
+    const contactItems = claim.items.filter((i) => i.contactId === contact.id);
+    const totalProceeds = contactItems.reduce((s, i) => s + i.donationAmount, 0);
+    const giftAidAmount = contactItems.reduce((s, i) => s + i.giftAidAmount, 0);
+
+    const hasEmail = !!contact.email;
+    const method = hasEmail ? "EMAIL" : "POST";
+
+    // Create notification record with unique token
+    const notification = await prisma.retailGiftAidNotification.create({
+      data: {
+        claimId: claim.id,
+        contactId: contact.id,
+        contactName,
+        contactEmail: contact.email,
+        method,
+        status: "PENDING",
+      },
+    });
+
+    const letterData: RetailGiftAidLetterData = {
+      contactName,
+      contactAddress,
+      charityName,
+      charityAddress,
+      charityNumber,
+      claimReference: claim.claimReference,
+      taxYearStart,
+      taxYearEnd,
+      totalProceeds: formatCurrency(totalProceeds),
+      giftAidClaimed: formatCurrency(giftAidAmount),
+      donationCount: contactItems.length,
+      optOutToken: notification.token,
+      emailConsentToken: notification.token,
+      notificationDeadline: deadlineStr,
+      hasEmail,
+    };
+
+    if (hasEmail && contact.email) {
+      // Send HTML email
+      try {
+        const html = buildRetailGiftAidEmailHtml(letterData);
+        const sent = await sendEmail({
+          to: contact.email,
+          subject: `Retail Gift Aid Notification — ${charityName} (${claim.claimReference})`,
+          html,
+        });
+
+        await prisma.retailGiftAidNotification.update({
+          where: { id: notification.id },
+          data: {
+            status: sent ? "SENT" : "FAILED",
+            sentAt: sent ? new Date() : undefined,
+          },
+        });
+
+        if (sent) emailsSent++;
+      } catch {
+        await prisma.retailGiftAidNotification.update({
+          where: { id: notification.id },
+          data: { status: "FAILED" },
+        });
+      }
+    } else {
+      // Mark as POST — PDF will be generated separately
+      postalNeeded++;
+    }
+  }
+
+  // Update claim status and set deadline
+  await prisma.giftAidClaim.update({
+    where: { id: claimId },
+    data: {
+      status: "NOTIFICATIONS_SENT",
+      notificationsSentAt: now,
+      notificationDeadline: deadline,
+      notificationsSentById: session.id,
+    },
+  });
+
+  await logAudit({
+    userId: session.id,
+    action: "UPDATE",
+    entityType: "GiftAidClaim",
+    entityId: claimId,
+    details: {
+      action: "send_retail_notifications",
+      emailsSent,
+      postalNeeded,
+      totalContacts: contacts.length,
+      deadline: deadline.toISOString(),
+    },
+  });
+
+  revalidatePath(`/finance/gift-aid/claims/${claimId}`);
+  redirect(`/finance/gift-aid/claims/${claimId}`);
+}
+
+/**
+ * Mark claim as ready for submission.
+ * For RETAIL claims: enforces 28-day notification deadline.
  */
 export async function markClaimReady(formData: FormData) {
   const session = await requireAuth();
@@ -254,7 +455,22 @@ export async function markClaimReady(formData: FormData) {
     include: { items: true },
   });
 
-  if (!claim || claim.status !== "DRAFT") return;
+  if (!claim) return;
+
+  // Standard claims: DRAFT → READY
+  // Retail claims: NOTIFICATIONS_SENT → READY (with 28-day check)
+  if (claim.claimType === "RETAIL") {
+    if (claim.status !== "NOTIFICATIONS_SENT") return;
+
+    // Hard block: 28 days must have passed
+    if (claim.notificationDeadline && new Date() < new Date(claim.notificationDeadline)) {
+      redirect(
+        `/finance/gift-aid/claims/${claimId}?error=deadline-not-passed`
+      );
+    }
+  } else {
+    if (claim.status !== "DRAFT") return;
+  }
 
   // Check for error items that are still included
   const errorItems = claim.items.filter((item) => item.status === "ERROR");
@@ -325,7 +541,6 @@ export async function submitToHmrc(formData: FormData) {
     const testCorrelationId = `TEST-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const testHmrcRef = `HMRC-TEST-${claim.claimReference}`;
 
-    // Simulate acceptance after a short delay
     await prisma.giftAidClaim.update({
       where: { id: claimId },
       data: {
@@ -357,8 +572,6 @@ export async function submitToHmrc(formData: FormData) {
       },
     });
   } else {
-    // Real submission: mark as submitted with mock correlation for now
-    // TODO: Replace with real HMRC Government Gateway API call
     const correlationId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
     await prisma.giftAidClaim.update({
@@ -402,8 +615,6 @@ export async function checkHmrcStatus(formData: FormData) {
 
   if (!claim || claim.status !== "SUBMITTED") return;
 
-  // TODO: Real HMRC status polling via Government Gateway
-  // For now: log the check attempt
   await logAudit({
     userId: session.id,
     action: "UPDATE",

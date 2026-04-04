@@ -276,6 +276,7 @@ model Contact {
   smsMessages    SmsMessage[]           @relation("ContactSmsMessages")
   memberPortalTokens MemberPortalToken[]
   autoTasks      AutoTask[]             @relation("AutoTaskContact")
+  retailGiftAidNotifications RetailGiftAidNotification[]
 }
 
 model Organisation {
@@ -1914,7 +1915,8 @@ model RenewalReminder {
 model GiftAidClaim {
   id              String    @id @default(cuid())
   claimReference  String    @unique
-  status          String    @default("DRAFT") // DRAFT | READY | SUBMITTED | ACCEPTED | REJECTED | PARTIAL
+  claimType       String    @default("STANDARD") // STANDARD | RETAIL
+  status          String    @default("DRAFT") // DRAFT | NOTIFICATIONS_SENT | READY | SUBMITTED | ACCEPTED | REJECTED | PARTIAL
   totalDonations  Float     @default(0)
   totalClaimable  Float     @default(0)
   donationCount   Int       @default(0)
@@ -1935,15 +1937,21 @@ model GiftAidClaim {
   isTestMode      Boolean   @default(false) // true = test submission, not sent to real HMRC
   submittedById   String?   // User who submitted to HMRC
   notes           String?
+  // Retail Gift Aid notification workflow fields
+  notificationsSentAt DateTime?  // When notifications were sent to donors
+  notificationDeadline DateTime? // 28 days after notifications sent
+  notificationsSentById String?  // User who triggered notifications
   createdById     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  createdBy   User              @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
-  submittedBy User?             @relation("GiftAidClaimSubmittedBy", fields: [submittedById], references: [id])
-  items       GiftAidClaimItem[]
+  createdBy       User              @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy     User?             @relation("GiftAidClaimSubmittedBy", fields: [submittedById], references: [id])
+  items           GiftAidClaimItem[]
+  notifications   RetailGiftAidNotification[]
 
   @@index([status])
+  @@index([claimType])
 }
 
 model GiftAidClaimItem {
@@ -1965,6 +1973,32 @@ model GiftAidClaimItem {
 
   @@index([claimId])
   @@index([donationId])
+}
+
+// Tracks individual notifications sent to donors for Retail Gift Aid claims
+model RetailGiftAidNotification {
+  id          String    @id @default(cuid())
+  claimId     String
+  contactId   String
+  contactName String
+  contactEmail String?
+  method      String    // EMAIL | POST
+  status      String    @default("PENDING") // PENDING | SENT | FAILED
+  sentAt      DateTime?
+  token       String    @unique @default(cuid()) // Unique token for opt-out/consent URLs
+  optedOut    Boolean   @default(false)
+  optOutAt    DateTime?
+  optOutReason String?
+  emailConsented Boolean @default(false) // Did they consent to email for future claims?
+  emailConsentAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  claim   GiftAidClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  contact Contact      @relation(fields: [contactId], references: [id])
+
+  @@index([claimId])
+  @@index([contactId])
+  @@index([token])
 }
 
 // ============================================
