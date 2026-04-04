@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Upload, FileText, Package, Calendar } from "lucide-react";
+import { Upload, FileText, Package, Calendar, Phone, Mail } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function RetailGiftAidPage() {
@@ -25,6 +25,19 @@ export default async function RetailGiftAidPage() {
     _count: { id: true },
     _sum: { amount: true },
   });
+
+  // Get contact capture stats (for all contacts, not just retail)
+  const totalContacts = await prisma.contact.count({
+    where: { status: "ACTIVE" },
+  });
+  const contactsWithPhone = await prisma.contact.count({
+    where: { status: "ACTIVE", phone: { not: null }, NOT: { phone: "" } },
+  });
+  const contactsWithEmail = await prisma.contact.count({
+    where: { status: "ACTIVE", email: { not: null }, NOT: { email: "" } },
+  });
+  const phonePct = totalContacts > 0 ? Math.round((contactsWithPhone / totalContacts) * 100) : 0;
+  const emailPct = totalContacts > 0 ? Math.round((contactsWithEmail / totalContacts) * 100) : 0;
 
   // Get retail claims
   const retailClaims = await prisma.giftAidClaim.findMany({
@@ -100,6 +113,88 @@ export default async function RetailGiftAidPage() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Data Capture */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/crm/contacts?missing=phone">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Phone className="h-4 w-4" />
+                    Mobile Phone Capture
+                  </p>
+                  <p className="text-3xl font-bold mt-1">
+                    <span className={phonePct === 100 ? "text-green-600" : phonePct >= 75 ? "text-amber-600" : "text-red-600"}>
+                      {phonePct}%
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {contactsWithPhone} of {totalContacts} contacts
+                  </p>
+                </div>
+                <div className="relative h-16 w-16">
+                  <svg viewBox="0 0 36 36" className="h-16 w-16 transform -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                    <circle
+                      cx="18" cy="18" r="15.9155" fill="none"
+                      stroke={phonePct === 100 ? "#16a34a" : phonePct >= 75 ? "#d97706" : "#dc2626"}
+                      strokeWidth="3"
+                      strokeDasharray={`${phonePct} ${100 - phonePct}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+              {totalContacts - contactsWithPhone > 0 && (
+                <p className="text-xs text-purple-600 mt-2 font-medium">
+                  Click to see {totalContacts - contactsWithPhone} contact{totalContacts - contactsWithPhone !== 1 ? "s" : ""} missing a phone number →
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/crm/contacts?missing=email">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Mail className="h-4 w-4" />
+                    Email Capture
+                  </p>
+                  <p className="text-3xl font-bold mt-1">
+                    <span className={emailPct === 100 ? "text-green-600" : emailPct >= 75 ? "text-amber-600" : "text-red-600"}>
+                      {emailPct}%
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {contactsWithEmail} of {totalContacts} contacts
+                  </p>
+                </div>
+                <div className="relative h-16 w-16">
+                  <svg viewBox="0 0 36 36" className="h-16 w-16 transform -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                    <circle
+                      cx="18" cy="18" r="15.9155" fill="none"
+                      stroke={emailPct === 100 ? "#16a34a" : emailPct >= 75 ? "#d97706" : "#dc2626"}
+                      strokeWidth="3"
+                      strokeDasharray={`${emailPct} ${100 - emailPct}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+              {totalContacts - contactsWithEmail > 0 && (
+                <p className="text-xs text-purple-600 mt-2 font-medium">
+                  Click to see {totalContacts - contactsWithEmail} contact{totalContacts - contactsWithEmail !== 1 ? "s" : ""} missing an email →
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Recent Claims */}

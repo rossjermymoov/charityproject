@@ -2,8 +2,8 @@
  * Retail Gift Aid notification letter templates.
  *
  * HMRC requires charities to notify donors annually (by 31 May) about the Gift Aid
- * claimed on proceeds from their donated goods. Donors have 28 days to opt out if
- * their circumstances have changed (e.g. insufficient tax paid, name change).
+ * claimed on proceeds from their donated goods. Letters tell donors they have 21 days
+ * to opt out, but the actual enforcement deadline is 28 days (giving a buffer).
  *
  * This module provides both an HTML email template and data for PDF generation.
  */
@@ -125,7 +125,7 @@ export function buildRetailGiftAidEmailHtml(
                       the tax year, it is your responsibility to pay any difference.
                     </p>
                     <p style="margin: 0; color: #78350f; font-size: 13px; line-height: 1.5;">
-                      <strong>You have until ${data.notificationDeadline}</strong> (28 days from this notification)
+                      <strong>You have until ${data.notificationDeadline}</strong> (21 days from this notification)
                       to opt out of this claim if you wish.
                     </p>
                   </td>
@@ -256,7 +256,7 @@ Number of donations: ${data.donationCount}
 IMPORTANT INFORMATION
 If you have not paid enough Income Tax and/or Capital Gains Tax to cover the Gift Aid claimed on all your donations (to all charities and Community Amateur Sports Clubs) in the tax year, it is your responsibility to pay any difference.
 
-You have until ${data.notificationDeadline} (28 days from this notification) to opt out of this claim if you wish.
+You have until ${data.notificationDeadline} (21 days from this notification) to opt out of this claim if you wish.
 
 TO OPT OUT
 Visit: ${optOutUrl}

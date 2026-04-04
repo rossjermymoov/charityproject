@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Users, Plus, Search, Ticket } from "lucide-react";
+import { Users, Plus, Search, Ticket, AlertCircle } from "lucide-react";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 export default async function ContactsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string; lottery?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; lottery?: string; missing?: string }>;
 }) {
   const params = await searchParams;
   const search = params.search || "";
   const typeFilter = params.type || "";
   const lotteryFilter = params.lottery || "";
+  const missingFilter = params.missing || ""; // "phone" or "email"
 
   const contacts = await prisma.contact.findMany({
     where: {
@@ -32,6 +33,8 @@ export default async function ContactsPage({
           : {},
         typeFilter ? { types: { has: typeFilter } } : {},
         lotteryFilter === "yes" ? { isLotteryMember: true } : {},
+        missingFilter === "phone" ? { OR: [{ phone: null }, { phone: "" }] } : {},
+        missingFilter === "email" ? { OR: [{ email: null }, { email: "" }] } : {},
       ],
     },
     include: {
@@ -67,6 +70,23 @@ export default async function ContactsPage({
         </Link>
       </div>
 
+      {/* Missing data banner */}
+      {missingFilter && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-amber-600" />
+            <p className="text-sm text-amber-800 font-medium">
+              {missingFilter === "phone"
+                ? "Showing contacts missing a phone number"
+                : "Showing contacts missing an email address"}
+            </p>
+          </div>
+          <Link href="/crm/contacts" className="text-sm text-amber-700 hover:text-amber-900 underline">
+            Clear filter
+          </Link>
+        </div>
+      )}
+
       {/* Search and filters */}
       <Card className="p-4">
         <form className="flex flex-col sm:flex-row gap-3">
@@ -96,6 +116,15 @@ export default async function ContactsPage({
           >
             <option value="">All Lottery</option>
             <option value="yes">Lottery Members</option>
+          </select>
+          <select
+            name="missing"
+            defaultValue={missingFilter}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All Data</option>
+            <option value="phone">Missing Phone</option>
+            <option value="email">Missing Email</option>
           </select>
           <Button type="submit" variant="outline" size="sm">
             Filter
