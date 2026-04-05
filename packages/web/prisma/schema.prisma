@@ -2335,7 +2335,8 @@ model EmailTemplate {
   subject   String
   bodyHtml  String
   bodyText  String?
-  category  String   @default("GENERAL") // THANK_YOU, WELCOME, RECEIPT, RENEWAL, CUSTOM
+  logoUrl   String?  // URL or path for template header logo
+  category  String   @default("GENERAL") // THANK_YOU, WELCOME, RECEIPT, RENEWAL, CUSTOM, EVENT, VOLUNTEER, MEMBERSHIP
   variables Json     @default("[]")
   isActive  Boolean  @default(true)
   createdById String

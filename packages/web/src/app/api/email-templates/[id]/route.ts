@@ -37,10 +37,11 @@ export async function PUT(
         name: body.name,
         subject: body.subject,
         bodyHtml: body.bodyHtml,
-        bodyText: body.bodyText,
-        category: body.category,
-        variables: body.variables,
-        isActive: body.isActive,
+        bodyText: body.bodyText || null,
+        logoUrl: body.logoUrl || null,
+        category: body.category || "GENERAL",
+        variables: body.variables || [],
+        isActive: body.isActive ?? true,
       },
     });
 
