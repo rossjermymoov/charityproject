@@ -251,8 +251,7 @@ export default async function VolunteerDetailPage({
         hours,
         description: (formData.get("description") as string) || null,
         departmentId: (formData.get("departmentId") as string) || null,
-        status: "APPROVED",
-        verifiedById: session.id,
+        status: "LOGGED",
       },
     });
     await logAudit({ userId: session.id, action: "CREATE", entityType: "VolunteerHours", entityId: id, details: { hours, date: formData.get("date") } });

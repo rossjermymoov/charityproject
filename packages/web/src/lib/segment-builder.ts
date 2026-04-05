@@ -97,11 +97,16 @@ function buildLocationFilter(filter: any): any {
   }
 
   if (filter.postcodes && filter.postcodes.length > 0) {
-    locationConditions.push({
+    // Use startsWith for each postcode prefix so "SY11" matches "SY11 1NZ" etc.
+    const postcodeConditions = filter.postcodes.map((pc: string) => ({
       postcode: {
-        in: filter.postcodes,
+        startsWith: pc.trim().toUpperCase(),
+        mode: "insensitive" as const,
       },
-    });
+    }));
+    locationConditions.push(
+      postcodeConditions.length === 1 ? postcodeConditions[0] : { OR: postcodeConditions }
+    );
   }
 
   if (locationConditions.length === 0) {

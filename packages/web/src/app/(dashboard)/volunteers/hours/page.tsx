@@ -57,7 +57,7 @@ export default async function HoursPage({
     }),
   ]);
 
-  const pendingCount = hoursLogs.filter((h) => h.status === "LOGGED").length;
+  const pendingCount = hoursLogs.filter((h) => h.status === "LOGGED" || h.status === "APPROVED").length;
   const totalHoursShown = hoursLogs.reduce((sum, h) => sum + h.hours, 0);
 
   async function quickLogHours(formData: FormData) {
@@ -76,8 +76,7 @@ export default async function HoursPage({
         hours,
         description: (formData.get("description") as string) || null,
         departmentId: (formData.get("departmentId") as string) || null,
-        status: "APPROVED",
-        verifiedById: s.id,
+        status: "LOGGED",
       },
     });
     await logAudit({ userId: s.id, action: "CREATE", entityType: "VolunteerHours", entityId: volunteerId, details: { hours, date: formData.get("date") } });
@@ -92,7 +91,7 @@ export default async function HoursPage({
     const logId = formData.get("logId") as string;
     await prisma.volunteerHoursLog.update({
       where: { id: logId },
-      data: { status: "VERIFIED", verifiedById: s.id, verifiedAt: new Date() },
+      data: { status: "VERIFIED", verifiedById: s.id },
     });
     await logAudit({ userId: s.id, action: "UPDATE", entityType: "VolunteerHours", entityId: logId, details: { status: "VERIFIED" } });
     revalidatePath("/volunteers/hours");
@@ -230,6 +229,7 @@ export default async function HoursPage({
               >
                 <option value="">All statuses</option>
                 <option value="LOGGED">Logged (Pending)</option>
+                <option value="APPROVED">Approved (Pending Verification)</option>
                 <option value="VERIFIED">Verified</option>
               </select>
             </div>
@@ -287,7 +287,7 @@ export default async function HoursPage({
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        {log.status === "LOGGED" && (
+                        {(log.status === "LOGGED" || log.status === "APPROVED") && (
                           <form action={verifyHours} className="inline">
                             <input type="hidden" name="logId" value={log.id} />
                             <Button type="submit" size="sm" variant="outline" className="text-green-700 border-green-300 hover:bg-green-50">

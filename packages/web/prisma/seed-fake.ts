@@ -161,8 +161,7 @@ async function main() {
             hours: Math.floor(Math.random() * 6) + 1,
             description: randomActivity(),
             departmentId: deptIds.length > 0 ? deptIds[Math.floor(Math.random() * deptIds.length)] : null,
-            status: "APPROVED",
-            verifiedById: admin.id,
+            status: "LOGGED",
           },
         });
       }
