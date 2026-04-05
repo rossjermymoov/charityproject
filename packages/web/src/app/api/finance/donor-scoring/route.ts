@@ -29,7 +29,8 @@ export async function GET() {
             id: true,
             amount: true,
             date: true,
-            giftAid: true,
+            isGiftAidable: true,
+            giftAidClaimed: true,
           },
         },
       },
@@ -106,7 +107,7 @@ export async function GET() {
         else if (totalDonated > 0) monetaryScore = 5;
 
         // Gift Aid Score (0-10): Gift Aid status
-        const giftAidStatus = donations.some((d) => d.giftAid);
+        const giftAidStatus = donations.some((d) => d.isGiftAidable);
         const giftAidScore = giftAidStatus ? 10 : 0;
 
         // Engagement Score (0-10): Based on gift aid status and donation recency
