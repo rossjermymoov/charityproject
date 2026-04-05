@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { getSystemSettings } from "@/lib/settings";
 import Link from "next/link";
-import { Users, Plus, Search, Ticket, AlertCircle } from "lucide-react";
+import { Users, Plus, Search, Ticket, AlertCircle, Crown } from "lucide-react";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,10 +46,15 @@ export default async function ContactsPage({
         where: { status: "ACTIVE" },
         select: { id: true, type: true },
       },
+      donations: {
+        select: { amount: true },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
+
+  const systemSettings = await getSystemSettings();
 
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
@@ -171,8 +177,11 @@ export default async function ContactsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {contacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-gray-50 transition-colors">
+                {contacts.map((contact) => {
+                  const lifetimeTotal = contact.donations.reduce((sum, d) => sum + d.amount, 0);
+                  const isGold = lifetimeTotal >= systemSettings.goldDonorThreshold;
+                  return (
+                  <tr key={contact.id} className={isGold ? "bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                     <td className="px-6 py-4">
                       <Link
                         href={`/crm/contacts/${contact.id}`}
@@ -180,9 +189,14 @@ export default async function ContactsPage({
                       >
                         <Avatar firstName={contact.firstName} lastName={contact.lastName} size="sm" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {contact.firstName} {contact.lastName}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-900">
+                              {contact.firstName} {contact.lastName}
+                            </p>
+                            {isGold && (
+                              <Crown className="h-3.5 w-3.5 text-amber-500" />
+                            )}
+                          </div>
                           {contact.phone && (
                             <p className="text-xs text-gray-500">{contact.phone}</p>
                           )}
@@ -240,7 +254,8 @@ export default async function ContactsPage({
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

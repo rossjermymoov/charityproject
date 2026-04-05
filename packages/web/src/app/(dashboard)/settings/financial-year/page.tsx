@@ -3,9 +3,10 @@ import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getSystemSettings } from "@/lib/settings";
 import Link from "next/link";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
 export default async function FinancialYearSettingsPage() {
@@ -28,6 +29,23 @@ export default async function FinancialYearSettingsPage() {
     revalidatePath("/settings/financial-year");
     revalidatePath("/finance/legacies");
     revalidatePath("/finance/grants");
+  }
+
+  async function updateGoldDonorThreshold(formData: FormData) {
+    "use server";
+    await requireRole(["ADMIN"]);
+
+    const threshold = parseFloat(formData.get("goldDonorThreshold") as string);
+    if (isNaN(threshold) || threshold < 0) return;
+
+    await prisma.systemSettings.upsert({
+      where: { id: "default" },
+      update: { goldDonorThreshold: threshold },
+      create: { id: "default", financialYearEndMonth: 3, financialYearEndDay: 31, goldDonorThreshold: threshold },
+    });
+
+    revalidatePath("/settings/financial-year");
+    revalidatePath("/crm/contacts");
   }
 
   const monthOptions = [
@@ -105,6 +123,40 @@ export default async function FinancialYearSettingsPage() {
               Most UK charities use 31 March. Companies often use 31 December. Choose the date that matches your organisation's reporting period.
             </p>
             <Button type="submit">Save Financial Year End</Button>
+          </form>
+        </CardContent>
+      </Card>
+      {/* Gold Donor Threshold */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-amber-500" />
+            <h3 className="text-lg font-semibold text-gray-900">Gold Donor Threshold</h3>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-6">
+            <p className="text-sm text-amber-700">
+              Contacts whose lifetime donations reach <span className="font-bold">£{settings.goldDonorThreshold.toLocaleString("en-GB", { minimumFractionDigits: 2 })}</span> or more will be highlighted with a gold contact card throughout the CRM.
+            </p>
+          </div>
+
+          <form action={updateGoldDonorThreshold} className="space-y-4">
+            <div className="max-w-xs">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Threshold Amount (£)</label>
+              <Input
+                name="goldDonorThreshold"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                defaultValue={settings.goldDonorThreshold}
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Set the lifetime donation amount at which a contact earns Gold Donor status. Their contact card will display with a gold border and badge.
+            </p>
+            <Button type="submit">Save Threshold</Button>
           </form>
         </CardContent>
       </Card>

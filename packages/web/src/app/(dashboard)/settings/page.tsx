@@ -31,7 +31,7 @@ export default async function SettingsPage() {
   });
 
   const settingsLinks = [
-    { icon: Calendar, title: "Financial Year", desc: "Set your organisation's financial year end date for reporting", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
+    { icon: Calendar, title: "Financial Year & Donors", desc: "Financial year end date and Gold Donor threshold", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
     { icon: Target, title: "Event Targets", desc: "Set annual income, cost budget, and profit targets for events", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
     { icon: Coins, title: "Collection Tins", desc: "Configure predefined or AI-suggested collection tin routes", href: "/settings/collection-tins", color: "text-amber-600 bg-amber-50" },
     { icon: Store, title: "Shops", desc: "Manage shop locations and generate QR codes for Retail Gift Aid", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },

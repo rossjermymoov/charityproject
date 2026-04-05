@@ -64,6 +64,9 @@ model SystemSettings {
   // ── Loqate Integration ──
   loqateApiKey          String?  // Loqate API key for address verification
 
+  // ── Donor Recognition ──
+  goldDonorThreshold    Float    @default(1000) // Lifetime donation amount (£) to earn Gold Donor status
+
   updatedAt             DateTime @updatedAt
 }
 

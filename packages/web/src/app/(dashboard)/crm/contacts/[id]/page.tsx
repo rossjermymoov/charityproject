@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket, PoundSterling, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket, PoundSterling, Calendar, Tag, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { logAudit } from "@/lib/audit";
+import { getSystemSettings } from "@/lib/settings";
 import { extractJGSlug, buildJGUrl } from "@/lib/justgiving";
 import { JustGivingSyncButton } from "@/components/ui/justgiving-sync";
 import { GiftAidShield } from "@/components/ui/gift-aid-shield";
@@ -50,6 +51,8 @@ export default async function ContactDetailPage({
   });
 
   if (!contact) notFound();
+
+  const systemSettings = await getSystemSettings();
 
   const allContacts = await prisma.contact.findMany({
     where: { id: { not: id } },
@@ -358,6 +361,7 @@ export default async function ContactDetailPage({
   // ── Computed values ─────────────────────────────────────────
 
   const lifetimeDonationTotal = contact.donations.reduce((sum, d) => sum + d.amount, 0);
+  const isGoldDonor = lifetimeDonationTotal >= systemSettings.goldDonorThreshold;
 
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
@@ -1059,7 +1063,7 @@ export default async function ContactDetailPage({
       </div>
 
       {/* Profile Card — always visible above tabs */}
-      <Card>
+      <Card className={isGoldDonor ? "border-2 border-amber-400 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 shadow-lg ring-1 ring-amber-200" : ""}>
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
             <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
@@ -1083,6 +1087,11 @@ export default async function ContactDetailPage({
                     )}
                     {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
                       <GiftAidShield type="R" size="md" />
+                    )}
+                    {isGoldDonor && (
+                      <Badge className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-sm">
+                        <Crown className="h-3 w-3 mr-1" />Gold Donor
+                      </Badge>
                     )}
                     {contact.isArchived && (
                       <Badge className="bg-red-100 text-red-800">Archived</Badge>
