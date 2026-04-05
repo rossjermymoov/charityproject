@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -470,7 +472,7 @@ export default function PartnershipDetailPage() {
                         {activityTypeLabels[activity.type] || activity.type}
                       </Badge>
                       <span className="text-sm text-gray-600">
-                        {new Date(activity.date).toLocaleDateString()}
+                        {formatDate(activity.date)}
                       </span>
                     </div>
                     {activity.description && (

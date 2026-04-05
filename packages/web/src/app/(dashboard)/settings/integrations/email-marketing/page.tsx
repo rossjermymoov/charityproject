@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -119,13 +121,7 @@ export default function EmailMarketingPage() {
 
   function formatDate(dateString: string | null) {
     if (!dateString) return "Never";
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatDate(dateString);
   }
 
   if (loading) {

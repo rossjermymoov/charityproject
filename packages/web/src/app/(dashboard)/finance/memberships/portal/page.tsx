@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -280,7 +282,7 @@ export default function MemberPortalManagementPage() {
                       {link.contactName || "Unknown"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(link.createdAt).toLocaleDateString()}
+                      {formatDate(link.createdAt)}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       {link.expiresAt ? (
@@ -291,7 +293,7 @@ export default function MemberPortalManagementPage() {
                               : "text-gray-600"
                           }
                         >
-                          {new Date(link.expiresAt).toLocaleDateString()}
+                          {formatDate(link.expiresAt)}
                           {isExpired(link.expiresAt) && " (Expired)"}
                         </span>
                       ) : (

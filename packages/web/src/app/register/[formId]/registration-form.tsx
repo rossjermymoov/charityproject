@@ -236,12 +236,7 @@ export function RegistrationFormClient({ form }: { form: FormData }) {
           <div className="flex items-center justify-center gap-4 mt-4 text-sm opacity-80">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {startDate.toLocaleDateString("en-GB", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+              {new Date(startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
             </span>
             {form.event.location && (
               <span className="flex items-center gap-1">

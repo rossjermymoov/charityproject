@@ -11,7 +11,7 @@ import {
   buildRetailGiftAidEmailHtml,
   type RetailGiftAidLetterData,
 } from "@/lib/retail-gift-aid-letter";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 // Donation types NOT eligible for Gift Aid
 const NON_ELIGIBLE_TYPES = ["IN_KIND", "GRANT", "LEGACY"];
@@ -314,21 +314,9 @@ export async function sendRetailNotifications(formData: FormData) {
     const deadline = new Date(now);
     deadline.setDate(deadline.getDate() + 28);
 
-    const taxYearStart = new Date(claim.periodStart).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    const taxYearEnd = new Date(claim.periodEnd).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    const deadlineStr = deadline.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    const taxYearStart = formatDate(claim.periodStart);
+    const taxYearEnd = formatDate(claim.periodEnd);
+    const deadlineStr = formatDate(deadline);
 
     let emailsSent = 0;
     let postalNeeded = 0;

@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { requireRole } from "@/lib/session";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,13 +22,7 @@ export default async function SyncDashboardPage() {
 
   const formatDate = (date: Date | null) => {
     if (!date) return "-";
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatDate(date);
   };
 
   const getStatusIcon = (status: string) => {

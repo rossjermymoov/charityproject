@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -205,8 +207,8 @@ export default function GasdsDetailPage({ params }: { params: Promise<{ id: stri
           <div>
             <h1 className="text-3xl font-bold tracking-tight">GASDS Claim</h1>
             <p className="text-gray-500 mt-1">
-              {new Date(claim.claimPeriodStart).toLocaleDateString("en-GB")} -{" "}
-              {new Date(claim.claimPeriodEnd).toLocaleDateString("en-GB")}
+              {formatDate(claim.claimPeriodStart)} -{" "}
+              {formatDate(claim.claimPeriodEnd)}
             </p>
           </div>
         </div>
@@ -357,7 +359,7 @@ export default function GasdsDetailPage({ params }: { params: Promise<{ id: stri
                   {claim.entries.map((entry) => (
                     <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        {new Date(entry.date).toLocaleDateString("en-GB")}
+                        {formatDate(entry.date)}
                       </td>
                       <td className="py-3 px-4">
                         <Badge variant="outline">{entry.source}</Badge>

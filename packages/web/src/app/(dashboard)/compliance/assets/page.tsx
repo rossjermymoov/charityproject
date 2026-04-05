@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Database, Plus, Search } from "lucide-react";
@@ -199,7 +200,7 @@ export default async function AssetsPage({
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {asset.lastReviewDate
-                        ? new Date(asset.lastReviewDate).toLocaleDateString()
+                        ? formatDate(asset.lastReviewDate)
                         : "—"}
                     </td>
                   </tr>

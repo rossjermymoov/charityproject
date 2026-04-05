@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -211,7 +213,7 @@ export default function BoardReportDetailPage({
               {report.status}
             </Badge>
             <span className="text-sm text-gray-500">
-              Period: {report.period} | Generated: {new Date(report.createdAt).toLocaleDateString()}
+              Period: {report.period} | Generated: {formatDate(report.createdAt)}
             </span>
           </div>
         </div>

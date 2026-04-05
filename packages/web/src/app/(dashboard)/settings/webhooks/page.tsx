@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -284,7 +286,7 @@ export default function WebhooksPage() {
                   <p className="text-gray-600">Last Triggered</p>
                   <p>
                     {webhook.lastTriggeredAt
-                      ? new Date(webhook.lastTriggeredAt).toLocaleDateString()
+                      ? formatDate(webhook.lastTriggeredAt)
                       : "Never"}
                   </p>
                 </div>

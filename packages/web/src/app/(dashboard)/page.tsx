@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -21,7 +22,7 @@ import {
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getStatusColor, formatDate } from "@/lib/utils";
+import { getStatusColor } from "@/lib/utils";
 import Link from "next/link";
 import {
   DonationsChart,
@@ -31,7 +32,7 @@ import {
 import { DashboardDateFilter } from "@/components/ui/dashboard-date-filter";
 
 function getMonthLabel(date: Date): string {
-  return date.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
+  return formatShortDate(date);
 }
 
 function getMonthsBetween(start: Date, end: Date): string[] {

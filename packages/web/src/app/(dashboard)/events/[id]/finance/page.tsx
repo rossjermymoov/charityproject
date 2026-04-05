@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -418,7 +419,7 @@ export default async function EventFinancePage({
                 <p><span className="font-medium text-gray-700">Notes:</span> {finance.notes}</p>
               )}
               <p className="text-xs text-gray-500">
-                Completed on {finance.completedAt?.toLocaleDateString("en-GB")}
+                {finance.completedAt && <>Completed on {formatDate(finance.completedAt)}</>}
               </p>
             </div>
           </CardContent>

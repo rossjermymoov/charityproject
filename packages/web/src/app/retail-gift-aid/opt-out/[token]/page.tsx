@@ -40,11 +40,7 @@ export default async function RetailGiftAidOptOutPage({
                 You have already opted out of this Gift Aid claim. Your opt-out was
                 recorded on{" "}
                 {notification.optOutAt
-                  ? new Date(notification.optOutAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
+                  ? new Date(notification.optOutAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
                   : "a previous date"}
                 .
               </p>
@@ -105,15 +101,9 @@ export default async function RetailGiftAidOptOutPage({
               Hi {notification.contactName}, you are receiving this because{" "}
               {charityName} is preparing a Retail Gift Aid claim with HMRC for
               the tax year{" "}
-              {new Date(notification.claim.periodStart).toLocaleDateString(
-                "en-GB",
-                { day: "numeric", month: "long", year: "numeric" }
-              )}{" "}
+              {new Date(notification.claim.periodStart).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}{" "}
               to{" "}
-              {new Date(notification.claim.periodEnd).toLocaleDateString(
-                "en-GB",
-                { day: "numeric", month: "long", year: "numeric" }
-              )}
+              {new Date(notification.claim.periodEnd).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
               .
             </p>
 

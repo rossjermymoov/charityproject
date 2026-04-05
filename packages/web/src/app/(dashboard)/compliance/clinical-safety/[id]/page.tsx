@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -293,7 +294,7 @@ export default async function HazardDetailPage({ params }: { params: Promise<{ i
             <div className="p-3 bg-green-50 rounded-lg border border-green-200">
               <p className="text-sm text-green-700">
                 <span className="font-semibold">✓ Signed off</span> on{" "}
-                {hazard.csoSignedOffAt && new Date(hazard.csoSignedOffAt).toLocaleDateString()}
+                {hazard.csoSignedOffAt && formatDate(hazard.csoSignedOffAt)}
               </p>
             </div>
             {hazard.csoReview && (

@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -307,7 +308,7 @@ export default async function TrainingPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {training.expiryDate
-                          ? new Date(training.expiryDate).toLocaleDateString()
+                          ? formatDate(training.expiryDate)
                           : "—"}
                       </td>
                     </tr>

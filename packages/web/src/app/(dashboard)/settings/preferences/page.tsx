@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState } from "react";
 import Link from "next/link";
 
@@ -415,7 +417,7 @@ export default function PreferencesSettingsPage() {
                           </td>
                           <td className="px-4 py-3 text-gray-700 text-xs">
                             {link.expiresAt
-                              ? new Date(link.expiresAt).toLocaleDateString()
+                              ? formatDate(link.expiresAt)
                               : "Never"}
                           </td>
                           <td className="px-4 py-3">

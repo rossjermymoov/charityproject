@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, FileText, AlertCircle } from "lucide-react";
@@ -202,8 +204,8 @@ export default function GasdsPage() {
                   {claims.map((claim) => (
                     <tr key={claim.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        {new Date(claim.claimPeriodStart).toLocaleDateString("en-GB")} –{" "}
-                        {new Date(claim.claimPeriodEnd).toLocaleDateString("en-GB")}
+                        {formatDate(claim.claimPeriodStart)} –{" "}
+                        {formatDate(claim.claimPeriodEnd)}
                       </td>
                       <td className="py-3 px-4">
                         £{claim.totalSmallDonations.toFixed(2)}

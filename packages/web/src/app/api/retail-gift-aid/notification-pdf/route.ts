@@ -3,7 +3,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { buildRetailGiftAidLetterText } from "@/lib/retail-gift-aid-letter";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency , formatDate } from '@/lib/utils';
 
 // A4 dimensions in points
 const W = 595.28;
@@ -110,23 +110,11 @@ export async function GET(request: Request) {
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const taxYearStart = new Date(claim.periodStart).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const taxYearEnd = new Date(claim.periodEnd).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const taxYearStart = formatDate(claim.periodStart);
+  const taxYearEnd = formatDate(claim.periodEnd);
 
   const deadline = claim.notificationDeadline
-    ? new Date(claim.notificationDeadline).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? formatDate(claim.notificationDeadline)
     : "28 days from receipt";
 
   for (const notif of postNotifications) {

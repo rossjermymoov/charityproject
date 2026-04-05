@@ -901,7 +901,7 @@ export default async function ContactDetailPage({
                         <Link href={`/finance/donations/${d.id}`} className="text-indigo-600 hover:underline">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                            <span>{new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                            <span>{formatDate(d.date)}</span>
                           </div>
                           <span className="text-xs text-gray-400 ml-5">
                             {new Date(d.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}

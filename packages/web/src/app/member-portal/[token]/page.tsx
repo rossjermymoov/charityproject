@@ -244,7 +244,7 @@ export default function MemberPortalPage() {
                       Started
                     </p>
                     <p className="text-sm text-gray-900">
-                      {new Date(memberData.membership.startDate).toLocaleDateString()}
+                      {new Date(memberData.membership.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                     </p>
                   </div>
 
@@ -253,7 +253,7 @@ export default function MemberPortalPage() {
                       Expires
                     </p>
                     <p className="text-sm text-gray-900">
-                      {new Date(memberData.membership.endDate).toLocaleDateString()}
+                      {new Date(memberData.membership.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                     </p>
                   </div>
 
@@ -263,7 +263,7 @@ export default function MemberPortalPage() {
                         Next Renewal
                       </p>
                       <p className="text-sm text-gray-900">
-                        {new Date(memberData.membership.renewalDate).toLocaleDateString()}
+                        {new Date(memberData.membership.renewalDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                       </p>
                     </div>
                   )}

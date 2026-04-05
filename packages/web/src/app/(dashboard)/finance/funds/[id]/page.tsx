@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -215,7 +217,7 @@ export default function FundDetailPage() {
                       )}
                       <p className="text-xs text-gray-500 mt-1">
                         {transaction.createdBy.name} •{" "}
-                        {new Date(transaction.date).toLocaleDateString()}
+                        {formatDate(transaction.date)}
                       </p>
                     </div>
                   </div>

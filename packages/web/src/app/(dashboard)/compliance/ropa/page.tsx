@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { FileText, Plus, Search } from "lucide-react";
@@ -155,7 +156,7 @@ export default async function RopaPage({
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {activity.lastReviewDate
-                        ? new Date(activity.lastReviewDate).toLocaleDateString()
+                        ? formatDate(activity.lastReviewDate)
                         : "—"}
                     </td>
                   </tr>

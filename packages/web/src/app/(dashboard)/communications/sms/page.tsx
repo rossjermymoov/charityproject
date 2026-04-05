@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -184,7 +186,7 @@ export default function SmsDashboardPage() {
                         {msg.direction}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(msg.createdAt).toLocaleDateString()}
+                        {formatDate(msg.createdAt)}
                       </td>
                     </tr>
                   ))}

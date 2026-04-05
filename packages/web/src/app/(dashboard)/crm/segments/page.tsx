@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import Link from "next/link";
@@ -62,10 +63,10 @@ export default async function SegmentsPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-gray-500">
-                    Created {new Date(segment.createdAt).toLocaleDateString()}
+                    Created {formatDate(segment.createdAt)}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Updated {new Date(segment.updatedAt).toLocaleDateString()}
+                    Updated {formatDate(segment.updatedAt)}
                   </p>
                 </CardContent>
               </Card>

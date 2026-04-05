@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { generateBalanceSheet } from "@/lib/sorp-reports";
+import { formatDate } from '@/lib/utils';
 
 /**
  * POST /api/finance/reports/generate-balance-sheet
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Create report record
     const report = await prisma.financialReport.create({
       data: {
-        name: name || `Balance Sheet as at ${date.toLocaleDateString()}`,
+        name: name || `Balance Sheet as at ${formatDate(date)}`,
         type: "BALANCE_SHEET",
         financialYear,
         startDate: date,

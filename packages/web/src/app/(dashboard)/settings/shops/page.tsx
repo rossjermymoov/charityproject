@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/session";
@@ -187,7 +188,7 @@ export default async function ShopsSettingsPage() {
                       </div>
 
                       <p className="text-xs text-gray-400">
-                        Created by {shop.createdBy.name} on {shop.createdAt.toLocaleDateString("en-GB")}
+                        Created by {shop.createdBy.name} on {formatDate(shop.createdAt)}
                       </p>
                     </div>
                   </div>

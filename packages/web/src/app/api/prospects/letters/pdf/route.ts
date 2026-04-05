@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { formatDate } from '@/lib/utils';
 
 type LetterInput = {
   prospectName: string;
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
 
     // Date
     const today = new Date();
-    const dateStr = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const dateStr = formatDate(today);
     page.drawText(dateStr, {
       x: MARGIN,
       y,

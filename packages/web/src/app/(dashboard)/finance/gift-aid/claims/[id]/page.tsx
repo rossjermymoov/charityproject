@@ -186,11 +186,7 @@ export default async function GiftAidClaimDetailPage({
               Donors must have 28 days to respond to their notifications before a retail Gift Aid
               claim can be submitted. The deadline is{" "}
               {claim.notificationDeadline
-                ? new Date(claim.notificationDeadline).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
+                ? formatDate(claim.notificationDeadline)
                 : "not yet set"}
               .
             </p>
@@ -264,7 +260,7 @@ export default async function GiftAidClaimDetailPage({
                 <p className="text-xs text-gray-500">
                   Deadline:{" "}
                   {claim.notificationDeadline
-                    ? new Date(claim.notificationDeadline).toLocaleDateString("en-GB")
+                    ? formatDate(claim.notificationDeadline)
                     : "—"}
                 </p>
               </>
@@ -454,11 +450,7 @@ export default async function GiftAidClaimDetailPage({
                       Waiting for 28-day notification period — {daysUntilDeadline} day{daysUntilDeadline !== 1 ? "s" : ""} remaining
                       (deadline:{" "}
                       {claim.notificationDeadline
-                        ? new Date(claim.notificationDeadline).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })
+                        ? formatDate(claim.notificationDeadline)
                         : "—"}
                       )
                     </span>

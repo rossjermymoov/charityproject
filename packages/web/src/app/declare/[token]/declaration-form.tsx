@@ -129,7 +129,7 @@ export function DeclarationForm({ token, contactName, isRetail = false }: Declar
       </button>
 
       <p className="text-xs text-gray-400 text-center">
-        Date: {new Date().toLocaleDateString("en-GB")}
+        Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
       </p>
     </form>
   );

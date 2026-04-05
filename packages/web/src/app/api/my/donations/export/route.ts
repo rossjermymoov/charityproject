@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { formatDate } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     ...donations.map((d) => {
       const giftAidValue = d.isGiftAidable ? (d.amount * 0.25).toFixed(2) : "0.00";
       return [
-        new Date(d.date).toLocaleDateString("en-GB"),
+        formatDate(d.date),
         d.type.replace("_", " "),
         `"${d.event?.name || d.campaign?.name || "General"}"`,
         d.amount.toFixed(2),

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useRef } from "react";
 import {
   MapPin,
@@ -84,11 +86,7 @@ export function RouteInfographic({ stats }: { stats: RouteStats }) {
   );
 
   const formattedDate = stats.completedDate
-    ? new Date(stats.completedDate).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? formatDate(stats.completedDate)
     : "—";
 
   return (
@@ -402,7 +400,7 @@ export function RouteInfographic({ stats }: { stats: RouteStats }) {
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 text-xs text-gray-400 flex items-center justify-between">
-          <span>DeepCharity Route Report · Generated {new Date().toLocaleDateString("en-GB")}</span>
+          <span>DeepCharity Route Report · Generated {formatDate(new Date())}</span>
           <span>
             {stats.totalTinsCounted} tins · £{stats.totalCollected.toFixed(2)} ·{" "}
             {completionRate}% completion

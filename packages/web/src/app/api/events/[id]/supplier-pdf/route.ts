@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmailViaProvider } from "@/lib/email-providers";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { loadBranding } from "@/lib/branding";
+import { formatDate } from '@/lib/utils';
 
 interface SupplierInfo {
   id: string;
@@ -131,7 +132,7 @@ async function generatePDF(
   drawText(eventName, MARGIN, 14, true, rgb(0.2, 0.2, 0.6));
   y -= 18;
   const meta: string[] = [];
-  if (eventDate) meta.push(`Date: ${eventDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`);
+  if (eventDate) meta.push(`Date: ${formatDate(eventDate)}`);
   if (eventLocation) meta.push(`Location: ${eventLocation}`);
   meta.push(`Suppliers: ${suppliers.length}`);
   drawText(meta.join("  |  "), MARGIN, 9, false, rgb(0.4, 0.4, 0.4));

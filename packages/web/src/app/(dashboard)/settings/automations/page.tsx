@@ -1,3 +1,4 @@
+import { formatDate, formatShortDate } from '@/lib/utils';
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireRole } from "@/lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,7 +141,7 @@ export default async function AutomationsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {rule.lastRunAt
-                          ? new Date(rule.lastRunAt).toLocaleDateString()
+                          ? formatDate(rule.lastRunAt)
                           : "Never"}
                       </td>
                       <td className="px-6 py-4">

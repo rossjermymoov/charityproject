@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate, formatShortDate } from '@/lib/utils';
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -401,7 +403,7 @@ export default function NewGasdsPage() {
                   {entries.map((entry) => (
                     <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        {new Date(entry.date).toLocaleDateString("en-GB")}
+                        {formatDate(entry.date)}
                       </td>
                       <td className="py-3 px-4">
                         <Badge variant="outline">{entry.source}</Badge>

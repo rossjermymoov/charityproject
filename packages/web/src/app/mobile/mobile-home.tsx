@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -29,11 +30,6 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
     const total = run.runStops.length;
     const done = run.runStops.filter((s) => s.status === "COMPLETED" || s.status === "SKIPPED").length;
     return { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
-  };
-
-  const formatDate = (d: string | null) => {
-    if (!d) return "";
-    return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   };
 
   return (
@@ -143,7 +139,7 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
               }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 600, color: "#555" }}>{run.route.name}</div>
-                  <div style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{run.runStops.length} stops · {formatDate(run.completedAt)}</div>
+                  <div style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{run.runStops.length} stops{run.completedAt ? ` · ${formatDate(run.completedAt)}` : ""}</div>
                 </div>
                 <div style={{ fontSize: 28, color: "#22c55e" }}>✓</div>
               </div>
