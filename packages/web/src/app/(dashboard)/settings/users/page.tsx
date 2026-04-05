@@ -67,7 +67,34 @@ export default async function UserManagementPage({
     if (!email || !name || !password) return;
 
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return;
+    if (existing) {
+      // If archived, restore them with the new details
+      if (existing.isArchived) {
+        const passwordHash = await hashPassword(password);
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            name,
+            role,
+            passwordHash,
+            contactId: contactId || null,
+            isArchived: false,
+            archivedAt: null,
+          },
+        });
+        await logAudit({
+          userId: s.id,
+          action: "UPDATE",
+          entityType: "User",
+          entityId: existing.id,
+          details: { email, role, name, restored: true },
+        });
+        revalidatePath("/settings/users");
+        return;
+      }
+      // Already active — skip
+      return;
+    }
 
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
