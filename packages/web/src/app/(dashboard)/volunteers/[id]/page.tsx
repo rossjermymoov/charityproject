@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Clock, Calendar, Wrench, Shield, Bell, Plus, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Wrench, Shield, Bell, Plus, X, Trash2, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import { getStatusColor, formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
 import { logAudit } from "@/lib/audit";
+import { startOnboarding } from "../onboarding/actions";
 
 async function changeStatus(formData: FormData) {
   "use server";
@@ -218,6 +219,7 @@ export default async function VolunteerDetailPage({
         activityRecords: { include: { department: true }, orderBy: { date: "desc" }, take: 20 },
         assignments: { include: { department: true }, orderBy: { date: "desc" }, take: 10 },
         reminders: { orderBy: { triggerDate: "desc" }, take: 10 },
+        onboardingSteps: true,
       },
     }),
     prisma.skill.findMany({ orderBy: { name: "asc" } }),
@@ -300,6 +302,21 @@ export default async function VolunteerDetailPage({
                 <Link href={`/crm/contacts/${volunteer.contactId}`}>
                   <Badge variant="outline" className="cursor-pointer hover:bg-gray-50">CRM Profile →</Badge>
                 </Link>
+                {volunteer.onboardingSteps.length > 0 ? (
+                  <Link href="/volunteers/onboarding">
+                    <Badge className="bg-indigo-100 text-indigo-800 cursor-pointer hover:bg-indigo-200">
+                      <ClipboardList className="h-3 w-3 mr-1" />
+                      View Onboarding →
+                    </Badge>
+                  </Link>
+                ) : (
+                  <form action={startOnboarding} className="inline">
+                    <input type="hidden" name="volunteerId" value={id} />
+                    <button type="submit" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200 transition-colors">
+                      <ClipboardList className="h-3 w-3" /> Start Onboarding
+                    </button>
+                  </form>
+                )}
               </div>
               <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
                 {volunteer.contact.email && <span>{volunteer.contact.email}</span>}

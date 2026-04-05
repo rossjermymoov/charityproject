@@ -35,11 +35,13 @@ export default async function NewVolunteerPage() {
     const skillIds = formData.getAll("skills") as string[];
     const desiredHours = formData.get("desiredHoursPerWeek") as string;
 
+    const startOnboarding = formData.get("startOnboarding") === "on";
+
     const volunteer = await prisma.volunteerProfile.create({
       data: {
         contactId: contact.id,
-        status: "ACTIVE",
-        startDate: new Date().toISOString().split("T")[0],
+        status: startOnboarding ? "APPLICANT" : "ACTIVE",
+        startDate: startOnboarding ? null : new Date().toISOString().split("T")[0],
         desiredHoursPerWeek: desiredHours ? parseFloat(desiredHours) : null,
         departments: {
           create: deptIds.map((id) => ({ departmentId: id })),
@@ -50,7 +52,32 @@ export default async function NewVolunteerPage() {
       },
     });
 
-    redirect(`/volunteers/${volunteer.id}`);
+    // Auto-start onboarding workflow if requested
+    if (startOnboarding) {
+      const ONBOARDING_STEPS = [
+        "APPLICATION_RECEIVED",
+        "DBS_SUBMITTED",
+        "DBS_CLEARED",
+        "INDUCTION",
+        "TRAINING_ASSIGNED",
+        "TRAINING_COMPLETED",
+        "FULLY_ONBOARDED",
+      ];
+      await prisma.$transaction(
+        ONBOARDING_STEPS.map((stepName) =>
+          prisma.onboardingStep.create({
+            data: {
+              volunteerId: volunteer.id,
+              stepName,
+              completedAt: stepName === "APPLICATION_RECEIVED" ? new Date() : null,
+              completedById: stepName === "APPLICATION_RECEIVED" ? session.id : null,
+            },
+          })
+        )
+      );
+    }
+
+    redirect(startOnboarding ? "/volunteers/onboarding" : `/volunteers/${volunteer.id}`);
   }
 
   return (
@@ -108,6 +135,23 @@ export default async function NewVolunteerPage() {
                 </div>
               </div>
             )}
+
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="startOnboarding"
+                  defaultChecked
+                  className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div>
+                  <p className="text-sm font-medium text-indigo-800">Start Onboarding Workflow</p>
+                  <p className="text-xs text-indigo-600 mt-0.5">
+                    Creates the volunteer as an Applicant and starts the 7-step onboarding process (DBS, induction, training, etc.). Uncheck to add them as Active immediately.
+                  </p>
+                </div>
+              </label>
+            </div>
 
             <div className="flex justify-end gap-3">
               <Link href="/volunteers">
