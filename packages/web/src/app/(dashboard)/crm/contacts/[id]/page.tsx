@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket, PoundSterling, Calendar, Tag, Crown } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket, PoundSterling, Calendar, Tag, Crown, Package } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -1069,34 +1069,51 @@ export default async function ContactDetailPage({
             <Avatar firstName={contact.firstName} lastName={contact.lastName} size="lg" />
             <div className="flex-1">
               <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {contact.firstName} {contact.lastName}
-                    </h2>
+                <div className="min-w-0">
+                  {/* Name */}
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {contact.firstName} {contact.lastName}
+                  </h2>
+
+                  {/* Status badges — uniform row */}
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                     {contact.types.map((t) => (
-                      <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>{t}</Badge>
+                      <span key={t} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${typeColors[t] || "bg-gray-100 text-gray-800"}`}>
+                        {t}
+                      </span>
                     ))}
-                    {contact.isLotteryMember && (
-                      <Badge className="bg-amber-100 text-amber-800">
-                        <Ticket className="h-3 w-3 mr-1" />Lottery Member
-                      </Badge>
-                    )}
                     {contact.giftAids.some((ga) => ga.type === "STANDARD" && ga.status === "ACTIVE") && (
-                      <GiftAidShield type="S" size="md" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-pink-100 text-pink-800 px-2 py-1 text-xs font-semibold">
+                        <Heart className="h-3 w-3" />
+                        Gift Aid
+                      </span>
                     )}
                     {contact.giftAids.some((ga) => ga.type === "RETAIL" && ga.status === "ACTIVE") && (
-                      <GiftAidShield type="R" size="md" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 px-2 py-1 text-xs font-semibold">
+                        <Package className="h-3 w-3" />
+                        Retail Gift Aid
+                      </span>
+                    )}
+                    {contact.isLotteryMember && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-800 px-2 py-1 text-xs font-semibold">
+                        <Ticket className="h-3 w-3" />
+                        Lottery
+                      </span>
                     )}
                     {isGoldDonor && (
-                      <Badge className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-sm">
-                        <Crown className="h-3 w-3 mr-1" />Gold Donor
-                      </Badge>
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-400 text-white px-2 py-1 text-xs font-semibold shadow-sm">
+                        <Crown className="h-3 w-3" />
+                        Gold Donor
+                      </span>
                     )}
                     {contact.isArchived && (
-                      <Badge className="bg-red-100 text-red-800">Archived</Badge>
+                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 text-red-800 px-2 py-1 text-xs font-semibold">
+                        Archived
+                      </span>
                     )}
                   </div>
+
+                  {/* Quick links */}
                   <div className="flex gap-2 mt-2">
                     {contact.volunteerProfile ? (
                       <Link href={`/volunteers/${contact.volunteerProfile.id}`}>

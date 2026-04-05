@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSystemSettings } from "@/lib/settings";
 import Link from "next/link";
-import { Users, Plus, Search, Ticket, AlertCircle, Crown } from "lucide-react";
-import { GiftAidShield } from "@/components/ui/gift-aid-shield";
+import { Users, Plus, Search, Ticket, AlertCircle, Crown, Heart, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -160,13 +159,7 @@ export default async function ContactsPage({
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Types
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gift Aid
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lottery
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Organisation
@@ -205,41 +198,33 @@ export default async function ContactsPage({
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{contact.email || "—"}</td>
                     <td className="px-6 py-4">
-                      <div className="flex gap-1 flex-wrap">
-                        {contact.types.length > 0 ? (
-                          contact.types.map((t) => (
-                            <Badge key={t} className={typeColors[t] || "bg-gray-100 text-gray-800"}>
-                              {t}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-gray-400">—</span>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {contact.types.map((t) => (
+                          <span key={t} className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${typeColors[t] || "bg-gray-100 text-gray-800"}`}>
+                            {t}
+                          </span>
+                        ))}
+                        {contact.giftAids.some((ga) => ga.type === "STANDARD") && (
+                          <span className="inline-flex items-center gap-0.5 rounded-md bg-pink-100 text-pink-800 px-1.5 py-0.5 text-[10px] font-semibold">
+                            <Heart className="h-2.5 w-2.5" />GA
+                          </span>
+                        )}
+                        {contact.giftAids.some((ga) => ga.type === "RETAIL") && (
+                          <span className="inline-flex items-center gap-0.5 rounded-md bg-purple-100 text-purple-800 px-1.5 py-0.5 text-[10px] font-semibold">
+                            <Package className="h-2.5 w-2.5" />RGA
+                          </span>
+                        )}
+                        {contact.isLotteryMember && (
+                          <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-100 text-amber-800 px-1.5 py-0.5 text-[10px] font-semibold">
+                            <Ticket className="h-2.5 w-2.5" />LM
+                          </span>
+                        )}
+                        {isGold && (
+                          <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-400 text-white px-1.5 py-0.5 text-[10px] font-semibold shadow-sm">
+                            <Crown className="h-2.5 w-2.5" />GOLD
+                          </span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {contact.giftAids.length > 0 ? (
-                        <div className="flex items-center justify-center gap-1.5">
-                          {contact.giftAids.some((ga) => ga.type === "STANDARD") && (
-                            <GiftAidShield type="S" />
-                          )}
-                          {contact.giftAids.some((ga) => ga.type === "RETAIL") && (
-                            <GiftAidShield type="R" />
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {contact.isLotteryMember ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800" title="Lottery member">
-                          <Ticket className="h-3 w-3 text-amber-600" />
-                          LM
-                        </span>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {contact.organisation?.name || "—"}
