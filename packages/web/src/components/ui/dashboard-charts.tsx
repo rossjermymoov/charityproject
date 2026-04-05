@@ -73,6 +73,8 @@ export function DonationsChart({ data }: { data: MonthlyDonation[] }) {
             name === "Donations" ? "Donations" : "Gift Aid",
           ]}
           labelStyle={{ fontWeight: 600 }}
+          contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
+          cursor={{ fill: "transparent" }}
         />
         <Legend
           verticalAlign="bottom"
@@ -117,7 +119,11 @@ export function DonationTypePie({ data }: { data: DonationTypeBreakdown[] }) {
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `£${v}`} />
         <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
-        <Tooltip formatter={(value: any) => `£${Number(value).toFixed(2)}`} />
+        <Tooltip
+          formatter={(value: any) => `£${Number(value).toFixed(2)}`}
+          contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
+          cursor={{ fill: "transparent" }}
+        />
         <Bar dataKey="value" name="Amount" radius={[0, 4, 4, 0]}>
           {sorted.map((_, index) => (
             <Cell key={`cell-${index}`} fill={getBarColor(index)} />
@@ -137,7 +143,11 @@ export function VolunteerHoursChart({ data }: { data: VolunteerHoursMonthly[] })
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(value: any) => [`${Number(value).toFixed(1)} hrs`, "Hours"]} />
+        <Tooltip
+          formatter={(value: any) => [`${Number(value).toFixed(1)} hrs`, "Hours"]}
+          contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
+          cursor={{ fill: "transparent" }}
+        />
         <Bar dataKey="hours" name="Hours" fill={brand} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
