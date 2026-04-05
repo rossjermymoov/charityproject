@@ -191,6 +191,7 @@ const sections: NavSection[] = [
     icon: Mail,
     roles: ALL_STAFF,
     items: [
+      { name: "Email", href: "/communications/email", icon: Mail },
       { name: "SMS", href: "/communications/sms", icon: MessageCircle },
     ],
   },

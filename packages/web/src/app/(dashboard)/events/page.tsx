@@ -135,6 +135,7 @@ export default async function EventsPage({
       ],
     },
     include: {
+      eventType: true,
       campaign: true,
       incomeLines: { select: { actual: true } },
       costLines: { select: { actual: true } },
@@ -338,7 +339,7 @@ export default async function EventsPage({
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>{formatDate(event.startDate)}</span>
                         {event.location && <span>· {event.location}</span>}
-                        {event.type && <span>· {event.type}</span>}
+                        {(event.eventType?.name || event.type) && <span>· {event.eventType?.name || event.type}</span>}
                         {event.campaign && <span>· {event.campaign.name}</span>}
                         <span>· {event._count.attendees} attendees</span>
                       </div>

@@ -750,11 +750,25 @@ model Donation {
 // EVENT MANAGEMENT MODULE
 // ============================================
 
+model EventType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  colour      String   @default("#6366f1") // hex colour for badges
+  isSystem    Boolean  @default(false)      // true = predefined, false = custom
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events Event[]
+}
+
 model Event {
   id           String    @id @default(cuid())
   name         String
   description  String?
-  type         String?   // FUNDRAISER | GALA | AUCTION | CHALLENGE | COMMUNITY | MEMORIAL | OTHER
+  type         String?   // legacy — kept for backward compat
+  eventTypeId  String?
   startDate    DateTime
   endDate      DateTime?
   location     String?
@@ -766,6 +780,7 @@ model Event {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  eventType   EventType?      @relation(fields: [eventTypeId], references: [id])
   campaign    Campaign?       @relation(fields: [campaignId], references: [id])
   ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
   createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])

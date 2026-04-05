@@ -10,14 +10,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function NewEventPage() {
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { name: "asc" },
-  });
-
-  const ledgerCodes = await prisma.ledgerCode.findMany({
-    where: { isActive: true },
-    orderBy: { code: "asc" },
-  });
+  const [campaigns, ledgerCodes, eventTypes] = await Promise.all([
+    prisma.campaign.findMany({ orderBy: { name: "asc" } }),
+    prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
+    prisma.eventType.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+  ]);
 
   async function createEvent(formData: FormData) {
     "use server";
@@ -31,7 +28,7 @@ export default async function NewEventPage() {
       data: {
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || null,
-        type: (formData.get("type") as string) || null,
+        eventTypeId: (formData.get("eventTypeId") as string) || null,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
         location: (formData.get("location") as string) || null,
@@ -63,16 +60,12 @@ export default async function NewEventPage() {
 
             <Select
               label="Event Type"
-              name="type"
-              options={[
-                { value: "FUNDRAISER", label: "Fundraiser" },
-                { value: "GALA", label: "Gala" },
-                { value: "AUCTION", label: "Auction" },
-                { value: "CHALLENGE", label: "Challenge" },
-                { value: "COMMUNITY", label: "Community" },
-                { value: "MEMORIAL", label: "Memorial" },
-                { value: "OTHER", label: "Other" },
-              ]}
+              name="eventTypeId"
+              placeholder="Select event type"
+              options={eventTypes.map((et) => ({
+                value: et.id,
+                label: et.name,
+              }))}
             />
 
             <div className="grid grid-cols-2 gap-4">

@@ -420,77 +420,43 @@ export default async function DashboardPage({
       </div>
 
       {/* Data Capture */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link href="/crm/contacts?missing=phone">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5" />
-                    Mobile Phone Capture
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          { href: "/crm/contacts?missing=phone", icon: Phone, label: "Phone", count: contactsWithPhone, total: activeContactCount, pct: phonePct, missing: missingPhone, missingLabel: "phone number" },
+          { href: "/crm/contacts?missing=email", icon: Mail, label: "Email", count: contactsWithEmail, total: activeContactCount, pct: emailPct, missing: missingEmail, missingLabel: "email" },
+        ].map((item) => {
+          const color = item.pct === 100 ? "#16a34a" : item.pct >= 75 ? "#d97706" : "#dc2626";
+          const textColor = item.pct === 100 ? "text-green-600" : item.pct >= 75 ? "text-amber-600" : "text-red-600";
+          return (
+            <Link key={item.label} href={item.href}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1.5 font-medium">
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label} Capture
                   </p>
-                  <p className="text-2xl font-bold mt-1">
-                    <span className={phonePct === 100 ? "text-green-600" : phonePct >= 75 ? "text-amber-600" : "text-red-600"}>
-                      {phonePct}%
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {contactsWithPhone} of {activeContactCount} contacts
-                  </p>
-                </div>
-                <div className="h-14 w-14">
-                  <svg viewBox="0 0 36 36" className="h-14 w-14 transform -rotate-90">
-                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.9155" fill="none"
-                      stroke={phonePct === 100 ? "#16a34a" : phonePct >= 75 ? "#d97706" : "#dc2626"}
-                      strokeWidth="3" strokeDasharray={`${phonePct} ${100 - phonePct}`} strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
-              {missingPhone > 0 && (
-                <p className="text-xs text-indigo-600 mt-1.5 font-medium">
-                  {missingPhone} contact{missingPhone !== 1 ? "s" : ""} missing a phone number →
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/crm/contacts?missing=email">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5" />
-                    Email Capture
-                  </p>
-                  <p className="text-2xl font-bold mt-1">
-                    <span className={emailPct === 100 ? "text-green-600" : emailPct >= 75 ? "text-amber-600" : "text-red-600"}>
-                      {emailPct}%
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {contactsWithEmail} of {activeContactCount} contacts
-                  </p>
-                </div>
-                <div className="h-14 w-14">
-                  <svg viewBox="0 0 36 36" className="h-14 w-14 transform -rotate-90">
-                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.9155" fill="none"
-                      stroke={emailPct === 100 ? "#16a34a" : emailPct >= 75 ? "#d97706" : "#dc2626"}
-                      strokeWidth="3" strokeDasharray={`${emailPct} ${100 - emailPct}`} strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
-              {missingEmail > 0 && (
-                <p className="text-xs text-indigo-600 mt-1.5 font-medium">
-                  {missingEmail} contact{missingEmail !== 1 ? "s" : ""} missing an email →
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
+                  <div className="relative h-20 w-20">
+                    <svg viewBox="0 0 36 36" className="h-20 w-20 transform -rotate-90">
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
+                      <circle cx="18" cy="18" r="15.9155" fill="none"
+                        stroke={color}
+                        strokeWidth="2.5" strokeDasharray={`${item.pct} ${100 - item.pct}`} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-lg font-bold leading-none ${textColor}`}>{item.pct}%</span>
+                      <span className="text-[10px] text-gray-500 leading-tight mt-0.5">{item.count}/{item.total}</span>
+                    </div>
+                  </div>
+                  {item.missing > 0 && (
+                    <p className="text-[11px] text-indigo-600 font-medium leading-tight">
+                      {item.missing} missing →
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Charts Row — date filtered */}

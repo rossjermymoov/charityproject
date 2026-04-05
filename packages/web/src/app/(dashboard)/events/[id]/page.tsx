@@ -22,6 +22,7 @@ export default async function EventDetailPage({
   const event = await prisma.event.findUnique({
     where: { id },
     include: {
+      eventType: true,
       campaign: true,
       ledgerCode: true,
       _count: { select: { attendees: true } },
@@ -147,7 +148,7 @@ export default async function EventDetailPage({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-y border-gray-100">
               <div>
                 <p className="text-xs text-gray-500 uppercase">Type</p>
-                <p className="text-sm font-medium text-gray-900">{event.type || "—"}</p>
+                <p className="text-sm font-medium text-gray-900">{event.eventType?.name || event.type || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase">Start Date</p>
