@@ -9,9 +9,10 @@ interface TopBarProps {
     email: string;
     role: string;
   };
+  notificationCount?: number;
 }
 
-export function TopBar({ user }: TopBarProps) {
+export function TopBar({ user, notificationCount = 0 }: TopBarProps) {
   const [firstName, ...rest] = user.name.split(" ");
   const lastName = rest.join(" ") || "";
 
@@ -31,7 +32,9 @@ export function TopBar({ user }: TopBarProps) {
       <div className="flex items-center gap-4">
         <button className="relative rounded-full p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+          {notificationCount > 0 && (
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+          )}
         </button>
         <div className="flex items-center gap-3">
           <Avatar firstName={firstName} lastName={lastName} size="sm" />

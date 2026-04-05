@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/shared/sidebar";
 import { TopBar } from "@/components/shared/top-bar";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { loadBranding, adjustColour } from "@/lib/branding";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({
   children,
@@ -27,6 +28,11 @@ export default async function DashboardLayout({
     guardRoute(session, pathname);
   }
 
+  // Count pending (unsent, past-due) reminders for the notification bell
+  const notificationCount = await prisma.reminder.count({
+    where: { isSent: false, triggerDate: { lte: new Date() } },
+  });
+
   // Load white-label branding
   const branding = await loadBranding();
   const brandingValues = {
@@ -39,7 +45,7 @@ export default async function DashboardLayout({
       <div className="flex h-screen bg-gray-50">
         <Sidebar userRole={session.role} />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar user={session} />
+          <TopBar user={session} notificationCount={notificationCount} />
           <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
