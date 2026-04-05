@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, Plus, Heart, Users, Edit3, Trash2, Archive, ArchiveX, Ticket, PoundSterling, Calendar, Tag } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -34,7 +34,7 @@ export default async function ContactDetailPage({
       interactions: { include: { createdBy: true }, orderBy: { date: "desc" } },
       volunteerProfile: true,
       giftAids: { orderBy: { createdAt: "desc" }, take: 5 },
-      donations: { include: { campaign: true }, orderBy: { date: "desc" }, take: 5 },
+      donations: { include: { campaign: true, event: true }, orderBy: { date: "desc" } },
       eventAttendees: { include: { event: true }, orderBy: { createdAt: "desc" }, take: 5 },
       eventOrders: { include: { event: true, lineItems: { include: { item: true } } }, orderBy: { createdAt: "desc" }, take: 5 },
       fundraisingPages: {
@@ -356,6 +356,8 @@ export default async function ContactDetailPage({
   }
 
   // ── Computed values ─────────────────────────────────────────
+
+  const lifetimeDonationTotal = contact.donations.reduce((sum, d) => sum + d.amount, 0);
 
   const typeColors: Record<string, string> = {
     DONOR: "bg-green-100 text-green-800",
@@ -833,6 +835,129 @@ export default async function ContactDetailPage({
     </div>
   );
 
+  const donationsContent = (
+    <div className="space-y-6">
+      {/* Lifetime Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-2xl font-bold text-gray-900">
+              £{lifetimeDonationTotal.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Lifetime Total</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-2xl font-bold text-gray-900">{contact.donations.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Total Donations</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-2xl font-bold text-gray-900">
+              £{contact.donations.length > 0
+                ? (lifetimeDonationTotal / contact.donations.length).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : "0.00"}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Average Donation</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Donations Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">All Donations</h3>
+            <span className="text-sm text-gray-500">{contact.donations.length} total</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {contact.donations.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">No donations recorded for this contact.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Date</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Type</th>
+                    <th className="text-right py-3 px-2 font-medium text-gray-500">Amount</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Method</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Campaign / Event</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Gift Aid</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contact.donations.map((d) => (
+                    <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="py-3 px-2">
+                        <Link href={`/finance/donations/${d.id}`} className="text-indigo-600 hover:underline">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                          </div>
+                          <span className="text-xs text-gray-400 ml-5">
+                            {new Date(d.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge variant="outline" className="text-xs">
+                          {d.isRetail ? "Retail" : d.type}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-2 text-right font-semibold text-gray-900">
+                        £{d.amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 px-2 text-gray-600">{d.method || "—"}</td>
+                      <td className="py-3 px-2">
+                        <div className="flex flex-col gap-0.5">
+                          {d.campaign && (
+                            <div className="flex items-center gap-1 text-xs text-indigo-600">
+                              <Tag className="h-3 w-3" />
+                              {d.campaign.name}
+                            </div>
+                          )}
+                          {d.event && (
+                            <Link href={`/events/${d.event.id}`} className="flex items-center gap-1 text-xs text-purple-600 hover:underline">
+                              <Calendar className="h-3 w-3" />
+                              {d.event.name}
+                            </Link>
+                          )}
+                          {!d.campaign && !d.event && <span className="text-gray-400">—</span>}
+                        </div>
+                      </td>
+                      <td className="py-3 px-2">
+                        {d.isGiftAidable ? (
+                          <Badge className={d.giftAidClaimed ? "bg-green-100 text-green-800 text-xs" : "bg-amber-100 text-amber-800 text-xs"}>
+                            {d.giftAidClaimed ? "Claimed" : "Eligible"}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-gray-400">N/A</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge className={
+                          d.status === "RECEIVED" ? "bg-green-100 text-green-800 text-xs" :
+                          d.status === "PENDING" ? "bg-yellow-100 text-yellow-800 text-xs" :
+                          d.status === "REFUNDED" ? "bg-red-100 text-red-800 text-xs" :
+                          "bg-gray-100 text-gray-800 text-xs"
+                        }>{d.status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const activityContent = (
     <div className="space-y-6">
       {/* Interactions */}
@@ -1024,6 +1149,15 @@ export default async function ContactDetailPage({
                   </div>
                 )}
               </div>
+              {lifetimeDonationTotal > 0 && (
+                <div className="flex items-center gap-2 mt-3 p-2 bg-green-50 rounded-lg">
+                  <PoundSterling className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-800">
+                    Lifetime Donations: £{lifetimeDonationTotal.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  <span className="text-xs text-green-600">({contact.donations.length} donation{contact.donations.length !== 1 ? "s" : ""})</span>
+                </div>
+              )}
               {contact.tags.length > 0 && (
                 <div className="flex gap-1 mt-3 flex-wrap">
                   {contact.tags.map((ct) => (
@@ -1040,8 +1174,10 @@ export default async function ContactDetailPage({
       <ContactTabs
         overviewContent={overviewContent}
         activityContent={activityContent}
+        donationsContent={donationsContent}
         interactionCount={contact.interactions.length}
         noteCount={contact.notes.length}
+        donationCount={contact.donations.length}
       />
     </div>
   );
