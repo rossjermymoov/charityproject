@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield,
   FileText,
+  FileInput,
   Zap,
   Users,
   Calendar,
@@ -13,11 +14,8 @@ import {
   Palette,
   Target,
   Activity,
-  Coins,
   Clock,
   User,
-  Building2,
-  FileImage,
 } from "lucide-react";
 import HeadOfficeForm from "./head-office-form";
 import LetterheadForm from "./letterhead-form";
@@ -31,17 +29,18 @@ export default async function SettingsPage() {
   });
 
   const settingsLinks = [
-    { icon: Calendar, title: "Financial Year & Donors", desc: "Financial year end date and Gold Donor threshold", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
-    { icon: Target, title: "Event Targets", desc: "Set annual income, cost budget, and profit targets for events", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
-    { icon: Coins, title: "Collection Tins", desc: "Configure predefined or AI-suggested collection tin routes", href: "/settings/collection-tins", color: "text-amber-600 bg-amber-50" },
-    { icon: Store, title: "Shops", desc: "Manage shop locations and generate QR codes for Retail Gift Aid", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
-    { icon: Palette, title: "Branding", desc: "White-label with your logo, colours, and organisation name", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
-    { icon: Shield, title: "Audit Log", desc: "Review all system activities and changes", href: "/settings/audit-log", color: "text-slate-600 bg-slate-50" },
-    { icon: FileText, title: "Data Retention", desc: "Manage how long data is kept before archiving or deletion", href: "/settings/data-retention", color: "text-violet-600 bg-violet-50" },
-    { icon: Zap, title: "Integrations", desc: "Email providers, API connections, and third-party services", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },
     { icon: Users, title: "Users", desc: "Manage user accounts, roles, and permissions", href: "/settings/users", color: "text-indigo-600 bg-indigo-50" },
-    { icon: Activity, title: "Test Agent", desc: "Run automated tests on all data entry flows", href: "/settings/test-agent", color: "text-rose-600 bg-rose-50" },
-    { icon: Clock, title: "Scheduled Jobs", desc: "Configure automated scheduled tasks and reminders", href: "/settings/scheduled-jobs", color: "text-cyan-600 bg-cyan-50" },
+    { icon: Palette, title: "Branding", desc: "Logo, colours, and organisation name", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
+    { icon: Calendar, title: "Financial Year", desc: "Financial year end and Gold Donor threshold", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
+    { icon: Target, title: "Events", desc: "Event types and annual targets", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
+    { icon: Store, title: "Shops", desc: "Shop locations and Retail Gift Aid QR codes", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
+    { icon: Zap, title: "Integrations", desc: "Email providers, APIs, and third-party services", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },
+    { icon: FileInput, title: "Form Builder", desc: "Create public registration and data capture forms", href: "/settings/forms", color: "text-teal-600 bg-teal-50" },
+    { icon: Activity, title: "Automations", desc: "Trigger-based workflows and automation rules", href: "/settings/automations", color: "text-purple-600 bg-purple-50" },
+    { icon: Zap, title: "Webhooks", desc: "Outbound event notifications to external services", href: "/settings/webhooks", color: "text-amber-600 bg-amber-50" },
+    { icon: Clock, title: "Scheduled Jobs", desc: "Automated scheduled tasks and reminders", href: "/settings/scheduled-jobs", color: "text-cyan-600 bg-cyan-50" },
+    { icon: FileText, title: "Data Retention", desc: "How long data is kept before archiving", href: "/settings/data-retention", color: "text-violet-600 bg-violet-50" },
+    { icon: Shield, title: "Audit Log", desc: "Review all system activities and changes", href: "/settings/audit-log", color: "text-slate-600 bg-slate-50" },
   ];
 
   return (

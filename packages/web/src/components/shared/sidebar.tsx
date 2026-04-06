@@ -22,18 +22,13 @@ import {
   CalendarDays,
   Megaphone,
   Package,
-  MapPin,
   Flower2,
   GraduationCap,
   BarChart3,
   Shield,
   BookOpen,
   ShieldCheck,
-  FileSearch,
-  AlertTriangle,
   FileText,
-  Database,
-  Activity,
   ClipboardCheck,
   UserCog,
   CreditCard,
@@ -69,16 +64,19 @@ interface NavSection {
 const ALL_STAFF = ["ADMIN", "STAFF"];
 
 const sections: NavSection[] = [
+  // ─── Core ───
   {
-    label: "Operations",
+    label: "Overview",
     icon: LayoutDashboard,
     roles: ALL_STAFF,
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Broadcasts", href: "/broadcasts", icon: Radio },
+      { name: "Tasks", href: "/tasks", icon: ClipboardCheck },
       { name: "Reminders", href: "/reminders", icon: Bell },
     ],
   },
+
+  // ─── Donor / Volunteer self-service ───
   {
     label: "My Account",
     icon: PoundSterling,
@@ -99,23 +97,36 @@ const sections: NavSection[] = [
       { name: "My Training", href: "/my/training", icon: GraduationCap },
     ],
   },
+
+  // ─── CRM ───
   {
-    label: "People",
+    label: "CRM",
     icon: Users,
     roles: ALL_STAFF,
     items: [
       { name: "Contacts", href: "/crm/contacts", icon: Users },
-      { name: "Duplicates", href: "/crm/duplicates", icon: Merge },
-      { name: "Segments", href: "/crm/segments", icon: Zap },
       { name: "Organisations", href: "/crm/organisations", icon: Building2 },
-      { name: "Volunteers", href: "/volunteers", icon: UserCheck },
-      { name: "Departments", href: "/volunteers/departments", icon: Building2 },
-      { name: "Skills", href: "/volunteers/skills", icon: Wrench },
-      { name: "Training", href: "/volunteers/training", icon: GraduationCap },
-      { name: "Assignments", href: "/assignments", icon: Calendar },
-      { name: "Log Hours", href: "/volunteers/hours", icon: Clock },
+      { name: "Segments", href: "/crm/segments", icon: Zap },
+      { name: "Duplicates", href: "/crm/duplicates", icon: Merge },
     ],
   },
+
+  // ─── Volunteers ───
+  {
+    label: "Volunteers",
+    icon: UserCheck,
+    roles: ALL_STAFF,
+    items: [
+      { name: "All Volunteers", href: "/volunteers", icon: UserCheck },
+      { name: "Hours", href: "/volunteers/hours", icon: Clock },
+      { name: "Training", href: "/volunteers/training", icon: GraduationCap },
+      { name: "Departments", href: "/volunteers/departments", icon: Building2 },
+      { name: "Skills", href: "/volunteers/skills", icon: Wrench },
+      { name: "Broadcasts", href: "/broadcasts", icon: Radio },
+    ],
+  },
+
+  // ─── Finance ───
   {
     label: "Finance",
     icon: PoundSterling,
@@ -123,20 +134,24 @@ const sections: NavSection[] = [
     items: [
       { name: "Donations", href: "/finance/donations", icon: PoundSterling },
       { name: "Payments & BACS", href: "/finance/payments", icon: CreditCard },
-      { name: "Subscriptions", href: "/finance/subscriptions", icon: RefreshCw },
-      { name: "Pledges", href: "/finance/pledges", icon: PoundSterling },
       { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
       { name: "Retail Gift Aid", href: "/finance/retail-gift-aid", icon: Package },
+      { name: "Subscriptions", href: "/finance/subscriptions", icon: RefreshCw },
+      { name: "Pledges", href: "/finance/pledges", icon: PoundSterling },
       { name: "Memberships", href: "/finance/memberships", icon: BadgeCheck },
       { name: "Donor Scoring", href: "/finance/donor-scoring", icon: Target },
       { name: "Major Gifts", href: "/finance/pipeline", icon: Target },
     ],
   },
+
+  // ─── Fundraising ───
   {
     label: "Fundraising",
     icon: Heart,
     roles: ALL_STAFF,
     items: [
+      { name: "Events", href: "/events", icon: CalendarDays },
+      { name: "Campaigns", href: "/campaigns", icon: Megaphone },
       { name: "Grants", href: "/finance/grants", icon: Landmark },
       { name: "Partnerships", href: "/finance/partnerships", icon: Handshake },
       { name: "Legacies", href: "/finance/legacies", icon: Flower2 },
@@ -144,6 +159,8 @@ const sections: NavSection[] = [
       { name: "Collection Tins", href: "/finance/collection-tins", icon: Package },
     ],
   },
+
+  // ─── Accounting ───
   {
     label: "Accounting",
     icon: BookOpen,
@@ -154,38 +171,18 @@ const sections: NavSection[] = [
       { name: "SORP Reports", href: "/finance/reports", icon: BarChart3 },
     ],
   },
+
+  // ─── Cases ───
   {
     label: "Cases",
     icon: Briefcase,
     roles: ALL_STAFF,
     items: [
-      { name: "Cases", href: "/cases", icon: Briefcase },
+      { name: "All Cases", href: "/cases", icon: Briefcase },
     ],
   },
-  {
-    label: "Events & Marketing",
-    icon: CalendarDays,
-    roles: ALL_STAFF,
-    items: [
-      { name: "Events", href: "/events", icon: CalendarDays },
-      { name: "Campaigns", href: "/campaigns", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Compliance",
-    icon: ShieldCheck,
-    roles: ALL_STAFF,
-    items: [
-      { name: "DPO Dashboard", href: "/compliance", icon: ShieldCheck },
-      { name: "DPIAs", href: "/compliance/dpias", icon: FileSearch },
-      { name: "Data Breaches", href: "/compliance/breaches", icon: AlertTriangle },
-      { name: "SARs", href: "/compliance/sars", icon: FileText },
-      { name: "ROPA", href: "/compliance/ropa", icon: Database },
-      { name: "Asset Register", href: "/compliance/assets", icon: ClipboardCheck },
-      { name: "Clinical Safety", href: "/compliance/clinical-safety", icon: Activity },
-      { name: "Consent Trail", href: "/compliance/consent-trail", icon: Shield },
-    ],
-  },
+
+  // ─── Communications ───
   {
     label: "Communications",
     icon: Mail,
@@ -193,25 +190,38 @@ const sections: NavSection[] = [
     items: [
       { name: "Email", href: "/communications/email", icon: Mail },
       { name: "SMS", href: "/communications/sms", icon: MessageCircle },
+      { name: "Email Templates", href: "/settings/email-templates", icon: FileText },
     ],
   },
+
+  // ─── Reports ───
   {
-    label: "Tools",
-    icon: FileInput,
+    label: "Reports",
+    icon: BarChart3,
     roles: ALL_STAFF,
     items: [
-      { name: "Form Builder", href: "/settings/forms", icon: FileInput },
-      { name: "Automations", href: "/settings/automations", icon: Wrench },
-      { name: "Email Templates", href: "/settings/email-templates", icon: Mail },
-      { name: "Webhooks", href: "/settings/webhooks", icon: Zap },
-      { name: "Tasks", href: "/tasks", icon: ClipboardCheck },
-      { name: "Task Rules", href: "/settings/task-rules", icon: Wrench },
-      { name: "Reports", href: "/reports", icon: BarChart3 },
+      { name: "Overview", href: "/reports", icon: BarChart3 },
       { name: "Report Builder", href: "/reports/builder", icon: BarChart3 },
       { name: "Board Reports", href: "/reports/board", icon: FileText },
-      { name: "Data Export", href: "/reports/export", icon: FileInput },
       { name: "Campaign ROI", href: "/reports/campaign-roi", icon: Target },
-      { name: "Audit Log", href: "/settings/audit-log", icon: Shield },
+      { name: "Data Export", href: "/reports/export", icon: FileInput },
+    ],
+  },
+
+  // ─── Compliance ───
+  {
+    label: "Compliance",
+    icon: ShieldCheck,
+    roles: ALL_STAFF,
+    items: [
+      { name: "DPO Dashboard", href: "/compliance", icon: ShieldCheck },
+      { name: "DPIAs", href: "/compliance/dpias", icon: Shield },
+      { name: "Data Breaches", href: "/compliance/breaches", icon: Shield },
+      { name: "SARs", href: "/compliance/sars", icon: FileText },
+      { name: "ROPA", href: "/compliance/ropa", icon: FileText },
+      { name: "Assets", href: "/compliance/assets", icon: ClipboardCheck },
+      { name: "Clinical Safety", href: "/compliance/clinical-safety", icon: Shield },
+      { name: "Consent Trail", href: "/compliance/consent-trail", icon: Shield },
     ],
   },
 ];
@@ -348,16 +358,6 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
 
       {/* Footer */}
       <div className="p-3 space-y-1" style={{ borderTop: `1px solid ${branding.sidebarTextColour}30` }}>
-        {userRole === "ADMIN" && (
-          <Link
-            href="/settings/users"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-            style={{ color: branding.sidebarTextColour }}
-          >
-            <UserCog className="h-5 w-5" />
-            User Management
-          </Link>
-        )}
         {["ADMIN", "STAFF"].includes(userRole) && (
           <Link
             href="/settings"
