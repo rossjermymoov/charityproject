@@ -28,6 +28,8 @@ export default async function ContactsPage({
                 { firstName: { contains: search, mode: "insensitive" } },
                 { lastName: { contains: search, mode: "insensitive" } },
                 { email: { contains: search, mode: "insensitive" } },
+                { postcode: { contains: search, mode: "insensitive" } },
+                ...(!isNaN(parseInt(search, 10)) ? [{ donorId: { equals: parseInt(search, 10) } }] : []),
               ],
             }
           : {},
@@ -101,7 +103,7 @@ export default async function ContactsPage({
               name="search"
               type="text"
               defaultValue={search}
-              placeholder="Search by name or email..."
+              placeholder="Search by name, email, postcode, or donor ID..."
               className="flex-1 border-0 bg-transparent text-sm focus:outline-none focus:ring-0"
             />
           </div>
@@ -152,6 +154,9 @@ export default async function ContactsPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                    ID
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
@@ -175,6 +180,9 @@ export default async function ContactsPage({
                   const isGold = lifetimeTotal >= systemSettings.goldDonorThreshold;
                   return (
                   <tr key={contact.id} className={isGold ? "bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors" : "hover:bg-gray-50 transition-colors"}>
+                    <td className="px-4 py-4">
+                      <span className="text-xs font-mono text-gray-400">{String(contact.donorId).padStart(5, "0")}</span>
+                    </td>
                     <td className="px-6 py-4">
                       <Link
                         href={`/crm/contacts/${contact.id}`}

@@ -1070,10 +1070,11 @@ export default async function ContactDetailPage({
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
-                  {/* Name */}
+                  {/* Name + Donor ID */}
                   <h2 className="text-xl font-bold text-gray-900">
                     {contact.firstName} {contact.lastName}
                   </h2>
+                  <p className="text-xs font-mono text-gray-400 mt-0.5">Donor ID: {String(contact.donorId).padStart(5, "0")}</p>
 
                   {/* Status badges — uniform row */}
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
