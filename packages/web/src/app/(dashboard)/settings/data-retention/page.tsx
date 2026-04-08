@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { RetentionPeriodInput } from "./retention-period-input";
 
 const ENTITY_TYPES = [
   { value: "Contact", label: "Contacts" },
@@ -39,18 +40,6 @@ const ACTION_OPTIONS = [
   { value: "ARCHIVE", label: "Archive", description: "Move to cold storage" },
   { value: "ANONYMISE", label: "Anonymise", description: "Remove PII, keep aggregate data" },
   { value: "DELETE", label: "Delete", description: "Permanently remove" },
-];
-
-const RETENTION_PERIODS = [
-  { value: 3, label: "3 months" },
-  { value: 6, label: "6 months" },
-  { value: 12, label: "1 year" },
-  { value: 24, label: "2 years" },
-  { value: 36, label: "3 years" },
-  { value: 60, label: "5 years" },
-  { value: 72, label: "6 years" },
-  { value: 84, label: "7 years" },
-  { value: 120, label: "10 years" },
 ];
 
 export default async function DataRetentionPage() {
@@ -156,23 +145,7 @@ export default async function DataRetentionPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Retention Period
-                </label>
-                <select
-                  name="retentionMonths"
-                  required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Select period...</option>
-                  {RETENTION_PERIODS.map((rp) => (
-                    <option key={rp.value} value={rp.value}>
-                      {rp.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <RetentionPeriodInput />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Action
