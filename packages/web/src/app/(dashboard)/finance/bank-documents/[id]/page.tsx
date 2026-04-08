@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ContactSearchSelect } from "@/components/ui/contact-search-select";
 import { logAudit } from "@/lib/audit";
 import { formatDate } from "@/lib/utils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
@@ -41,8 +41,7 @@ export default async function BankDocumentDetailPage({
 
   const isOpen = bankDoc.status === "OPEN";
 
-  const [contacts, campaigns, ledgerCodes, events, paymentMethods] = await Promise.all([
-    prisma.contact.findMany({ orderBy: { lastName: "asc" }, select: { id: true, firstName: true, lastName: true } }),
+  const [campaigns, ledgerCodes, events, paymentMethods] = await Promise.all([
     prisma.campaign.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, ledgerCodeId: true } }),
     prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
     prisma.event.findMany({
@@ -252,15 +251,7 @@ export default async function BankDocumentDetailPage({
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                  <SearchableSelect
-                    name="contactId"
-                    required
-                    placeholder="Search contacts..."
-                    options={contacts.map((c) => ({
-                      value: c.id,
-                      label: `${c.firstName} ${c.lastName}`,
-                    }))}
-                  />
+                  <ContactSearchSelect name="contactId" required />
                 </div>
                 <Input label="Date" name="date" type="date" required defaultValue={today} />
                 <Input label="Amount (£)" name="amount" type="number" step="0.01" required />

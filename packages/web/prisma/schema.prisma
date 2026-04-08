@@ -219,6 +219,7 @@ model NotificationPreference {
 
 model Contact {
   id             String   @id @default(cuid())
+  donorId        Int      @unique @default(autoincrement())
   firstName      String
   lastName       String
   email          String?

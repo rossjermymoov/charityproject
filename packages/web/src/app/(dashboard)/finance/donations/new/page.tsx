@@ -1,213 +1,435 @@
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/session";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle, Plus, Lock, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { logAudit } from "@/lib/audit";
-import { executeAutomations } from "@/lib/automation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ContactSearchSelect } from "@/components/ui/contact-search-select";
 
-export default async function NewDonationPage() {
-  const [contacts, campaigns, ledgerCodes, events, paymentMethods] = await Promise.all([
-    prisma.contact.findMany({
-      orderBy: { lastName: "asc" },
-      include: {
-        giftAids: {
-          where: { status: "ACTIVE" },
-          select: { id: true },
-          take: 1,
-        },
-      },
-    }),
-    prisma.campaign.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, ledgerCodeId: true } }),
-    prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
-    prisma.event.findMany({
-      where: { status: { not: "CANCELLED" } },
-      orderBy: { startDate: "desc" },
-      select: { id: true, name: true, startDate: true },
-    }),
-    prisma.paymentMethod.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-  ]);
+interface RecordedDonation {
+  id: string;
+  contactName: string;
+  donorId: number;
+  amount: number;
+  type: string;
+  method: string | null;
+}
 
-  async function createDonation(formData: FormData) {
-    "use server";
-    const session = await requireAuth();
+interface SelectOption {
+  id: string;
+  name: string;
+  code?: string;
+  ledgerCodeId?: string | null;
+}
 
-    const amount = parseFloat(formData.get("amount") as string);
-    const isGiftAidable = (formData.get("isGiftAidable") as string) === "on";
+export default function NewDonationPage() {
+  const router = useRouter();
 
-    const campaignId = (formData.get("campaignId") as string) || null;
+  // Session state
+  const [bankDocId, setBankDocId] = useState<string | null>(null);
+  const [bankDocRef, setBankDocRef] = useState<string>("");
+  const [recorded, setRecorded] = useState<RecordedDonation[]>([]);
+  const [sessionClosed, setSessionClosed] = useState(false);
 
-    const donation = await prisma.donation.create({
-      data: {
-        contactId: formData.get("contactId") as string,
-        amount,
-        currency: formData.get("currency") as string,
-        type: formData.get("type") as string,
-        method: (formData.get("method") as string) || null,
-        reference: (formData.get("reference") as string) || null,
-        date: new Date(formData.get("date") as string),
-        ledgerCodeId: (formData.get("ledgerCodeId") as string) || null,
-        campaignId,
-        eventId: (formData.get("eventId") as string) || null,
-        isGiftAidable,
-        notes: (formData.get("notes") as string) || null,
-        createdById: session.id,
-      },
-    });
+  // Form state
+  const [contactId, setContactId] = useState("");
+  const [contactHasGA, setContactHasGA] = useState(false);
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState("DONATION");
+  const [method, setMethod] = useState("");
+  const [reference, setReference] = useState("");
+  const [ledgerCodeId, setLedgerCodeId] = useState("");
+  const [campaignId, setCampaignId] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [isGiftAidable, setIsGiftAidable] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [contactKey, setContactKey] = useState(0);
 
-    // Update campaign's actualRaised total
-    if (campaignId) {
-      await prisma.campaign.update({
-        where: { id: campaignId },
-        data: { actualRaised: { increment: amount } },
-      });
+  // Reference data
+  const [campaigns, setCampaigns] = useState<SelectOption[]>([]);
+  const [ledgerCodes, setLedgerCodes] = useState<SelectOption[]>([]);
+  const [events, setEvents] = useState<SelectOption[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<SelectOption[]>([]);
+
+  // Load reference data on mount
+  useEffect(() => {
+    async function load() {
+      const [campRes, lcRes, evtRes, pmRes] = await Promise.all([
+        fetch("/api/finance/reference-data?type=campaigns"),
+        fetch("/api/finance/reference-data?type=ledger-codes"),
+        fetch("/api/finance/reference-data?type=events"),
+        fetch("/api/finance/reference-data?type=payment-methods"),
+      ]);
+      setCampaigns(await campRes.json());
+      setLedgerCodes(await lcRes.json());
+      setEvents(await evtRes.json());
+      setPaymentMethods(await pmRes.json());
     }
+    load();
+  }, []);
 
-    await logAudit({ userId: session.id, action: "CREATE", entityType: "Donation", entityId: donation.id, details: { amount, type: formData.get("type") } });
+  // Auto-create bank document on first donation
+  async function ensureBankDoc(): Promise<string> {
+    if (bankDocId) return bankDocId;
 
-    // Trigger automations
-    await executeAutomations("DONATION_RECEIVED", {
-      contactId: donation.contactId,
-      amount: donation.amount,
-      campaignId: donation.campaignId ?? undefined,
-      donationType: donation.type,
-      donationId: donation.id,
-      eventId: donation.eventId ?? undefined,
-    });
-
-    revalidatePath("/finance/donations");
-    if (campaignId) revalidatePath(`/campaigns/${campaignId}`);
-    redirect(`/finance/donations/${donation.id}`);
+    const res = await fetch("/api/finance/bank-documents", { method: "POST" });
+    const data = await res.json();
+    setBankDocId(data.id);
+    setBankDocRef(data.reference);
+    return data.id;
   }
 
+  async function handleRecordDonation(andNext: boolean) {
+    if (!contactId || !amount || !type || !date) return;
+    setSaving(true);
+
+    try {
+      const docId = await ensureBankDoc();
+
+      const res = await fetch("/api/finance/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId,
+          amount,
+          type,
+          method: method || null,
+          reference: reference || null,
+          date,
+          ledgerCodeId: ledgerCodeId || null,
+          campaignId: campaignId || null,
+          eventId: eventId || null,
+          isGiftAidable,
+          notes: notes || null,
+          bankDocumentId: docId,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to record donation");
+
+      const donation = await res.json();
+      setRecorded((prev) => [...prev, donation]);
+
+      if (andNext) {
+        // Reset form for next entry
+        setContactId("");
+        setContactHasGA(false);
+        setAmount("");
+        setMethod("");
+        setReference("");
+        setLedgerCodeId("");
+        setCampaignId("");
+        setEventId("");
+        setIsGiftAidable(false);
+        setNotes("");
+        setContactKey((k) => k + 1);
+      } else {
+        // Done — go to donation detail
+        router.push(`/finance/donations/${donation.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    setSaving(false);
+  }
+
+  async function handleCloseSession() {
+    if (!bankDocId) return;
+    await fetch("/api/finance/bank-documents", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: bankDocId, status: "CLOSED" }),
+    });
+    setSessionClosed(true);
+  }
+
+  const sessionTotal = recorded.reduce((sum, d) => sum + d.amount, 0);
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/finance/donations" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Record Donation</h1>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900">Record Donations</h1>
+          <p className="text-gray-500 mt-1">
+            {bankDocRef ? (
+              <span className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Bank Document: <span className="font-mono font-medium text-gray-700">{bankDocRef}</span>
+                &middot; {recorded.length} recorded &middot; £{sessionTotal.toFixed(2)}
+              </span>
+            ) : (
+              "A bank document will be created automatically when you record your first donation"
+            )}
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <form action={createDonation} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <SearchableSelect
-                  name="contactId"
-                  required
-                  placeholder="Search contacts..."
-                  options={contacts.map((contact) => ({
-                    value: contact.id,
-                    label: `${contact.firstName} ${contact.lastName}${contact.giftAids.length > 0 ? " [GA]" : ""}`,
-                  }))}
-                />
+      {/* Session summary — recorded items */}
+      {recorded.length > 0 && (
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <div className="space-y-1.5">
+              {recorded.map((d, i) => (
+                <div key={d.id} className="flex items-center gap-3 text-sm py-1">
+                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <span className="font-mono text-xs text-gray-400 w-10">#{String(d.donorId).padStart(5, "0")}</span>
+                  <span className="text-gray-900 font-medium flex-1">{d.contactName}</span>
+                  <span className="text-gray-500">{d.type}</span>
+                  <span className="text-gray-500">{d.method || ""}</span>
+                  <span className="font-medium text-gray-900">£{d.amount.toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
+                <span className="text-sm font-semibold text-gray-900">{recorded.length} donation{recorded.length !== 1 ? "s" : ""}</span>
+                <span className="text-sm font-bold text-gray-900">£{sessionTotal.toFixed(2)}</span>
               </div>
-              <Input label="Date" name="date" type="date" required />
             </div>
+          </CardContent>
+        </Card>
+      )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Amount" name="amount" type="number" step="0.01" required />
-              <Select
-                label="Currency"
-                name="currency"
-                options={[{ value: "GBP", label: "GBP (£)" }]}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Type"
-                name="type"
-                required
-                options={[
-                  { value: "DONATION", label: "Donation" },
-                  { value: "PAYMENT", label: "Payment" },
-                  { value: "GIFT", label: "Gift" },
-                  { value: "EVENT_FEE", label: "Event Fee" },
-                  { value: "SPONSORSHIP", label: "Sponsorship" },
-                  { value: "LEGACY", label: "Legacy" },
-                  { value: "GRANT", label: "Grant" },
-                  { value: "IN_KIND", label: "In Kind" },
-                ]}
-              />
-              <Select
-                label="Method"
-                name="method"
-                placeholder="Select method (optional)"
-                options={paymentMethods.map((pm) => ({
-                  value: pm.name,
-                  label: pm.name,
-                }))}
-              />
-            </div>
-
-            <Input label="Reference" name="reference" placeholder="e.g. receipt number" />
-
-            <Select
-              label="Ledger Code"
-              name="ledgerCodeId"
-              placeholder="Select code (optional)"
-              options={ledgerCodes.map((code) => ({
-                value: code.id,
-                label: `${code.code} - ${code.name}`,
-              }))}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Campaign"
-                name="campaignId"
-                placeholder="Select campaign (optional)"
-                options={campaigns.map((campaign) => ({
-                  value: campaign.id,
-                  label: campaign.name,
-                }))}
-              />
-              <Select
-                label="Event"
-                name="eventId"
-                placeholder="Select event (optional)"
-                options={events.map((event) => ({
-                  value: event.id,
-                  label: event.name,
-                }))}
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="isGiftAidable"
-                name="isGiftAidable"
-                className="rounded border-gray-300"
-              />
-              <label htmlFor="isGiftAidable" className="text-sm font-medium text-gray-700">
-                Eligible for Gift Aid
-              </label>
-            </div>
-
-            <Input label="Notes" name="notes" placeholder="Additional notes..." />
-
-            <div className="flex justify-end gap-3">
-              <Link href="/finance/donations">
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
+      {/* Session closed */}
+      {sessionClosed ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Lock className="h-10 w-10 text-green-500 mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-gray-900">Session Closed</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Bank document <span className="font-mono font-medium">{bankDocRef}</span> has been closed with {recorded.length} donation{recorded.length !== 1 ? "s" : ""} totalling £{sessionTotal.toFixed(2)}.
+            </p>
+            <div className="flex justify-center gap-3 mt-6">
+              <Link href={`/finance/bank-documents/${bankDocId}`}>
+                <Button variant="outline">View Bank Document</Button>
               </Link>
-              <Button type="submit">Record Donation</Button>
+              <Link href="/finance/donations/new">
+                <Button>Start New Session</Button>
+              </Link>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Donation form */
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {recorded.length > 0 ? `Donation #${recorded.length + 1}` : "New Donation"}
+            </h3>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-5">
+              {/* Row 1: Contact + Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                  <ContactSearchSelect
+                    key={contactKey}
+                    name="contactId"
+                    required
+                    onSelect={(c) => {
+                      if (c) {
+                        setContactId(c.id);
+                        setContactHasGA(c.hasGiftAid);
+                        setIsGiftAidable(c.hasGiftAid);
+                      } else {
+                        setContactId("");
+                        setContactHasGA(false);
+                        setIsGiftAidable(false);
+                      }
+                    }}
+                  />
+                  {contactHasGA && (
+                    <p className="text-xs text-green-600 mt-1 font-medium">Active Gift Aid declaration on file</p>
+                  )}
+                  {contactId && !contactHasGA && (
+                    <p className="text-xs text-amber-600 mt-1">No Gift Aid declaration — consider sending one</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Amount + Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount (£)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                    placeholder="0.00"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="DONATION">Donation</option>
+                    <option value="PAYMENT">Payment</option>
+                    <option value="GIFT">Gift</option>
+                    <option value="EVENT_FEE">Event Fee</option>
+                    <option value="SPONSORSHIP">Sponsorship</option>
+                    <option value="LEGACY">Legacy</option>
+                    <option value="GRANT">Grant</option>
+                    <option value="IN_KIND">In Kind</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Method + Reference */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                  <select
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select method...</option>
+                    {paymentMethods.map((pm) => (
+                      <option key={pm.id} value={pm.name}>{pm.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+                  <input
+                    type="text"
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    placeholder="Receipt / cheque no."
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Ledger + Campaign + Event */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ledger Code</label>
+                  <select
+                    value={ledgerCodeId}
+                    onChange={(e) => setLedgerCodeId(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select code...</option>
+                    {ledgerCodes.map((lc) => (
+                      <option key={lc.id} value={lc.id}>{lc.code} - {lc.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign</label>
+                  <select
+                    value={campaignId}
+                    onChange={(e) => setCampaignId(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select campaign...</option>
+                    {campaigns.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
+                  <select
+                    value={eventId}
+                    onChange={(e) => setEventId(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select event...</option>
+                    {events.map((e) => (
+                      <option key={e.id} value={e.id}>{e.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Gift Aid + Notes */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isGiftAidable"
+                    checked={isGiftAidable}
+                    onChange={(e) => setIsGiftAidable(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="isGiftAidable" className="text-sm font-medium text-gray-700">
+                    Gift Aid Eligible
+                  </label>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Notes (optional)"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div>
+                  {recorded.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCloseSession}
+                      className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <Lock className="h-4 w-4" /> Close Session ({recorded.length} recorded)
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving || !contactId || !amount}
+                    onClick={() => handleRecordDonation(false)}
+                  >
+                    Record &amp; Finish
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={saving || !contactId || !amount}
+                    onClick={() => handleRecordDonation(true)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {saving ? "Saving..." : "Record & Next"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
