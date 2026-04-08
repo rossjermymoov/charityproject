@@ -13,15 +13,25 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function NewDonationPage() {
-  const [contacts, campaigns, ledgerCodes, events] = await Promise.all([
-    prisma.contact.findMany({ orderBy: { lastName: "asc" } }),
-    prisma.campaign.findMany({ orderBy: { name: "asc" } }),
+  const [contacts, campaigns, ledgerCodes, events, paymentMethods] = await Promise.all([
+    prisma.contact.findMany({
+      orderBy: { lastName: "asc" },
+      include: {
+        giftAids: {
+          where: { status: "ACTIVE" },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    }),
+    prisma.campaign.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, ledgerCodeId: true } }),
     prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
     prisma.event.findMany({
       where: { status: { not: "CANCELLED" } },
       orderBy: { startDate: "desc" },
       select: { id: true, name: true, startDate: true },
     }),
+    prisma.paymentMethod.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
   ]);
 
   async function createDonation(formData: FormData) {
@@ -97,7 +107,7 @@ export default async function NewDonationPage() {
                   placeholder="Search contacts..."
                   options={contacts.map((contact) => ({
                     value: contact.id,
-                    label: `${contact.firstName} ${contact.lastName}`,
+                    label: `${contact.firstName} ${contact.lastName}${contact.giftAids.length > 0 ? " [GA]" : ""}`,
                   }))}
                 />
               </div>
@@ -133,16 +143,10 @@ export default async function NewDonationPage() {
                 label="Method"
                 name="method"
                 placeholder="Select method (optional)"
-                options={[
-                  { value: "CASH", label: "Cash" },
-                  { value: "CHEQUE", label: "Cheque" },
-                  { value: "CARD", label: "Card" },
-                  { value: "DIRECT_DEBIT", label: "Direct Debit" },
-                  { value: "STANDING_ORDER", label: "Standing Order" },
-                  { value: "BANK_TRANSFER", label: "Bank Transfer" },
-                  { value: "ONLINE", label: "Online" },
-                  { value: "OTHER", label: "Other" },
-                ]}
+                options={paymentMethods.map((pm) => ({
+                  value: pm.name,
+                  label: pm.name,
+                }))}
               />
             </div>
 

@@ -45,6 +45,7 @@ import {
   Handshake,
   MessageCircle,
   Wallet,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -133,6 +134,7 @@ const sections: NavSection[] = [
     roles: ALL_STAFF,
     items: [
       { name: "Donations", href: "/finance/donations", icon: PoundSterling },
+      { name: "Bank Documents", href: "/finance/bank-documents", icon: FileText },
       { name: "Payments & BACS", href: "/finance/payments", icon: CreditCard },
       { name: "Gift Aid", href: "/finance/gift-aid", icon: Heart },
       { name: "Retail Gift Aid", href: "/finance/retail-gift-aid", icon: Package },
@@ -168,6 +170,7 @@ const sections: NavSection[] = [
     items: [
       { name: "Fund Accounting", href: "/finance/funds", icon: Wallet },
       { name: "Ledger Codes", href: "/finance/ledger-codes", icon: BookOpen },
+      { name: "Daily Export", href: "/finance/daily-export", icon: FileSpreadsheet },
       { name: "SORP Reports", href: "/finance/reports", icon: BarChart3 },
     ],
   },

@@ -165,6 +165,7 @@ model User {
   webhooksCreated        Webhook[]              @relation("WebhookCreatedBy")
   taskRulesAssignee      TaskRule[]             @relation("TaskRuleAssignee")
   autoTasksAssigned      AutoTask[]             @relation("AutoTaskAssignee")
+  bankDocuments          BankDocument[]         @relation("BankDocCreatedBy")
 }
 
 model Department {
@@ -280,6 +281,7 @@ model Contact {
   memberPortalTokens MemberPortalToken[]
   autoTasks      AutoTask[]             @relation("AutoTaskContact")
   retailGiftAidNotifications RetailGiftAidNotification[]
+  softCredits    SoftCredit[]
 }
 
 model Organisation {
@@ -744,6 +746,46 @@ model Donation {
   createdBy     User        @relation("DonationCreatedBy", fields: [createdById], references: [id])
   pledgePayment PledgePayment? @relation("PledgePayment")
   fundTransaction FundTransaction? @relation("DonationFundTransaction")
+  bankDocumentId String?
+  bankDocument BankDocument? @relation(fields: [bankDocumentId], references: [id])
+  softCredits SoftCredit[]
+}
+
+model PaymentMethod {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BankDocument {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  date        DateTime @default(now())
+  status      String   @default("OPEN") // OPEN | SUBMITTED | CLOSED
+  notes       String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User     @relation("BankDocCreatedBy", fields: [createdById], references: [id])
+  donations   Donation[]
+}
+
+model SoftCredit {
+  id         String   @id @default(cuid())
+  donationId String
+  contactId  String
+  amount     Float
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 // ============================================

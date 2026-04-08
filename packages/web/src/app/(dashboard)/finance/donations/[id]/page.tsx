@@ -33,7 +33,7 @@ export default async function DonationDetailPage({
 
   if (!donation) notFound();
 
-  const [contacts, campaigns, ledgerCodes, events] = await Promise.all([
+  const [contacts, campaigns, ledgerCodes, events, paymentMethods] = await Promise.all([
     prisma.contact.findMany({ orderBy: { lastName: "asc" } }),
     prisma.campaign.findMany({ orderBy: { name: "asc" } }),
     prisma.ledgerCode.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),
@@ -42,6 +42,7 @@ export default async function DonationDetailPage({
       orderBy: { startDate: "desc" },
       select: { id: true, name: true },
     }),
+    prisma.paymentMethod.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
   ]);
 
   async function updateDonation(formData: FormData) {
@@ -350,16 +351,10 @@ export default async function DonationDetailPage({
                 name="method"
                 placeholder="Select method (optional)"
                 defaultValue={donation.method || ""}
-                options={[
-                  { value: "CASH", label: "Cash" },
-                  { value: "CHEQUE", label: "Cheque" },
-                  { value: "CARD", label: "Card" },
-                  { value: "DIRECT_DEBIT", label: "Direct Debit" },
-                  { value: "STANDING_ORDER", label: "Standing Order" },
-                  { value: "BANK_TRANSFER", label: "Bank Transfer" },
-                  { value: "ONLINE", label: "Online" },
-                  { value: "OTHER", label: "Other" },
-                ]}
+                options={paymentMethods.map((pm) => ({
+                  value: pm.name,
+                  label: pm.name,
+                }))}
               />
             </div>
 
