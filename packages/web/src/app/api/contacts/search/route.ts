@@ -29,29 +29,34 @@ export async function GET(req: NextRequest) {
       orConditions.push({ donorId: { equals: donorIdNum } } as never);
     }
 
-    const contacts = await prisma.contact.findMany({
-      where: {
-        isArchived: false,
-        OR: orConditions,
-      },
-      select: {
-        id: true,
-        donorId: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        addressLine1: true,
-        city: true,
-        postcode: true,
-        giftAids: {
-          where: { status: "ACTIVE" },
-          select: { id: true },
-          take: 1,
+    const whereClause = {
+      isArchived: false,
+      OR: orConditions,
+    };
+
+    const [contacts, totalCount] = await Promise.all([
+      prisma.contact.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          donorId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          addressLine1: true,
+          city: true,
+          postcode: true,
+          giftAids: {
+            where: { status: "ACTIVE" },
+            select: { id: true },
+            take: 1,
+          },
         },
-      },
-      take: 20,
-      orderBy: { lastName: "asc" },
-    });
+        take: 20,
+        orderBy: { lastName: "asc" },
+      }),
+      prisma.contact.count({ where: whereClause }),
+    ]);
 
     const results = contacts.map((c) => ({
       id: c.id,
@@ -65,7 +70,7 @@ export async function GET(req: NextRequest) {
       hasGiftAid: c.giftAids.length > 0,
     }));
 
-    return NextResponse.json(results);
+    return NextResponse.json({ results, totalCount });
   } catch (error) {
     console.error("Failed to search contacts:", error);
     return NextResponse.json(

@@ -32,43 +32,58 @@ export function ContactSearchSelect({
 }: ContactSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [narrowFilter, setNarrowFilter] = useState("");
   const [results, setResults] = useState<ContactResult[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
   const [selectedLabel, setSelectedLabel] = useState(defaultLabel);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const narrowRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 1) {
       setResults([]);
+      setTotalCount(0);
       return;
     }
     setLoading(true);
     try {
       const res = await fetch(`/api/contacts/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
+      if (data.results) {
+        setResults(data.results);
+        setTotalCount(data.totalCount || 0);
+      } else {
+        setResults(Array.isArray(data) ? data : []);
+        setTotalCount(0);
+      }
     } catch {
       setResults([]);
+      setTotalCount(0);
     }
     setLoading(false);
   }, []);
 
+  // Combine main search + narrow filter into a single query
+  const combinedQuery = [search, narrowFilter].filter(Boolean).join(" ");
+
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => doSearch(search), 250);
+    debounceRef.current = setTimeout(() => doSearch(combinedQuery), 250);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [search, doSearch]);
+  }, [combinedQuery, doSearch]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
         setSearch("");
+        setNarrowFilter("");
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -80,6 +95,7 @@ export function ContactSearchSelect({
     setSelectedLabel(`${contact.firstName} ${contact.lastName} (#${contact.donorId})`);
     setOpen(false);
     setSearch("");
+    setNarrowFilter("");
     onSelect?.(contact);
   }
 
@@ -131,11 +147,28 @@ export function ContactSearchSelect({
               ref={inputRef}
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setNarrowFilter(""); }}
               placeholder="Type name, donor ID, postcode, or email..."
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               autoComplete="off"
             />
+            {/* Secondary narrow filter — appears when 10+ results */}
+            {!loading && totalCount >= 10 && search.length > 0 && (
+              <div className="mt-1.5">
+                <div className="text-[11px] text-amber-600 font-medium mb-1">
+                  {totalCount} matches found — narrow by postcode, email, or donor ID:
+                </div>
+                <input
+                  ref={narrowRef}
+                  type="text"
+                  value={narrowFilter}
+                  onChange={(e) => setNarrowFilter(e.target.value)}
+                  placeholder="e.g. SY10 or jones@email.com"
+                  className="w-full px-3 py-1.5 text-sm border border-amber-200 bg-amber-50 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  autoComplete="off"
+                />
+              </div>
+            )}
           </div>
 
           {/* Results */}
@@ -148,6 +181,11 @@ export function ContactSearchSelect({
             )}
             {!loading && search.length === 0 && (
               <div className="px-4 py-3 text-sm text-gray-400 text-center">Start typing to search</div>
+            )}
+            {!loading && results.length > 0 && totalCount > results.length && (
+              <div className="px-4 py-1.5 text-[11px] text-gray-400 text-center border-b border-gray-50">
+                Showing {results.length} of {totalCount} results
+              </div>
             )}
             {results.map((contact) => (
               <button
