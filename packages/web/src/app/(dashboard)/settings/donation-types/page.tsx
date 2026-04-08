@@ -131,16 +131,12 @@ export default async function DonationTypesSettingsPage() {
                       variant="ghost"
                       size="sm"
                       type="submit"
-                      className={`text-xs h-7 px-2 gap-1 whitespace-nowrap ${dt.isGiftAidEligible ? "text-green-700 bg-green-50 hover:bg-green-100" : "text-gray-400 hover:text-gray-600"}`}
+                      className={`text-xs h-7 w-16 justify-center gap-1 whitespace-nowrap ${dt.isGiftAidEligible ? "text-green-700 bg-green-50 hover:bg-green-100" : "text-gray-400 hover:text-gray-600"}`}
                     >
                       <Heart className="h-3 w-3" />
                       {dt.isGiftAidEligible ? "GA" : "No GA"}
                     </Button>
                   </form>
-
-                  {dt.isSystem && (
-                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold whitespace-nowrap">System</span>
-                  )}
 
                   <form action={toggleType} className="inline">
                     <input type="hidden" name="id" value={dt.id} />
