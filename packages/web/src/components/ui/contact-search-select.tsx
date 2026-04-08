@@ -36,6 +36,7 @@ export function ContactSearchSelect({
   const [results, setResults] = useState<ContactResult[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showNarrow, setShowNarrow] = useState(false);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
   const [selectedLabel, setSelectedLabel] = useState(defaultLabel);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,13 +57,17 @@ export function ContactSearchSelect({
       if (data.results) {
         setResults(data.results);
         setTotalCount(data.totalCount || 0);
+        if (data.totalCount >= 10) setShowNarrow(true);
+        if (data.totalCount < 10) setShowNarrow(false);
       } else {
         setResults(Array.isArray(data) ? data : []);
         setTotalCount(0);
+        setShowNarrow(false);
       }
     } catch {
       setResults([]);
       setTotalCount(0);
+      setShowNarrow(false);
     }
     setLoading(false);
   }, []);
@@ -147,16 +152,16 @@ export function ContactSearchSelect({
               ref={inputRef}
               type="text"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setNarrowFilter(""); }}
+              onChange={(e) => { setSearch(e.target.value); setNarrowFilter(""); setShowNarrow(false); }}
               placeholder="Type name, donor ID, postcode, or email..."
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               autoComplete="off"
             />
-            {/* Secondary narrow filter — appears when 10+ results */}
-            {!loading && totalCount >= 10 && search.length > 0 && (
+            {/* Secondary narrow filter — stays visible once shown to prevent focus loss */}
+            {showNarrow && search.length > 0 && (
               <div className="mt-1.5">
                 <div className="text-[11px] text-amber-600 font-medium mb-1">
-                  {totalCount} matches found — narrow by postcode, email, or donor ID:
+                  {totalCount} matches — narrow by postcode, email, or donor ID:
                 </div>
                 <input
                   ref={narrowRef}
