@@ -1,17 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { FileText, Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { requireAuth } from "@/lib/session";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export default async function BankDocumentsPage() {
-  const session = await requireAuth();
+  await requireAuth();
 
   const bankDocs = await prisma.bankDocument.findMany({
     include: {
@@ -22,61 +19,23 @@ export default async function BankDocumentsPage() {
     take: 50,
   });
 
-  async function createBankDoc() {
-    "use server";
-    const session = await requireAuth();
-
-    // Generate sequential reference: BD-YYYYMMDD-NNN
-    const today = new Date();
-    const dateStr = today.toISOString().split("T")[0].replace(/-/g, "");
-    const prefix = `BD-${dateStr}`;
-
-    const existing = await prisma.bankDocument.count({
-      where: { reference: { startsWith: prefix } },
-    });
-
-    const ref = `${prefix}-${String(existing + 1).padStart(3, "0")}`;
-
-    const doc = await prisma.bankDocument.create({
-      data: {
-        reference: ref,
-        date: today,
-        createdById: session.id,
-      },
-    });
-
-    revalidatePath("/finance/bank-documents");
-    redirect(`/finance/bank-documents/${doc.id}`);
-  }
-
   const statusColors: Record<string, string> = {
     OPEN: "bg-blue-100 text-blue-800",
-    SUBMITTED: "bg-yellow-100 text-yellow-800",
     CLOSED: "bg-green-100 text-green-800",
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bank Documents</h1>
-          <p className="text-gray-500 mt-1">Batch donations into numbered bank documents for accounting</p>
-        </div>
-        <form action={createBankDoc}>
-          <Button type="submit" className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Bank Document
-          </Button>
-        </form>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Bank Documents</h1>
+        <p className="text-gray-500 mt-1">Bank documents are created automatically when you record donations. View and edit donation lines here.</p>
       </div>
 
       {bankDocs.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No bank documents"
-          description="Create your first bank document to start batching donations."
-          actionLabel="New Bank Document"
-          actionHref="#"
+          title="No bank documents yet"
+          description="Bank documents will appear here automatically when you record donations via Finance → Donations → Add Donation."
         />
       ) : (
         <Card>
@@ -106,7 +65,7 @@ export default async function BankDocumentsPage() {
                       <td className="px-6 py-4 text-sm text-gray-600">{doc.donations.length}</td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">£{total.toFixed(2)}</td>
                       <td className="px-6 py-4">
-                        <Badge className={statusColors[doc.status] || ""}>{doc.status}</Badge>
+                        <Badge className={statusColors[doc.status] || "bg-gray-100 text-gray-800"}>{doc.status}</Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{doc.createdBy.name}</td>
                     </tr>
