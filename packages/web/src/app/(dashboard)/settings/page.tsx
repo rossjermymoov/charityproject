@@ -34,6 +34,7 @@ export default async function SettingsPage() {
     { icon: Palette, title: "Branding", desc: "Logo, colours, and organisation name", href: "/settings/branding", color: "text-pink-600 bg-pink-50" },
     { icon: Calendar, title: "Financial Year", desc: "Financial year end and Gold Donor threshold", href: "/settings/financial-year", color: "text-blue-600 bg-blue-50" },
     { icon: CreditCard, title: "Payment Methods", desc: "Configure how donations and payments are received", href: "/settings/payment-methods", color: "text-green-600 bg-green-50" },
+    { icon: FileText, title: "Donation Types", desc: "Donation types and Gift Aid eligibility settings", href: "/settings/donation-types", color: "text-rose-600 bg-rose-50" },
     { icon: Target, title: "Events", desc: "Event types and annual targets", href: "/settings/events", color: "text-orange-600 bg-orange-50" },
     { icon: Store, title: "Shops", desc: "Shop locations and Retail Gift Aid QR codes", href: "/settings/shops", color: "text-emerald-600 bg-emerald-50" },
     { icon: Zap, title: "Integrations", desc: "Email providers, APIs, and third-party services", href: "/settings/integrations", color: "text-yellow-600 bg-yellow-50" },

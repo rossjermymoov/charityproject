@@ -21,7 +21,10 @@ interface SelectOption {
   id: string;
   name: string;
   code?: string;
+  label?: string;
   ledgerCodeId?: string | null;
+  defaultLedgerCodeId?: string | null;
+  isGiftAidEligible?: boolean;
 }
 
 export default function NewDonationPage() {
@@ -54,23 +57,39 @@ export default function NewDonationPage() {
   const [ledgerCodes, setLedgerCodes] = useState<SelectOption[]>([]);
   const [events, setEvents] = useState<SelectOption[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<SelectOption[]>([]);
+  const [donationTypes, setDonationTypes] = useState<SelectOption[]>([]);
 
   // Load reference data on mount
   useEffect(() => {
     async function load() {
-      const [campRes, lcRes, evtRes, pmRes] = await Promise.all([
+      const [campRes, lcRes, evtRes, pmRes, dtRes] = await Promise.all([
         fetch("/api/finance/reference-data?type=campaigns"),
         fetch("/api/finance/reference-data?type=ledger-codes"),
         fetch("/api/finance/reference-data?type=events"),
         fetch("/api/finance/reference-data?type=payment-methods"),
+        fetch("/api/finance/reference-data?type=donation-types"),
       ]);
       setCampaigns(await campRes.json());
       setLedgerCodes(await lcRes.json());
       setEvents(await evtRes.json());
       setPaymentMethods(await pmRes.json());
+      setDonationTypes(await dtRes.json());
     }
     load();
   }, []);
+
+  // Auto-compute Gift Aid + auto-populate ledger code from type
+  useEffect(() => {
+    const selectedType = donationTypes.find((dt) => dt.name === type);
+    const typeEligible = selectedType?.isGiftAidEligible ?? false;
+    setIsGiftAidable(typeEligible && contactHasGA);
+    // Auto-set ledger code from donation type default
+    if (selectedType?.defaultLedgerCodeId) {
+      setLedgerCodeId(selectedType.defaultLedgerCodeId);
+    } else {
+      setLedgerCodeId("");
+    }
+  }, [type, contactHasGA, donationTypes]);
 
   // Auto-create bank document on first donation
   async function ensureBankDoc(): Promise<string> {
@@ -285,14 +304,11 @@ export default function NewDonationPage() {
                     onChange={(e) => setType(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <option value="DONATION">Donation</option>
-                    <option value="PAYMENT">Payment</option>
-                    <option value="GIFT">Gift</option>
-                    <option value="EVENT_FEE">Event Fee</option>
-                    <option value="SPONSORSHIP">Sponsorship</option>
-                    <option value="LEGACY">Legacy</option>
-                    <option value="GRANT">Grant</option>
-                    <option value="IN_KIND">In Kind</option>
+                    {donationTypes.map((dt) => (
+                      <option key={dt.name} value={dt.name}>
+                        {dt.label}{dt.isGiftAidEligible ? " (GA)" : ""}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -324,47 +340,42 @@ export default function NewDonationPage() {
                 </div>
               </div>
 
-              {/* Row 4: Ledger + Campaign + Event */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ledger Code</label>
-                  <select
-                    value={ledgerCodeId}
-                    onChange={(e) => setLedgerCodeId(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select code...</option>
-                    {ledgerCodes.map((lc) => (
-                      <option key={lc.id} value={lc.id}>{lc.code} - {lc.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign</label>
-                  <select
-                    value={campaignId}
-                    onChange={(e) => setCampaignId(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select campaign...</option>
-                    {campaigns.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
-                  <select
-                    value={eventId}
-                    onChange={(e) => setEventId(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select event...</option>
-                    {events.map((e) => (
-                      <option key={e.id} value={e.id}>{e.name}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* Row 4: Campaign / Event (grouped dropdown) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Campaign / Event</label>
+                <select
+                  value={campaignId ? `campaign:${campaignId}` : eventId ? `event:${eventId}` : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.startsWith("campaign:")) {
+                      setCampaignId(val.replace("campaign:", ""));
+                      setEventId("");
+                    } else if (val.startsWith("event:")) {
+                      setEventId(val.replace("event:", ""));
+                      setCampaignId("");
+                    } else {
+                      setCampaignId("");
+                      setEventId("");
+                    }
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">None</option>
+                  {campaigns.length > 0 && (
+                    <optgroup label="Campaigns">
+                      {campaigns.map((c) => (
+                        <option key={c.id} value={`campaign:${c.id}`}>{c.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {events.length > 0 && (
+                    <optgroup label="Events">
+                      {events.map((e) => (
+                        <option key={e.id} value={`event:${e.id}`}>{e.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
               </div>
 
               {/* Gift Aid + Notes */}
@@ -378,8 +389,11 @@ export default function NewDonationPage() {
                     className="rounded border-gray-300"
                   />
                   <label htmlFor="isGiftAidable" className="text-sm font-medium text-gray-700">
-                    Gift Aid Eligible
+                    Gift Aid
                   </label>
+                  {isGiftAidable && (
+                    <span className="text-[10px] text-green-600 font-medium ml-1">(auto: type eligible + GA registered)</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <input

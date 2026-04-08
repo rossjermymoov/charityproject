@@ -39,6 +39,14 @@ export async function GET(req: NextRequest) {
       });
       return NextResponse.json(data);
     }
+    case "donation-types": {
+      const data = await prisma.donationType.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, name: true, label: true, isGiftAidEligible: true, defaultLedgerCodeId: true },
+      });
+      return NextResponse.json(data);
+    }
     default:
       return NextResponse.json({ error: "Unknown type" }, { status: 400 });
   }

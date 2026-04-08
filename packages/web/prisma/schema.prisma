@@ -715,6 +715,7 @@ model LedgerCode {
   donations            Donation[]
   events              Event[]
   campaigns           Campaign[]
+  donationTypes       DonationType[] @relation("DonationTypeDefaultLedger")
   sageAccountMappings SageAccountMapping[]
   xeroAccountMappings XeroAccountMapping[] @relation("XeroAccountMappings")
 }
@@ -750,6 +751,20 @@ model Donation {
   bankDocumentId String?
   bankDocument BankDocument? @relation(fields: [bankDocumentId], references: [id])
   softCredits SoftCredit[]
+}
+
+model DonationType {
+  id                 String      @id @default(cuid())
+  name               String      @unique
+  label              String              // display label e.g. "Donation", "Event Fee"
+  isGiftAidEligible  Boolean     @default(false)
+  isSystem           Boolean     @default(false)
+  isActive           Boolean     @default(true)
+  sortOrder          Int         @default(0)
+  defaultLedgerCodeId String?
+  defaultLedgerCode   LedgerCode? @relation("DonationTypeDefaultLedger", fields: [defaultLedgerCodeId], references: [id])
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 model PaymentMethod {
