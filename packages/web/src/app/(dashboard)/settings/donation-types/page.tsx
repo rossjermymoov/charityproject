@@ -85,7 +85,7 @@ export default async function DonationTypesSettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/settings" className="text-gray-400 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
@@ -107,51 +107,59 @@ export default async function DonationTypesSettingsPage() {
 
           <div className="space-y-2 mb-6">
             {types.map((dt) => (
-              <div key={dt.id} className="flex items-center gap-3 py-2 px-3 rounded-lg border bg-white">
-                <span className={`text-sm font-medium min-w-[120px] ${!dt.isActive ? "text-gray-400 line-through" : "text-gray-900"}`}>
-                  {dt.label}
-                </span>
-                <span className="text-[10px] font-mono text-gray-400 w-24 shrink-0">{dt.name}</span>
+              <div key={dt.id} className="flex items-center justify-between py-2 px-3 rounded-lg border bg-white gap-2">
+                {/* Left: label + system name */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`text-sm font-medium truncate ${!dt.isActive ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                    {dt.label}
+                  </span>
+                  <span className="text-[10px] font-mono text-gray-400 shrink-0">{dt.name}</span>
+                </div>
 
-                {/* Ledger code assignment */}
-                <LedgerCodeSelect
-                  typeId={dt.id}
-                  currentValue={dt.defaultLedgerCodeId || ""}
-                  ledgerCodes={ledgerCodes}
-                  updateAction={updateLedgerCode}
-                />
+                {/* Right: actions row */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <LedgerCodeSelect
+                    typeId={dt.id}
+                    currentValue={dt.defaultLedgerCodeId || ""}
+                    ledgerCodes={ledgerCodes}
+                    updateAction={updateLedgerCode}
+                  />
 
-                {/* Gift Aid toggle */}
-                <form action={toggleGiftAid} className="inline">
-                  <input type="hidden" name="id" value={dt.id} />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    type="submit"
-                    className={`text-xs h-7 px-2 gap-1 ${dt.isGiftAidEligible ? "text-green-700 bg-green-50 hover:bg-green-100" : "text-gray-400 hover:text-gray-600"}`}
-                  >
-                    <Heart className="h-3 w-3" />
-                    {dt.isGiftAidEligible ? "GA Eligible" : "No GA"}
-                  </Button>
-                </form>
-
-                {dt.isSystem && (
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">System</span>
-                )}
-                <form action={toggleType} className="inline">
-                  <input type="hidden" name="id" value={dt.id} />
-                  <Button variant="ghost" size="sm" type="submit" className="text-xs h-7 px-2">
-                    {dt.isActive ? "Disable" : "Enable"}
-                  </Button>
-                </form>
-                {!dt.isSystem && (
-                  <form action={deleteType} className="inline">
+                  <form action={toggleGiftAid} className="inline">
                     <input type="hidden" name="id" value={dt.id} />
-                    <Button variant="ghost" size="sm" type="submit" className="text-xs h-7 px-2 text-red-500 hover:text-red-700">
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="submit"
+                      className={`text-xs h-7 px-2 gap-1 whitespace-nowrap ${dt.isGiftAidEligible ? "text-green-700 bg-green-50 hover:bg-green-100" : "text-gray-400 hover:text-gray-600"}`}
+                    >
+                      <Heart className="h-3 w-3" />
+                      {dt.isGiftAidEligible ? "GA" : "No GA"}
                     </Button>
                   </form>
-                )}
+
+                  {dt.isSystem && (
+                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold whitespace-nowrap">System</span>
+                  )}
+
+                  <form action={toggleType} className="inline">
+                    <input type="hidden" name="id" value={dt.id} />
+                    <Button variant="ghost" size="sm" type="submit" className="text-xs h-7 px-2 whitespace-nowrap">
+                      {dt.isActive ? "Disable" : "Enable"}
+                    </Button>
+                  </form>
+
+                  {!dt.isSystem ? (
+                    <form action={deleteType} className="inline">
+                      <input type="hidden" name="id" value={dt.id} />
+                      <Button variant="ghost" size="sm" type="submit" className="text-xs h-7 px-1.5 text-red-500 hover:text-red-700">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="w-7" />
+                  )}
+                </div>
               </div>
             ))}
           </div>
