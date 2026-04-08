@@ -1543,13 +1543,13 @@ model AuditLog {
 // ============================================
 
 model DataRetentionPolicy {
-  id             String   @id @default(cuid())
-  entityType     String   @unique // Contact | Donation | etc.
-  retentionDays  Int      // how many days to keep records
-  action         String   // ARCHIVE | ANONYMISE | DELETE
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  entityType      String   @unique // Contact | Donation | etc.
+  retentionMonths Int      // how many months to keep records
+  action          String   // ARCHIVE | ANONYMISE | DELETE
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // ============================================
