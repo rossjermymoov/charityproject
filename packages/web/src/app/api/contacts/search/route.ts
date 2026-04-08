@@ -12,26 +12,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // Split search into terms for multi-word matching (e.g. "Mary Jones")
+    // Split search into terms for multi-word AND matching (e.g. "Jones SY10" = must match BOTH)
     const terms = q.split(/\s+/).filter(Boolean);
 
-    // Build OR conditions: each term matches firstName, lastName, postcode, email
-    const orConditions = terms.flatMap((term) => [
-      { firstName: { contains: term, mode: "insensitive" as const } },
-      { lastName: { contains: term, mode: "insensitive" as const } },
-      { postcode: { contains: term, mode: "insensitive" as const } },
-      { email: { contains: term, mode: "insensitive" as const } },
-    ]);
-
-    // Also try matching donorId as a number
-    const donorIdNum = parseInt(q, 10);
-    if (!isNaN(donorIdNum)) {
-      orConditions.push({ donorId: { equals: donorIdNum } } as never);
-    }
+    // Each term must match at least one field (AND across terms, OR within each term's fields)
+    const andConditions = terms.map((term) => {
+      const termNum = parseInt(term, 10);
+      const orFields: Record<string, unknown>[] = [
+        { firstName: { contains: term, mode: "insensitive" as const } },
+        { lastName: { contains: term, mode: "insensitive" as const } },
+        { postcode: { contains: term, mode: "insensitive" as const } },
+        { email: { contains: term, mode: "insensitive" as const } },
+      ];
+      if (!isNaN(termNum)) {
+        orFields.push({ donorId: { equals: termNum } });
+      }
+      return { OR: orFields };
+    });
 
     const whereClause = {
       isArchived: false,
-      OR: orConditions,
+      AND: andConditions,
     };
 
     const [contacts, totalCount] = await Promise.all([
