@@ -7,6 +7,7 @@ import { ArrowLeft, Tag, Plus, Trash2, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LedgerCodeSelect } from "./ledger-code-select";
 
 export default async function DonationTypesSettingsPage() {
   await requireRole(["ADMIN"]);
@@ -113,20 +114,12 @@ export default async function DonationTypesSettingsPage() {
                 <span className="text-[10px] font-mono text-gray-400 w-24 shrink-0">{dt.name}</span>
 
                 {/* Ledger code assignment */}
-                <form action={updateLedgerCode} className="inline shrink-0">
-                  <input type="hidden" name="id" value={dt.id} />
-                  <select
-                    name="ledgerCodeId"
-                    defaultValue={dt.defaultLedgerCodeId || ""}
-                    onChange={(e) => (e.target as HTMLSelectElement).form?.requestSubmit()}
-                    className="text-xs h-7 px-1.5 rounded border border-gray-200 bg-gray-50 text-gray-700 w-36"
-                  >
-                    <option value="">No ledger code</option>
-                    {ledgerCodes.map((lc) => (
-                      <option key={lc.id} value={lc.id}>{lc.code} - {lc.name}</option>
-                    ))}
-                  </select>
-                </form>
+                <LedgerCodeSelect
+                  typeId={dt.id}
+                  currentValue={dt.defaultLedgerCodeId || ""}
+                  ledgerCodes={ledgerCodes}
+                  updateAction={updateLedgerCode}
+                />
 
                 {/* Gift Aid toggle */}
                 <form action={toggleGiftAid} className="inline">
