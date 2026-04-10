@@ -6,14 +6,14 @@ interface Props {
   defaultPrimary: string;
   defaultSidebar: string;
   defaultSidebarText: string;
-  defaultOrgName: string;
+  logoUrl: string | null;
 }
 
 export function BrandingPreview({
   defaultPrimary,
   defaultSidebar,
   defaultSidebarText,
-  defaultOrgName,
+  logoUrl,
 }: Props) {
   const [primary, setPrimary] = useState(defaultPrimary);
   const [sidebar, setSidebar] = useState(defaultSidebar);
@@ -58,15 +58,22 @@ export function BrandingPreview({
     return () => cleanups.forEach((fn) => fn?.());
   }, []);
 
-  // Also read the org name live
-  const [orgName, setOrgName] = useState(defaultOrgName);
+  // Live preview of the logo as the user uploads/changes it
+  const [livePreviewLogo, setLivePreviewLogo] = useState<string | null>(logoUrl);
   useEffect(() => {
     const form = document.querySelector("form");
-    const input = form?.querySelector('[name="orgName"]') as HTMLInputElement;
-    if (!input) return;
-    const onChange = () => setOrgName(input.value || "Parity CRM");
-    input.addEventListener("input", onChange);
-    return () => input.removeEventListener("input", onChange);
+    const hidden = form?.querySelector('[name="logoUrl"]') as HTMLInputElement;
+    if (!hidden) return;
+    const update = () => setLivePreviewLogo(hidden.value || null);
+    // React doesn't fire input events on hidden fields when value prop changes,
+    // so poll briefly after mount and on any form mutation
+    const observer = new MutationObserver(update);
+    observer.observe(hidden, { attributes: true, attributeFilter: ["value"] });
+    const interval = setInterval(update, 500);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -77,16 +84,17 @@ export function BrandingPreview({
         style={{ backgroundColor: sidebar }}
       >
         {/* Logo area */}
-        <div className="px-4 py-3 flex items-center gap-2">
-          <div
-            className="h-7 w-7 rounded-md flex items-center justify-center"
-            style={{ backgroundColor: primary }}
-          >
-            <span className="text-white font-bold text-xs">
-              {orgName.substring(0, 2).toUpperCase()}
-            </span>
-          </div>
-          <span className="text-white font-semibold text-sm">{orgName}</span>
+        <div className="px-4 py-4 flex items-center justify-center">
+          {livePreviewLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={livePreviewLogo}
+              alt="Logo"
+              className="h-8 max-w-[160px] object-contain"
+            />
+          ) : (
+            <span className="text-white font-semibold text-sm tracking-tight">Parity CRM</span>
+          )}
         </div>
 
         {/* Nav items */}

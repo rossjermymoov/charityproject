@@ -108,14 +108,8 @@ export default async function BrandingPage() {
               <Palette className="h-5 w-5" /> Organisation Identity
             </h2>
 
-            <Input
-              label="Organisation Name"
-              name="orgName"
-              defaultValue={settings.orgName || ""}
-              placeholder="Your Charity Name"
-            />
-            <p className="text-xs text-gray-500 -mt-4">
-              The organisation name replaces &quot;Parity CRM&quot; in the sidebar. The logo appears next to it.
+            <p className="text-sm text-gray-500">
+              Upload your charity&apos;s logo — it will replace the Parity CRM wordmark in the top-left of the sidebar.
             </p>
 
             <LogoUpload currentLogoUrl={settings.logoUrl} />
@@ -206,7 +200,7 @@ export default async function BrandingPage() {
               defaultPrimary={settings.primaryColour}
               defaultSidebar={settings.sidebarColour}
               defaultSidebarText={settings.sidebarTextColour}
-              defaultOrgName={settings.orgName || "Parity CRM"}
+              logoUrl={settings.logoUrl}
             />
           </CardContent>
         </Card>

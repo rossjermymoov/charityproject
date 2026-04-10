@@ -262,25 +262,18 @@ export function Sidebar({ userRole = "STAFF" }: { userRole?: string }) {
       style={{ backgroundColor: branding.sidebarColour }}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center px-6">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="flex h-16 items-center justify-center px-6">
+        <Link href="/" className="flex items-center">
           {branding.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={branding.logoUrl}
-              alt={branding.orgName}
-              className="h-8 w-8 rounded-lg object-contain"
+              alt="Parity CRM"
+              className="h-10 max-w-[180px] object-contain"
             />
           ) : (
-            <div
-              className="h-8 w-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: branding.primaryColour }}
-            >
-              <span className="text-white font-bold text-sm">
-                {branding.orgName.substring(0, 2).toUpperCase()}
-              </span>
-            </div>
+            <span className="text-white font-semibold text-xl tracking-tight">Parity CRM</span>
           )}
-          <span className="text-white font-semibold text-lg">{branding.orgName}</span>
         </Link>
       </div>
 

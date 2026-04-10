@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/session";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 
 const ALLOWED_TYPES = new Set([
   "image/svg+xml",
@@ -63,22 +61,10 @@ export async function POST(req: NextRequest) {
       buffer = Buffer.from(sanitised, "utf8");
     }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "branding");
-    await mkdir(uploadsDir, { recursive: true });
+    // Store as a data URL so the logo survives Railway's ephemeral filesystem
+    const base64 = buffer.toString("base64");
+    const logoUrl = `data:${file.type};base64,${base64}`;
 
-    const extMap: Record<string, string> = {
-      "image/svg+xml": "svg",
-      "image/png": "png",
-      "image/jpeg": "jpg",
-      "image/webp": "webp",
-    };
-    const ext = extMap[file.type] || "bin";
-    const filename = `logo-${Date.now()}.${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-
-    await writeFile(filepath, buffer);
-
-    const logoUrl = `/uploads/branding/${filename}`;
     return NextResponse.json({ success: true, logoUrl });
   } catch (error) {
     console.error("Logo upload error:", error);
