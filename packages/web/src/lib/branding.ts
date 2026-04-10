@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { DEFAULT_BRANDING } from "./default-branding";
 
 export interface Branding {
   orgName: string;
@@ -9,11 +10,11 @@ export interface Branding {
 }
 
 const DEFAULTS: Branding = {
-  orgName: "Parity CRM",
-  logoUrl: null,
-  primaryColour: "#4f46e5",
-  sidebarColour: "#111827",
-  sidebarTextColour: "#d1d5db",
+  orgName: DEFAULT_BRANDING.orgName,
+  logoUrl: DEFAULT_BRANDING.logoUrl,
+  primaryColour: DEFAULT_BRANDING.primaryColour,
+  sidebarColour: DEFAULT_BRANDING.sidebarColour,
+  sidebarTextColour: DEFAULT_BRANDING.sidebarTextColour,
 };
 
 /**

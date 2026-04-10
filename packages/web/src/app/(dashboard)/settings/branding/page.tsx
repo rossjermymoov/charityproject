@@ -9,6 +9,7 @@ import { ArrowLeft, Palette } from "lucide-react";
 import { BrandingPreview } from "./branding-preview";
 import { ResetBrandingButton } from "./reset-branding-button";
 import { LogoUpload } from "./logo-upload";
+import { DEFAULT_BRANDING } from "@/lib/default-branding";
 
 export default async function BrandingPage() {
   const user = await requireAuth();
@@ -27,9 +28,9 @@ export default async function BrandingPage() {
 
     const orgName = (formData.get("orgName") as string) || null;
     const logoUrl = (formData.get("logoUrl") as string) || null;
-    const primaryColour = (formData.get("primaryColour") as string) || "#4f46e5";
-    const sidebarColour = (formData.get("sidebarColour") as string) || "#111827";
-    const sidebarTextColour = (formData.get("sidebarTextColour") as string) || "#d1d5db";
+    const primaryColour = (formData.get("primaryColour") as string) || DEFAULT_BRANDING.primaryColour;
+    const sidebarColour = (formData.get("sidebarColour") as string) || DEFAULT_BRANDING.sidebarColour;
+    const sidebarTextColour = (formData.get("sidebarTextColour") as string) || DEFAULT_BRANDING.sidebarTextColour;
 
     await prisma.systemSettings.upsert({
       where: { id: "default" },
@@ -62,16 +63,17 @@ export default async function BrandingPage() {
       where: { id: "default" },
       update: {
         orgName: null,
-        logoUrl: null,
-        primaryColour: "#4f46e5",
-        sidebarColour: "#111827",
-        sidebarTextColour: "#d1d5db",
+        logoUrl: DEFAULT_BRANDING.logoUrl,
+        primaryColour: DEFAULT_BRANDING.primaryColour,
+        sidebarColour: DEFAULT_BRANDING.sidebarColour,
+        sidebarTextColour: DEFAULT_BRANDING.sidebarTextColour,
       },
       create: {
         id: "default",
-        primaryColour: "#4f46e5",
-        sidebarColour: "#111827",
-        sidebarTextColour: "#d1d5db",
+        logoUrl: DEFAULT_BRANDING.logoUrl,
+        primaryColour: DEFAULT_BRANDING.primaryColour,
+        sidebarColour: DEFAULT_BRANDING.sidebarColour,
+        sidebarTextColour: DEFAULT_BRANDING.sidebarTextColour,
       },
     });
 

@@ -24,9 +24,9 @@ model SystemSettings {
   // ── White-label branding ──
   orgName           String? // Display name (replaces "Parity CRM" in sidebar)
   logoUrl           String? // URL or /uploads/logo.png path for the logo
-  primaryColour     String  @default("#4f46e5") // Brand colour (hex) — buttons, links, accents
-  sidebarColour     String  @default("#111827") // Sidebar background colour (hex)
-  sidebarTextColour String  @default("#d1d5db") // Sidebar text colour (hex)
+  primaryColour     String  @default("#1b3a2d") // Brand colour (hex) — buttons, links, accents
+  sidebarColour     String  @default("#1b3a2d") // Sidebar background colour (hex)
+  sidebarTextColour String  @default("#f7f3ec") // Sidebar text colour (hex)
 
   // ── Collection Tins Mode ──
   // MY_ROUTES = predefined routes assigned to volunteers (larger charities)
