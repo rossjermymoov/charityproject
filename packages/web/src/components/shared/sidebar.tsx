@@ -168,7 +168,6 @@ const sections: NavSection[] = [
     icon: BookOpen,
     roles: ALL_STAFF,
     items: [
-      { name: "Fund Accounting", href: "/finance/funds", icon: Wallet },
       { name: "Ledger Codes", href: "/finance/ledger-codes", icon: BookOpen },
       { name: "Daily Export", href: "/finance/daily-export", icon: FileSpreadsheet },
       { name: "SORP Reports", href: "/finance/reports", icon: BarChart3 },

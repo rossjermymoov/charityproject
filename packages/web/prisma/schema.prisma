@@ -12,62 +12,62 @@ datasource db {
 // ============================================
 
 model SystemSettings {
-  id                    String   @id @default("default")
-  financialYearEndMonth Int      @default(3)  // 1=Jan … 12=Dec, default March (UK charity standard)
-  financialYearEndDay   Int      @default(31) // day of month
+  id                    String @id @default("default")
+  financialYearEndMonth Int    @default(3) // 1=Jan … 12=Dec, default March (UK charity standard)
+  financialYearEndDay   Int    @default(31) // day of month
 
   // ── Annual events targets ──
-  eventsIncomeTarget Float?  // Annual target income from events e.g. 400000
-  eventsCostBudget   Float?  // Annual predicted cost budget e.g. 250000
-  eventsProfitTarget Float?  // Annual profit target
+  eventsIncomeTarget Float? // Annual target income from events e.g. 400000
+  eventsCostBudget   Float? // Annual predicted cost budget e.g. 250000
+  eventsProfitTarget Float? // Annual profit target
 
   // ── White-label branding ──
-  orgName               String?  // Display name (replaces "DeepCharity" in sidebar)
-  logoUrl               String?  // URL or /uploads/logo.png path for the logo
-  primaryColour         String   @default("#4f46e5") // Brand colour (hex) — buttons, links, accents
-  sidebarColour         String   @default("#111827") // Sidebar background colour (hex)
-  sidebarTextColour     String   @default("#d1d5db") // Sidebar text colour (hex)
+  orgName           String? // Display name (replaces "DeepCharity" in sidebar)
+  logoUrl           String? // URL or /uploads/logo.png path for the logo
+  primaryColour     String  @default("#4f46e5") // Brand colour (hex) — buttons, links, accents
+  sidebarColour     String  @default("#111827") // Sidebar background colour (hex)
+  sidebarTextColour String  @default("#d1d5db") // Sidebar text colour (hex)
 
   // ── Collection Tins Mode ──
   // MY_ROUTES = predefined routes assigned to volunteers (larger charities)
   // SUGGESTED_ROUTES = AI-suggested ad-hoc routes based on distance & data (smaller charities)
-  collectionMode        String   @default("SUGGESTED_ROUTES") // MY_ROUTES | SUGGESTED_ROUTES
+  collectionMode String @default("SUGGESTED_ROUTES") // MY_ROUTES | SUGGESTED_ROUTES
 
   // ── Collection Tins — Head Office (route start point) ──
-  headOfficeAddress     String?  // Full address text
-  headOfficeLat         Float?   // Latitude for route calculations
-  headOfficeLng         Float?   // Longitude for route calculations
+  headOfficeAddress String? // Full address text
+  headOfficeLat     Float? // Latitude for route calculations
+  headOfficeLng     Float? // Longitude for route calculations
 
   // ── Catchment Area & Prospects ──
-  catchmentPostcodes    String?  // JSON array of postcode prefixes e.g. ["SY10","SY11","SY10 1"]
-  charityDescription    String?  // Free-text paragraph about what the charity does (used in letters/infographics)
-  charityWebsite        String?  // Charity website URL for AI letter generation
-  charityWebsiteSummary String?  // AI-generated summary of charity website content (cached)
-  googlePlacesApiKey    String?  // Google Places API key for prospect finding
-  letterheadImage       String?  // Base64 data URL of charity letterhead image (PNG/JPEG)
+  catchmentPostcodes    String? // JSON array of postcode prefixes e.g. ["SY10","SY11","SY10 1"]
+  charityDescription    String? // Free-text paragraph about what the charity does (used in letters/infographics)
+  charityWebsite        String? // Charity website URL for AI letter generation
+  charityWebsiteSummary String? // AI-generated summary of charity website content (cached)
+  googlePlacesApiKey    String? // Google Places API key for prospect finding
+  letterheadImage       String? // Base64 data URL of charity letterhead image (PNG/JPEG)
 
   // ── HMRC Gift Aid Integration ──
-  hmrcCharityRef        String?  // HMRC Charity Reference (e.g. XR12345)
-  hmrcGatewayUser       String?  // Government Gateway User ID
-  hmrcGatewayPassword   String?  // Government Gateway Password
-  hmrcSenderId          String?  // Software Vendor Sender ID
-  hmrcEnabled           Boolean  @default(false)
+  hmrcCharityRef      String? // HMRC Charity Reference (e.g. XR12345)
+  hmrcGatewayUser     String? // Government Gateway User ID
+  hmrcGatewayPassword String? // Government Gateway Password
+  hmrcSenderId        String? // Software Vendor Sender ID
+  hmrcEnabled         Boolean @default(false)
 
   // ── Sage Intacct Integration ──
-  sageCompanyId         String?  // Sage Intacct Company ID
-  sageSenderId          String?  // Web Services Sender ID
-  sageSenderPassword    String?  // Sender Password (encrypted)
-  sageUserId            String?  // User ID for API auth
-  sageUserPassword      String?  // User Password (encrypted)
-  sageEnabled           Boolean  @default(false)
+  sageCompanyId      String? // Sage Intacct Company ID
+  sageSenderId       String? // Web Services Sender ID
+  sageSenderPassword String? // Sender Password (encrypted)
+  sageUserId         String? // User ID for API auth
+  sageUserPassword   String? // User Password (encrypted)
+  sageEnabled        Boolean @default(false)
 
   // ── Loqate Integration ──
-  loqateApiKey          String?  // Loqate API key for address verification
+  loqateApiKey String? // Loqate API key for address verification
 
   // ── Donor Recognition ──
-  goldDonorThreshold    Float    @default(1000) // Lifetime donation amount (£) to earn Gold Donor status
+  goldDonorThreshold Float @default(1000) // Lifetime donation amount (£) to earn Gold Donor status
 
-  updatedAt             DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 model Shop {
@@ -82,7 +82,7 @@ model Shop {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy   User     @relation("ShopCreatedBy", fields: [createdById], references: [id])
+  createdBy User @relation("ShopCreatedBy", fields: [createdById], references: [id])
 
   @@index([qrToken])
 }
@@ -92,80 +92,78 @@ model Shop {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  passwordHash  String
-  role          String    @default("STAFF") // ADMIN | STAFF | VOLUNTEER | DONOR
-  contactId     String?   @unique  // link to CRM Contact for donors/volunteers
-  avatarUrl     String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("STAFF") // ADMIN | STAFF | VOLUNTEER | DONOR
+  contactId    String?  @unique // link to CRM Contact for donors/volunteers
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  isArchived    Boolean   @default(false)
-  archivedAt    DateTime?
-  mfaEnabled    Boolean   @default(false)
-  lastLoginAt   DateTime?
+  isArchived  Boolean   @default(false)
+  archivedAt  DateTime?
+  mfaEnabled  Boolean   @default(false)
+  lastLoginAt DateTime?
 
-  contactsCreated        Contact[]           @relation("CreatedByUser")
-  interactionsCreated    Interaction[]       @relation("InteractionCreatedBy")
-  notesCreated           Note[]              @relation("NoteCreatedBy")
-  hoursVerified          VolunteerHoursLog[] @relation("VerifiedByUser")
-  assignmentsCreated     Assignment[]        @relation("AssignmentCreatedBy")
-  broadcastsCreated      Broadcast[]         @relation("BroadcastCreatedBy")
-  broadcastConfirmations BroadcastResponse[] @relation("BroadcastConfirmedBy")
-  remindersCreated       Reminder[]          @relation("ReminderCreatedBy")
-  skillsVerified         VolunteerSkill[]    @relation("SkillVerifiedBy")
-  notifications          Notification[]      @relation("NotificationRecipient")
-  notificationPreference NotificationPreference?
-  pushDevices            PushDevice[]
-  volunteerProfile       VolunteerProfile?   @relation("UserVolunteerProfile")
-  auditLogs              AuditLog[]          @relation("AuditLogUser")
-  giftAidCreated         GiftAid[]           @relation("GiftAidCreatedBy")
-  donationsCreated       Donation[]          @relation("DonationCreatedBy")
-  eventsCreated          Event[]             @relation("EventCreatedBy")
-  campaignsCreated       Campaign[]          @relation("CampaignCreatedBy")
-  collectionTinsCreated  CollectionTin[]     @relation("CollectionTinCreatedBy")
-  tributeFundsCreated    TributeFund[]       @relation("TributeFundCreatedBy")
-  trainingVerified       VolunteerTraining[] @relation("TrainingVerifiedBy")
-  dpiasCreated           Dpia[]              @relation("DpiaCreatedBy")
-  breachesCreated        DataBreach[]        @relation("BreachCreatedBy")
-  sarsCreated            SubjectAccessRequest[] @relation("SarCreatedBy")
-  sarsAssigned           SubjectAccessRequest[] @relation("SarAssignedTo")
-  consentRecords         ConsentRecord[]     @relation("ConsentRecordedBy")
-  emailProviders         EmailProvider[]     @relation("EmailProviderCreatedBy")
-  paymentProvidersCreated PaymentProvider[] @relation("PaymentProviderCreatedBy")
-  formsCreated            Form[]           @relation("FormCreatedBy")
-  grantsCreated           Grant[]          @relation("GrantCreatedBy")
-  legaciesCreated         Legacy[]         @relation("LegacyCreatedBy")
-  casesCreated            CaseRecord[]     @relation("CaseCreatedBy")
-  casesAssigned           CaseRecord[]     @relation("CaseAssignedTo")
-  giftAidClaimsCreated    GiftAidClaim[]   @relation("GiftAidClaimCreatedBy")
-  giftAidClaimsSubmitted  GiftAidClaim[]   @relation("GiftAidClaimSubmittedBy")
-  shopsCreated            Shop[]           @relation("ShopCreatedBy")
-  routesCreated          CollectionRoute[]    @relation("RouteCreatedBy")
-  runsCreated            CollectionRun[]      @relation("RunCreatedBy")
-  tinReturnsProcessed    TinReturn[]          @relation("TinReturnCountedBy")
-  automationRules        AutomationRule[]     @relation("AutomationRulesCreated")
-  emailTemplates         EmailTemplate[]      @relation("EmailTemplatesCreated")
-  linkedContact          Contact?            @relation("UserLinkedContact", fields: [contactId], references: [id])
-  savedReports           SavedReport[]        @relation("SavedReportCreatedBy")
-  donorOpportunitiesCreated DonorOpportunity[] @relation("DonorOpportunitiesCreatedBy")
-  donorOpportunitiesAssigned DonorOpportunity[] @relation("DonorOpportunitiesAssignedTo")
-  reconciliationSessions ReconciliationSession[] @relation("ReconciliationSessionsCreated")
-  gasdsClaimsCreated     GasdsClaim[]           @relation("GasdsClaimsCreated")
-  partnershipActivities  PartnershipActivity[]  @relation("PartnershipActivityUser")
-  savedSegments          SavedSegment[]         @relation("SavedSegmentCreatedBy")
-  donationImports        DonationImport[]       @relation("DonationImportCreatedBy")
-  pledgesCreated         Pledge[]               @relation("PledgeCreatedBy")
-  boardReportsGenerated  BoardReport[]           @relation("BoardReportGeneratedBy")
-  financialReportsGenerated FinancialReport[] @relation("FinancialReportGeneratedBy")
-  fundTransactionsCreated FundTransaction[]     @relation("FundTransactionCreatedBy")
-  fundTransfersApproved  FundTransfer[]         @relation("FundTransferApprovedBy")
-  webhooksCreated        Webhook[]              @relation("WebhookCreatedBy")
-  taskRulesAssignee      TaskRule[]             @relation("TaskRuleAssignee")
-  autoTasksAssigned      AutoTask[]             @relation("AutoTaskAssignee")
-  bankDocuments          BankDocument[]         @relation("BankDocCreatedBy")
+  contactsCreated            Contact[]               @relation("CreatedByUser")
+  interactionsCreated        Interaction[]           @relation("InteractionCreatedBy")
+  notesCreated               Note[]                  @relation("NoteCreatedBy")
+  hoursVerified              VolunteerHoursLog[]     @relation("VerifiedByUser")
+  assignmentsCreated         Assignment[]            @relation("AssignmentCreatedBy")
+  broadcastsCreated          Broadcast[]             @relation("BroadcastCreatedBy")
+  broadcastConfirmations     BroadcastResponse[]     @relation("BroadcastConfirmedBy")
+  remindersCreated           Reminder[]              @relation("ReminderCreatedBy")
+  skillsVerified             VolunteerSkill[]        @relation("SkillVerifiedBy")
+  notifications              Notification[]          @relation("NotificationRecipient")
+  notificationPreference     NotificationPreference?
+  pushDevices                PushDevice[]
+  volunteerProfile           VolunteerProfile?       @relation("UserVolunteerProfile")
+  auditLogs                  AuditLog[]              @relation("AuditLogUser")
+  giftAidCreated             GiftAid[]               @relation("GiftAidCreatedBy")
+  donationsCreated           Donation[]              @relation("DonationCreatedBy")
+  eventsCreated              Event[]                 @relation("EventCreatedBy")
+  campaignsCreated           Campaign[]              @relation("CampaignCreatedBy")
+  collectionTinsCreated      CollectionTin[]         @relation("CollectionTinCreatedBy")
+  tributeFundsCreated        TributeFund[]           @relation("TributeFundCreatedBy")
+  trainingVerified           VolunteerTraining[]     @relation("TrainingVerifiedBy")
+  dpiasCreated               Dpia[]                  @relation("DpiaCreatedBy")
+  breachesCreated            DataBreach[]            @relation("BreachCreatedBy")
+  sarsCreated                SubjectAccessRequest[]  @relation("SarCreatedBy")
+  sarsAssigned               SubjectAccessRequest[]  @relation("SarAssignedTo")
+  consentRecords             ConsentRecord[]         @relation("ConsentRecordedBy")
+  emailProviders             EmailProvider[]         @relation("EmailProviderCreatedBy")
+  paymentProvidersCreated    PaymentProvider[]       @relation("PaymentProviderCreatedBy")
+  formsCreated               Form[]                  @relation("FormCreatedBy")
+  grantsCreated              Grant[]                 @relation("GrantCreatedBy")
+  legaciesCreated            Legacy[]                @relation("LegacyCreatedBy")
+  casesCreated               CaseRecord[]            @relation("CaseCreatedBy")
+  casesAssigned              CaseRecord[]            @relation("CaseAssignedTo")
+  giftAidClaimsCreated       GiftAidClaim[]          @relation("GiftAidClaimCreatedBy")
+  giftAidClaimsSubmitted     GiftAidClaim[]          @relation("GiftAidClaimSubmittedBy")
+  shopsCreated               Shop[]                  @relation("ShopCreatedBy")
+  routesCreated              CollectionRoute[]       @relation("RouteCreatedBy")
+  runsCreated                CollectionRun[]         @relation("RunCreatedBy")
+  tinReturnsProcessed        TinReturn[]             @relation("TinReturnCountedBy")
+  automationRules            AutomationRule[]        @relation("AutomationRulesCreated")
+  emailTemplates             EmailTemplate[]         @relation("EmailTemplatesCreated")
+  linkedContact              Contact?                @relation("UserLinkedContact", fields: [contactId], references: [id])
+  savedReports               SavedReport[]           @relation("SavedReportCreatedBy")
+  donorOpportunitiesCreated  DonorOpportunity[]      @relation("DonorOpportunitiesCreatedBy")
+  donorOpportunitiesAssigned DonorOpportunity[]      @relation("DonorOpportunitiesAssignedTo")
+  reconciliationSessions     ReconciliationSession[] @relation("ReconciliationSessionsCreated")
+  gasdsClaimsCreated         GasdsClaim[]            @relation("GasdsClaimsCreated")
+  partnershipActivities      PartnershipActivity[]   @relation("PartnershipActivityUser")
+  savedSegments              SavedSegment[]          @relation("SavedSegmentCreatedBy")
+  donationImports            DonationImport[]        @relation("DonationImportCreatedBy")
+  pledgesCreated             Pledge[]                @relation("PledgeCreatedBy")
+  boardReportsGenerated      BoardReport[]           @relation("BoardReportGeneratedBy")
+  financialReportsGenerated  FinancialReport[]       @relation("FinancialReportGeneratedBy")
+  webhooksCreated            Webhook[]               @relation("WebhookCreatedBy")
+  taskRulesAssignee          TaskRule[]              @relation("TaskRuleAssignee")
+  autoTasksAssigned          AutoTask[]              @relation("AutoTaskAssignee")
+  bankDocuments              BankDocument[]          @relation("BankDocCreatedBy")
 }
 
 model Department {
@@ -193,7 +191,7 @@ model Skill {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  department      Department?       @relation(fields: [departmentId], references: [id])
+  department      Department?      @relation(fields: [departmentId], references: [id])
   volunteerSkills VolunteerSkill[]
   broadcastSkills BroadcastSkill[]
 }
@@ -218,77 +216,77 @@ model NotificationPreference {
 // ============================================
 
 model Contact {
-  id             String   @id @default(cuid())
-  donorId        Int      @unique @default(autoincrement())
-  firstName      String
-  lastName       String
-  email          String?
-  phone          String?
-  addressLine1   String?
-  addressLine2   String?
-  city           String?
-  postcode       String?
-  country        String?
-  type           String   @default("OTHER") // DEPRECATED - use types[] instead
-  types          String[] @default([])      // VOLUNTEER | DONOR (multi-select)
-  organisationId String?
-  customFields   String?  // JSON key-value store for configurable fields
-  status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | DECEASED | ANONYMISED
-  consentPost    Boolean  @default(false)
-  consentEmail   Boolean  @default(false)
-  consentPhone   Boolean  @default(false)
-  consentSms     Boolean  @default(false)
-  consentUpdatedAt DateTime?
-  emailOptIn     Boolean  @default(true)
-  smsOptIn       Boolean  @default(false)
-  postOptIn      Boolean  @default(true)
-  phoneOptIn     Boolean  @default(false)
-  communicationFrequency String? @default("WEEKLY") // DAILY | WEEKLY | MONTHLY
-  interestCategories String[] @default([]) // JSON array of interest categories
-  isLotteryMember  Boolean  @default(false)
-  lotteryMemberSince DateTime?
-  isArchived     Boolean  @default(false)
-  archivedAt     DateTime?
-  dateOfBirth    String?
-  createdById    String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  donorId                Int       @unique @default(autoincrement())
+  firstName              String
+  lastName               String
+  email                  String?
+  phone                  String?
+  addressLine1           String?
+  addressLine2           String?
+  city                   String?
+  postcode               String?
+  country                String?
+  type                   String    @default("OTHER") // DEPRECATED - use types[] instead
+  types                  String[]  @default([]) // VOLUNTEER | DONOR (multi-select)
+  organisationId         String?
+  customFields           String? // JSON key-value store for configurable fields
+  status                 String    @default("ACTIVE") // ACTIVE | ARCHIVED | DECEASED | ANONYMISED
+  consentPost            Boolean   @default(false)
+  consentEmail           Boolean   @default(false)
+  consentPhone           Boolean   @default(false)
+  consentSms             Boolean   @default(false)
+  consentUpdatedAt       DateTime?
+  emailOptIn             Boolean   @default(true)
+  smsOptIn               Boolean   @default(false)
+  postOptIn              Boolean   @default(true)
+  phoneOptIn             Boolean   @default(false)
+  communicationFrequency String?   @default("WEEKLY") // DAILY | WEEKLY | MONTHLY
+  interestCategories     String[]  @default([]) // JSON array of interest categories
+  isLotteryMember        Boolean   @default(false)
+  lotteryMemberSince     DateTime?
+  isArchived             Boolean   @default(false)
+  archivedAt             DateTime?
+  dateOfBirth            String?
+  createdById            String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  organisation       Organisation?        @relation(fields: [organisationId], references: [id])
-  createdBy          User                 @relation("CreatedByUser", fields: [createdById], references: [id])
-  tags               ContactTag[]
-  notes              Note[]
-  interactions       Interaction[]
-  volunteerProfile   VolunteerProfile?
-  giftAids           GiftAid[]
-  donations          Donation[]
-  eventAttendees     EventAttendee[]
-  relationshipsFrom  ContactRelationship[] @relation("RelationshipFrom")
-  relationshipsTo    ContactRelationship[] @relation("RelationshipTo")
-  tributeGuardians       TributeFundGuardian[]
-  eventOrders            EventOrder[]
-  userAccount            User?               @relation("UserLinkedContact")
-  fundraisingPages       FundraisingPage[]
-  payments       Payment[]
-  subscriptions  Subscription[]
-  memberships    Membership[]
-  legacies       Legacy[]
-  cases          CaseRecord[]
-  donorOpportunities DonorOpportunity[]   @relation("DonorOpportunitiesContact")
-  pledges        Pledge[]               @relation("PledgeContact")
-  corporatePartnerships CorporatePartnership[] @relation("PartnershipContact")
-  preferenceTokens   PreferenceToken[]
-  smsMessages    SmsMessage[]           @relation("ContactSmsMessages")
-  memberPortalTokens MemberPortalToken[]
-  autoTasks      AutoTask[]             @relation("AutoTaskContact")
+  organisation               Organisation?               @relation(fields: [organisationId], references: [id])
+  createdBy                  User                        @relation("CreatedByUser", fields: [createdById], references: [id])
+  tags                       ContactTag[]
+  notes                      Note[]
+  interactions               Interaction[]
+  volunteerProfile           VolunteerProfile?
+  giftAids                   GiftAid[]
+  donations                  Donation[]
+  eventAttendees             EventAttendee[]
+  relationshipsFrom          ContactRelationship[]       @relation("RelationshipFrom")
+  relationshipsTo            ContactRelationship[]       @relation("RelationshipTo")
+  tributeGuardians           TributeFundGuardian[]
+  eventOrders                EventOrder[]
+  userAccount                User?                       @relation("UserLinkedContact")
+  fundraisingPages           FundraisingPage[]
+  payments                   Payment[]
+  subscriptions              Subscription[]
+  memberships                Membership[]
+  legacies                   Legacy[]
+  cases                      CaseRecord[]
+  donorOpportunities         DonorOpportunity[]          @relation("DonorOpportunitiesContact")
+  pledges                    Pledge[]                    @relation("PledgeContact")
+  corporatePartnerships      CorporatePartnership[]      @relation("PartnershipContact")
+  preferenceTokens           PreferenceToken[]
+  smsMessages                SmsMessage[]                @relation("ContactSmsMessages")
+  memberPortalTokens         MemberPortalToken[]
+  autoTasks                  AutoTask[]                  @relation("AutoTaskContact")
   retailGiftAidNotifications RetailGiftAidNotification[]
-  softCredits    SoftCredit[]
+  softCredits                SoftCredit[]
 }
 
 model Organisation {
   id           String   @id @default(cuid())
   name         String
-  type         String?  // Corporate | Foundation | Government | Trust | Other
+  type         String? // Corporate | Foundation | Government | Trust | Other
   website      String?
   phone        String?
   email        String?
@@ -297,20 +295,20 @@ model Organisation {
   city         String?
   postcode     String?
   country      String?
-  parentId     String?  // FK → Organisation (parent/child hierarchy)
+  parentId     String? // FK → Organisation (parent/child hierarchy)
   isSupplier   Boolean  @default(false)
   isArchived   Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  parent   Organisation?  @relation("OrgHierarchy", fields: [parentId], references: [id])
-  children Organisation[] @relation("OrgHierarchy")
-  contacts Contact[]
-  grants         Grant[]
-  partnerships   CorporatePartnership[] @relation("CorporatePartnerships")
-  eventIncomeLines EventIncomeLine[] @relation("IncomeLineOrg")
-  eventCostLines   EventCostLine[]   @relation("CostLineOrg")
-  eventSponsors    EventSponsor[] @relation("SponsorOrg")
+  parent           Organisation?          @relation("OrgHierarchy", fields: [parentId], references: [id])
+  children         Organisation[]         @relation("OrgHierarchy")
+  contacts         Contact[]
+  grants           Grant[]
+  partnerships     CorporatePartnership[] @relation("CorporatePartnerships")
+  eventIncomeLines EventIncomeLine[]      @relation("IncomeLineOrg")
+  eventCostLines   EventCostLine[]        @relation("CostLineOrg")
+  eventSponsors    EventSponsor[]         @relation("SponsorOrg")
 }
 
 model Tag {
@@ -374,8 +372,8 @@ model VolunteerProfile {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  contact               Contact               @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user                  User?                 @relation("UserVolunteerProfile", fields: [userId], references: [id])
+  contact               Contact                @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user                  User?                  @relation("UserVolunteerProfile", fields: [userId], references: [id])
   departments           VolunteerDepartment[]
   skills                VolunteerSkill[]
   availability          Availability[]
@@ -387,8 +385,8 @@ model VolunteerProfile {
   broadcastResponses    BroadcastResponse[]
   assignmentReminders   AssignmentReminder[]
   trainings             VolunteerTraining[]
-  routesAssigned         CollectionRoute[]    @relation("RouteAssignedTo")
-  runsAssigned           CollectionRun[]      @relation("RunAssignedTo")
+  routesAssigned        CollectionRoute[]      @relation("RouteAssignedTo")
+  runsAssigned          CollectionRun[]        @relation("RunAssignedTo")
   dbsChecks             DBSCheck[]
   drivingLicence        DrivingLicence?
   onboardingSteps       OnboardingStep[]
@@ -516,9 +514,9 @@ model Assignment {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  volunteer  VolunteerProfile   @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-  department Department         @relation(fields: [departmentId], references: [id])
-  createdBy  User               @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
+  volunteer  VolunteerProfile     @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  department Department           @relation(fields: [departmentId], references: [id])
+  createdBy  User                 @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
   reminders  AssignmentReminder[]
 }
 
@@ -561,14 +559,14 @@ model Notification {
 
 // Push device tokens for mobile app notifications
 model PushDevice {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique // FCM or Expo push token
-  platform  String   @default("EXPO") // EXPO | FCM | APNS
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique // FCM or Expo push token
+  platform   String   @default("EXPO") // EXPO | FCM | APNS
   deviceName String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -596,8 +594,8 @@ model Broadcast {
   expiresAt       DateTime
   filledAt        DateTime?
 
-  department Department?        @relation(fields: [departmentId], references: [id])
-  createdBy  User               @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
+  department Department?         @relation(fields: [departmentId], references: [id])
+  createdBy  User                @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
   skills     BroadcastSkill[]
   responses  BroadcastResponse[]
 }
@@ -634,12 +632,12 @@ model BroadcastResponse {
 // ============================================
 
 model ContactRelationship {
-  id             String   @id @default(cuid())
-  fromContactId  String
-  toContactId    String
-  type           String   // SPOUSE | PARENT | CHILD | SIBLING | EMPLOYER | EMPLOYEE | FRIEND | GUARDIAN | OTHER
-  description    String?
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  fromContactId String
+  toContactId   String
+  type          String // SPOUSE | PARENT | CHILD | SIBLING | EMPLOYER | EMPLOYEE | FRIEND | GUARDIAN | OTHER
+  description   String?
+  createdAt     DateTime @default(now())
 
   fromContact Contact @relation("RelationshipFrom", fields: [fromContactId], references: [id], onDelete: Cascade)
   toContact   Contact @relation("RelationshipTo", fields: [toContactId], references: [id], onDelete: Cascade)
@@ -652,35 +650,35 @@ model ContactRelationship {
 // ============================================
 
 model GiftAid {
-  id            String    @id @default(cuid())
-  contactId     String
-  declarationDate DateTime
-  startDate     DateTime
-  endDate       DateTime?  // null = ongoing
-  status        String    @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED
-  type          String    @default("STANDARD") // STANDARD | RETAIL
-  documentUrl   String?   // scanned declaration document
+  id                  String    @id @default(cuid())
+  contactId           String
+  declarationDate     DateTime
+  startDate           DateTime
+  endDate             DateTime? // null = ongoing
+  status              String    @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED
+  type                String    @default("STANDARD") // STANDARD | RETAIL
+  documentUrl         String? // scanned declaration document
   declarationImageUrl String? // uploaded photo/scan of paper declaration
-  source        String    @default("MANUAL") // MANUAL | DIGITAL | PAPER
+  source              String    @default("MANUAL") // MANUAL | DIGITAL | PAPER
   // Digital declaration fields
-  digitalToken    String?   @unique // unique token for digital declaration URL
-  digitalSignedAt DateTime? // when the donor digitally signed
-  digitalSignedIp String?   // IP address for audit trail
-  digitalSignedName String? // name as typed by donor (e-signature)
-  notes         String?
-  createdById   String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  digitalToken        String?   @unique // unique token for digital declaration URL
+  digitalSignedAt     DateTime? // when the donor digitally signed
+  digitalSignedIp     String? // IP address for audit trail
+  digitalSignedName   String? // name as typed by donor (e-signature)
+  notes               String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   // Backdating
-  backdateFrom      DateTime?  // earliest date this declaration covers
+  backdateFrom        DateTime? // earliest date this declaration covers
   // Cessation
-  cessationReason   String?    // DONOR_REQUEST | DECEASED | HMRC_INSTRUCTION | OTHER
-  cessationDate     DateTime?
-  cessationNotes    String?
+  cessationReason     String? // DONOR_REQUEST | DECEASED | HMRC_INSTRUCTION | OTHER
+  cessationDate       DateTime?
+  cessationNotes      String?
 
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  createdBy User    @relation("GiftAidCreatedBy", fields: [createdById], references: [id])
-  pauses            GiftAidPause[]
+  contact   Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdBy User           @relation("GiftAidCreatedBy", fields: [createdById], references: [id])
+  pauses    GiftAidPause[]
 }
 
 model GiftAidPause {
@@ -712,10 +710,10 @@ model LedgerCode {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  donations            Donation[]
+  donations           Donation[]
   events              Event[]
   campaigns           Campaign[]
-  donationTypes       DonationType[] @relation("DonationTypeDefaultLedger")
+  donationTypes       DonationType[]       @relation("DonationTypeDefaultLedger")
   sageAccountMappings SageAccountMapping[]
   xeroAccountMappings XeroAccountMapping[] @relation("XeroAccountMappings")
 }
@@ -725,9 +723,9 @@ model Donation {
   contactId      String
   amount         Float
   currency       String   @default("GBP")
-  type           String   // DONATION | PAYMENT | GIFT | EVENT_FEE | SPONSORSHIP | LEGACY | GRANT | IN_KIND
-  method         String?  // CASH | CHEQUE | CARD | DIRECT_DEBIT | STANDING_ORDER | BANK_TRANSFER | ONLINE | OTHER
-  reference      String?  // payment reference / receipt number
+  type           String // DONATION | PAYMENT | GIFT | EVENT_FEE | SPONSORSHIP | LEGACY | GRANT | IN_KIND
+  method         String? // CASH | CHEQUE | CARD | DIRECT_DEBIT | STANDING_ORDER | BANK_TRANSFER | ONLINE | OTHER
+  reference      String? // payment reference / receipt number
   date           DateTime
   ledgerCodeId   String?
   campaignId     String?
@@ -741,30 +739,29 @@ model Donation {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  ledgerCode    LedgerCode? @relation(fields: [ledgerCodeId], references: [id])
-  campaign      Campaign?   @relation(fields: [campaignId], references: [id])
-  event         Event?      @relation(fields: [eventId], references: [id])
-  createdBy     User        @relation("DonationCreatedBy", fields: [createdById], references: [id])
-  pledgePayment PledgePayment? @relation("PledgePayment")
-  fundTransaction FundTransaction? @relation("DonationFundTransaction")
+  contact        Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  ledgerCode     LedgerCode?    @relation(fields: [ledgerCodeId], references: [id])
+  campaign       Campaign?      @relation(fields: [campaignId], references: [id])
+  event          Event?         @relation(fields: [eventId], references: [id])
+  createdBy      User           @relation("DonationCreatedBy", fields: [createdById], references: [id])
+  pledgePayment  PledgePayment? @relation("PledgePayment")
   bankDocumentId String?
-  bankDocument BankDocument? @relation(fields: [bankDocumentId], references: [id])
-  softCredits SoftCredit[]
+  bankDocument   BankDocument?  @relation(fields: [bankDocumentId], references: [id])
+  softCredits    SoftCredit[]
 }
 
 model DonationType {
-  id                 String      @id @default(cuid())
-  name               String      @unique
-  label              String              // display label e.g. "Donation", "Event Fee"
-  isGiftAidEligible  Boolean     @default(false)
-  isSystem           Boolean     @default(false)
-  isActive           Boolean     @default(true)
-  sortOrder          Int         @default(0)
+  id                  String      @id @default(cuid())
+  name                String      @unique
+  label               String // display label e.g. "Donation", "Event Fee"
+  isGiftAidEligible   Boolean     @default(false)
+  isSystem            Boolean     @default(false)
+  isActive            Boolean     @default(true)
+  sortOrder           Int         @default(0)
   defaultLedgerCodeId String?
   defaultLedgerCode   LedgerCode? @relation("DonationTypeDefaultLedger", fields: [defaultLedgerCodeId], references: [id])
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 }
 
 model PaymentMethod {
@@ -787,8 +784,8 @@ model BankDocument {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy   User     @relation("BankDocCreatedBy", fields: [createdById], references: [id])
-  donations   Donation[]
+  createdBy User       @relation("BankDocCreatedBy", fields: [createdById], references: [id])
+  donations Donation[]
 }
 
 model SoftCredit {
@@ -800,8 +797,8 @@ model SoftCredit {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
-  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  donation Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 }
 
 // ============================================
@@ -809,14 +806,14 @@ model SoftCredit {
 // ============================================
 
 model EventType {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  colour      String   @default("#6366f1") // hex colour for badges
-  isSystem    Boolean  @default(false)      // true = predefined, false = custom
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @unique
+  colour    String   @default("#6366f1") // hex colour for badges
+  isSystem  Boolean  @default(false) // true = predefined, false = custom
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   events Event[]
 }
@@ -825,7 +822,7 @@ model Event {
   id           String    @id @default(cuid())
   name         String
   description  String?
-  type         String?   // legacy — kept for backward compat
+  type         String? // legacy — kept for backward compat
   eventTypeId  String?
   startDate    DateTime
   endDate      DateTime?
@@ -838,10 +835,10 @@ model Event {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  eventType   EventType?      @relation(fields: [eventTypeId], references: [id])
-  campaign    Campaign?       @relation(fields: [campaignId], references: [id])
-  ledgerCode  LedgerCode?     @relation(fields: [ledgerCodeId], references: [id])
-  createdBy   User            @relation("EventCreatedBy", fields: [createdById], references: [id])
+  eventType        EventType?             @relation(fields: [eventTypeId], references: [id])
+  campaign         Campaign?              @relation(fields: [campaignId], references: [id])
+  ledgerCode       LedgerCode?            @relation(fields: [ledgerCodeId], references: [id])
+  createdBy        User                   @relation("EventCreatedBy", fields: [createdById], references: [id])
   attendees        EventAttendee[]
   donations        Donation[]
   merchandise      EventMerchandise[]
@@ -859,32 +856,32 @@ model Event {
 // ============================================
 
 model EventFinance {
-  id              String   @id @default(cuid())
-  eventId         String   @unique
-  incomeTarget    Float    @default(0) // Target total income (£)
-  costTarget      Float    @default(0) // Target total costs (£)
-  profitTarget    Float    @default(0) // Target profit (£)
-  finalTakings    Float?   // Final total after event completion
-  completedAt     DateTime?
-  notes           String?  // Completion notes
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String    @id @default(cuid())
+  eventId      String    @unique
+  incomeTarget Float     @default(0) // Target total income (£)
+  costTarget   Float     @default(0) // Target total costs (£)
+  profitTarget Float     @default(0) // Target profit (£)
+  finalTakings Float? // Final total after event completion
+  completedAt  DateTime?
+  notes        String? // Completion notes
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventIncomeLine {
-  id              String   @id @default(cuid())
-  eventId         String
-  organisationId  String?  // Optional link to supplier organisation
-  category        String   // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
-  label           String   // Display label e.g. "Early Bird Tickets"
-  description     String?
-  estimated       Float    @default(0) // Budgeted / estimated amount
-  actual          Float    @default(0) // Actual amount received
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  eventId        String
+  organisationId String? // Optional link to supplier organisation
+  category       String // REGISTRATION_FEES | TICKET_SALES | BUCKET_COLLECTION | DONATIONS_ON_DAY | PITCH_FEES | SPONSORSHIP | MERCHANDISE | RAFFLE | AUCTION | OTHER
+  label          String // Display label e.g. "Early Bird Tickets"
+  description    String?
+  estimated      Float    @default(0) // Budgeted / estimated amount
+  actual         Float    @default(0) // Actual amount received
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   organisation Organisation? @relation("IncomeLineOrg", fields: [organisationId], references: [id], onDelete: SetNull)
@@ -894,17 +891,17 @@ model EventIncomeLine {
 }
 
 model EventCostLine {
-  id              String   @id @default(cuid())
-  eventId         String
-  organisationId  String?  // Optional link to supplier organisation
-  category        String   // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
-  label           String   // Display label e.g. "Main Hall Hire"
-  description     String?
-  estimated       Float    @default(0) // Budgeted / estimated amount
-  actual          Float    @default(0) // Actual amount paid
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  eventId        String
+  organisationId String? // Optional link to supplier organisation
+  category       String // VENUE_HIRE | CATERING | ENTERTAINMENT | EQUIPMENT | MARKETING | INSURANCE | STAFFING | TRANSPORT | PRINTING | LICENSES | DECORATIONS | FIRST_AID | SECURITY | WASTE_DISPOSAL | OTHER
+  label          String // Display label e.g. "Main Hall Hire"
+  description    String?
+  estimated      Float    @default(0) // Budgeted / estimated amount
+  actual         Float    @default(0) // Actual amount paid
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   organisation Organisation? @relation("CostLineOrg", fields: [organisationId], references: [id], onDelete: SetNull)
@@ -920,24 +917,24 @@ model EventCostLine {
 // A supporter creates their own page — they may do multiple over the years.
 
 model FundraisingPage {
-  id              String    @id @default(cuid())
-  contactId       String    // the fundraiser — the person who created the page
-  eventId         String?   // optionally linked to a charity event
-  platform        String    @default("JUSTGIVING") // JUSTGIVING | GOFUNDME | VIRGINMONEY | OTHER
-  pageUrl         String    // full URL to the page
-  pageSlug        String    // extracted slug for API calls
-  title           String?   // e.g. "Ross's 3000 Mile Bike Ride"
-  targetAmount    Float?    // fundraising target
-  totalRaised     Float     @default(0)
-  giftAidTotal    Float     @default(0)
-  currency        String    @default("GBP")
-  isActive        Boolean   @default(true)
-  lastSyncAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  contactId    String // the fundraiser — the person who created the page
+  eventId      String? // optionally linked to a charity event
+  platform     String    @default("JUSTGIVING") // JUSTGIVING | GOFUNDME | VIRGINMONEY | OTHER
+  pageUrl      String // full URL to the page
+  pageSlug     String // extracted slug for API calls
+  title        String? // e.g. "Ross's 3000 Mile Bike Ride"
+  targetAmount Float? // fundraising target
+  totalRaised  Float     @default(0)
+  giftAidTotal Float     @default(0)
+  currency     String    @default("GBP")
+  isActive     Boolean   @default(true)
+  lastSyncAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  event     Event?   @relation(fields: [eventId], references: [id])
+  contact   Contact               @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  event     Event?                @relation(fields: [eventId], references: [id])
   donations FundraisingDonation[]
 
   @@index([contactId])
@@ -948,16 +945,16 @@ model FundraisingDonation {
   id                  String   @id @default(cuid())
   fundraisingPageId   String
   externalId          String   @unique // JG donation ID etc. to prevent duplicates
-  donorDisplayName    String?  // public display name from the platform
+  donorDisplayName    String? // public display name from the platform
   amount              Float
   currencyCode        String   @default("GBP")
   donationDate        DateTime
   message             String?
   estimatedTaxReclaim Float?
   isGiftAidEligible   Boolean  @default(false)
-  imageUrl            String?  // donor avatar from platform
-  donationId          String?  // linked to main Donation record in finance
-  rawData             String?  // full JSON from API
+  imageUrl            String? // donor avatar from platform
+  donationId          String? // linked to main Donation record in finance
+  rawData             String? // full JSON from API
   syncedAt            DateTime @default(now())
 
   fundraisingPage FundraisingPage @relation(fields: [fundraisingPageId], references: [id], onDelete: Cascade)
@@ -967,14 +964,14 @@ model FundraisingDonation {
 }
 
 model EventAttendee {
-  id        String   @id @default(cuid())
-  eventId   String
-  contactId String
-  status    String   @default("REGISTERED") // REGISTERED | CONFIRMED | ATTENDED | NO_SHOW | CANCELLED
+  id         String   @id @default(cuid())
+  eventId    String
+  contactId  String
+  status     String   @default("REGISTERED") // REGISTERED | CONFIRMED | ATTENDED | NO_SHOW | CANCELLED
   ticketType String?
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -983,15 +980,15 @@ model EventAttendee {
 }
 
 model EventMerchandise {
-  id          String   @id @default(cuid())
-  eventId     String
-  name        String
-  description String?
-  quantity    Int      @default(0)
-  unitPrice   Float?
-  quantitySold Int     @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  eventId      String
+  name         String
+  description  String?
+  quantity     Int      @default(0)
+  unitPrice    Float?
+  quantitySold Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
@@ -1000,7 +997,7 @@ model EventSponsor {
   id               String   @id @default(cuid())
   eventId          String
   organisationId   String?
-  name             String   // sponsor name (if no org link)
+  name             String // sponsor name (if no org link)
   logoUrl          String?
   sponsorshipLevel String   @default("MINOR") // HEADLINE | MAJOR | MINOR | IN_KIND
   amount           Float?
@@ -1018,8 +1015,8 @@ model FinancialTemplate {
   id          String   @id @default(cuid())
   name        String
   description String?
-  incomeLines String?  // JSON array of {category, label, estimated}
-  costLines   String?  // JSON array of {category, label, estimated}
+  incomeLines String? // JSON array of {category, label, estimated}
+  costLines   String? // JSON array of {category, label, estimated}
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -1029,25 +1026,25 @@ model FinancialTemplate {
 // ============================================
 
 model EventRegistrationForm {
-  id              String   @id @default(cuid())
-  eventId         String   @unique
-  title           String
-  description     String?
+  id          String  @id @default(cuid())
+  eventId     String  @unique
+  title       String
+  description String?
 
   // Branding
   logoUrl         String?
-  primaryColor    String   @default("#4F46E5")
-  accentColor     String   @default("#10B981")
+  primaryColor    String  @default("#4F46E5")
+  accentColor     String  @default("#10B981")
   headerText      String?
   thankYouMessage String?
 
   // Settings
-  isActive        Boolean  @default(true)
-  requiresPayment Boolean  @default(true)
-  allowDonations  Boolean  @default(true)
-  collectPhone    Boolean  @default(true)
-  collectAddress  Boolean  @default(false)
-  giftAidEnabled  Boolean  @default(true)
+  isActive        Boolean @default(true)
+  requiresPayment Boolean @default(true)
+  allowDonations  Boolean @default(true)
+  collectPhone    Boolean @default(true)
+  collectAddress  Boolean @default(false)
+  giftAidEnabled  Boolean @default(true)
 
   // Payment gateways
   stripeEnabled     Boolean @default(false)
@@ -1066,13 +1063,13 @@ model EventFormItem {
   formId            String
   name              String
   description       String?
-  type              String   // REGISTRATION_FEE | MERCHANDISE | DONATION
-  price             Float?   // null for DONATION (user enters amount)
+  type              String // REGISTRATION_FEE | MERCHANDISE | DONATION
+  price             Float? // null for DONATION (user enters amount)
   isRequired        Boolean  @default(false)
   isGiftAidEligible Boolean  @default(false)
-  maxQuantity       Int?     // stock limit for merchandise
+  maxQuantity       Int? // stock limit for merchandise
   sortOrder         Int      @default(0)
-  options           String?  // JSON for variants e.g. ["S","M","L","XL"]
+  options           String? // JSON for variants e.g. ["S","M","L","XL"]
   imageUrl          String?
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
@@ -1083,31 +1080,31 @@ model EventFormItem {
 }
 
 model EventOrder {
-  id               String   @id @default(cuid())
-  formId           String
-  contactId        String
-  eventId          String
-  orderNumber      String   @unique
+  id          String @id @default(cuid())
+  formId      String
+  contactId   String
+  eventId     String
+  orderNumber String @unique
 
   // Totals
-  subtotal         Float
-  giftAidTotal     Float    @default(0)
-  totalAmount      Float
+  subtotal     Float
+  giftAidTotal Float @default(0)
+  totalAmount  Float
 
   // Status
-  status           String   @default("PENDING")  // PENDING | CONFIRMED | CANCELLED | REFUNDED
-  paymentStatus    String   @default("UNPAID")    // UNPAID | PAID | PARTIAL | REFUNDED | FREE
-  paymentMethod    String?                        // STRIPE | GOCARDLESS | FREE
-  paymentReference String?                        // external payment ID
+  status           String  @default("PENDING") // PENDING | CONFIRMED | CANCELLED | REFUNDED
+  paymentStatus    String  @default("UNPAID") // UNPAID | PAID | PARTIAL | REFUNDED | FREE
+  paymentMethod    String? // STRIPE | GOCARDLESS | FREE
+  paymentReference String? // external payment ID
 
   // Attendee info
-  attendeeName     String
-  attendeeEmail    String
-  attendeePhone    String?
-  attendeeAddress  String?
+  attendeeName    String
+  attendeeEmail   String
+  attendeePhone   String?
+  attendeeAddress String?
 
   // Gift Aid
-  giftAidDeclared  Boolean  @default(false)
+  giftAidDeclared Boolean @default(false)
 
   notes     String?
   createdAt DateTime @default(now())
@@ -1128,7 +1125,7 @@ model OrderLineItem {
   unitPrice         Float
   total             Float
   isGiftAidEligible Boolean  @default(false)
-  variant           String?  // e.g. "Size: L"
+  variant           String? // e.g. "Size: L"
   createdAt         DateTime @default(now())
 
   order EventOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -1139,10 +1136,10 @@ model EventPayment {
   id        String   @id @default(cuid())
   orderId   String
   amount    Float
-  method    String   // STRIPE | GOCARDLESS
-  status    String   // PENDING | SUCCEEDED | FAILED | REFUNDED
-  reference String?  // external payment ID (pi_xxx, pm_xxx)
-  metadata  String?  // JSON
+  method    String // STRIPE | GOCARDLESS
+  status    String // PENDING | SUCCEEDED | FAILED | REFUNDED
+  reference String? // external payment ID (pi_xxx, pm_xxx)
+  metadata  String? // JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1157,7 +1154,7 @@ model Campaign {
   id           String    @id @default(cuid())
   name         String
   description  String?
-  type         String?   // APPEAL | MAIL | EMAIL | EVENT | LEGACY | CORPORATE | OTHER
+  type         String? // APPEAL | MAIL | EMAIL | EVENT | LEGACY | CORPORATE | OTHER
   ledgerCodeId String?
   startDate    DateTime?
   endDate      DateTime?
@@ -1168,13 +1165,13 @@ model Campaign {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  ledgerCode LedgerCode?       @relation(fields: [ledgerCodeId], references: [id])
-  createdBy  User               @relation("CampaignCreatedBy", fields: [createdById], references: [id])
-  events     Event[]
-  donations  Donation[]
-  segments   CampaignSegment[]
+  ledgerCode         LedgerCode?        @relation(fields: [ledgerCodeId], references: [id])
+  createdBy          User               @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  events             Event[]
+  donations          Donation[]
+  segments           CampaignSegment[]
   donorOpportunities DonorOpportunity[] @relation("DonorOpportunitiesCampaign")
-  pledges        Pledge[]               @relation("PledgeCampaign")
+  pledges            Pledge[]           @relation("PledgeCampaign")
 }
 
 model CampaignSegment {
@@ -1193,7 +1190,7 @@ model SavedSegment {
   id          String   @id @default(cuid())
   name        String
   description String?
-  filters     String   // JSON object with filter criteria
+  filters     String // JSON object with filter criteria
   createdById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1213,7 +1210,7 @@ model TinLocation {
   address      String?
   city         String?
   postcode     String?
-  postcodeArea String?  // e.g. "SY11 1", "SY11 2" — auto-derived from postcode
+  postcodeArea String? // e.g. "SY11 1", "SY11 2" — auto-derived from postcode
   type         String   @default("OTHER") // SHOP | PUB | RESTAURANT | OFFICE | SCHOOL | CHURCH | OTHER
   contactName  String?
   contactPhone String?
@@ -1224,41 +1221,41 @@ model TinLocation {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  tins CollectionTin[]
+  tins       CollectionTin[]
   routeStops RouteStop[]
 
   @@index([postcodeArea])
 }
 
 model CollectionTin {
-  id          String   @id @default(cuid())
-  tinNumber   String   @unique
-  locationName String
+  id              String    @id @default(cuid())
+  tinNumber       String    @unique
+  locationName    String
   locationAddress String?
-  locationId  String?
-  contactId   String?  // FK → Contact (location contact person)
-  status      String   @default("IN_STOCK") // IN_STOCK | DEPLOYED | RETURNED | LOST | STOLEN | RETIRED
-  deployedAt  DateTime?
-  returnedAt  DateTime?
-  notes       String?
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  locationId      String?
+  contactId       String? // FK → Contact (location contact person)
+  status          String    @default("IN_STOCK") // IN_STOCK | DEPLOYED | RETURNED | LOST | STOLEN | RETIRED
+  deployedAt      DateTime?
+  returnedAt      DateTime?
+  notes           String?
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  location  TinLocation?       @relation(fields: [locationId], references: [id])
-  createdBy User              @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
-  movements CollectionTinMovement[]
-  tinReturns     TinReturn[]
-  deployedRunStops  RunStop[] @relation("RunStopDeployedTin")
-  collectedRunStops RunStop[] @relation("RunStopCollectedTin")
+  location          TinLocation?            @relation(fields: [locationId], references: [id])
+  createdBy         User                    @relation("CollectionTinCreatedBy", fields: [createdById], references: [id])
+  movements         CollectionTinMovement[]
+  tinReturns        TinReturn[]
+  deployedRunStops  RunStop[]               @relation("RunStopDeployedTin")
+  collectedRunStops RunStop[]               @relation("RunStopCollectedTin")
 }
 
 model CollectionTinMovement {
   id        String   @id @default(cuid())
   tinId     String
-  type      String   // DEPLOYED | COLLECTED | COUNTED | LOST | STOLEN | RETURNED
+  type      String // DEPLOYED | COLLECTED | COUNTED | LOST | STOLEN | RETURNED
   date      DateTime
-  amount    Float?   // amount collected (if counted)
+  amount    Float? // amount collected (if counted)
   notes     String?
   routeId   String?
   stopId    String?
@@ -1269,16 +1266,16 @@ model CollectionTinMovement {
 
 // Route = reusable template (a "round"), like a courier route with fixed stops
 model CollectionRoute {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
-  tinCount      Int       @default(0) // how many fresh tins to take out
-  assignedToId  String?   // default volunteer for this route
-  createdById   String
-  isActive      Boolean   @default(true)
-  source        String    @default("MANUAL") // MANUAL | SUGGESTED
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  tinCount     Int      @default(0) // how many fresh tins to take out
+  assignedToId String? // default volunteer for this route
+  createdById  String
+  isActive     Boolean  @default(true)
+  source       String   @default("MANUAL") // MANUAL | SUGGESTED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   assignedTo VolunteerProfile? @relation("RouteAssignedTo", fields: [assignedToId], references: [id])
   createdBy  User              @relation("RouteCreatedBy", fields: [createdById], references: [id])
@@ -1290,18 +1287,18 @@ model CollectionRoute {
 
 // RouteStop = a fixed stop on the route template (reused across runs)
 model RouteStop {
-  id             String    @id @default(cuid())
-  routeId        String
-  locationId     String
-  sortOrder      Int       @default(0)
-  parkingNotes   String?
-  accessNotes    String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  routeId      String
+  locationId   String
+  sortOrder    Int      @default(0)
+  parkingNotes String?
+  accessNotes  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  route        CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  location     TinLocation     @relation(fields: [locationId], references: [id])
-  runStops     RunStop[]
+  route    CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  location TinLocation     @relation(fields: [locationId], references: [id])
+  runStops RunStop[]
 
   @@index([routeId])
 }
@@ -1314,7 +1311,7 @@ model CollectionRun {
   scheduledDate DateTime?
   startedAt     DateTime?
   completedAt   DateTime?
-  assignedToId  String?   // can override route default volunteer
+  assignedToId  String? // can override route default volunteer
   createdById   String
   notes         String?
   createdAt     DateTime  @default(now())
@@ -1365,9 +1362,9 @@ model TinReturn {
   notes       String?
   createdAt   DateTime @default(now())
 
-  tin       CollectionTin   @relation(fields: [tinId], references: [id])
-  run       CollectionRun?  @relation(fields: [runId], references: [id])
-  countedBy User            @relation("TinReturnCountedBy", fields: [countedById], references: [id])
+  tin       CollectionTin  @relation(fields: [tinId], references: [id])
+  run       CollectionRun? @relation(fields: [runId], references: [id])
+  countedBy User           @relation("TinReturnCountedBy", fields: [countedById], references: [id])
 
   @@index([tinId])
   @@index([runId])
@@ -1380,16 +1377,16 @@ model TinReturn {
 model TributeFund {
   id          String   @id @default(cuid())
   name        String
-  type        String   // TRADITIONAL | ROBIN (children's)
+  type        String // TRADITIONAL | ROBIN (children's)
   description String?
-  inMemoryOf  String?  // name of person being remembered
+  inMemoryOf  String? // name of person being remembered
   status      String   @default("ACTIVE") // ACTIVE | CLOSED
   totalRaised Float    @default(0)
   createdById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy  User                  @relation("TributeFundCreatedBy", fields: [createdById], references: [id])
+  createdBy  User                   @relation("TributeFundCreatedBy", fields: [createdById], references: [id])
   guardians  TributeFundGuardian[]
   milestones TributeFundMilestone[]
 }
@@ -1423,22 +1420,22 @@ model TributeFundMilestone {
 // ============================================
 
 model TrainingCourse {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  isMandatory Boolean  @default(false)
-  validityMonths Int?  // how long certification lasts (null = never expires)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String?
+  isMandatory    Boolean  @default(false)
+  validityMonths Int? // how long certification lasts (null = never expires)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  volunteerTrainings VolunteerTraining[]
+  volunteerTrainings  VolunteerTraining[]
   departmentTrainings DepartmentTraining[]
 }
 
 model VolunteerTraining {
   id             String    @id @default(cuid())
   volunteerId    String
-  courseId        String
+  courseId       String
   status         String    @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | EXPIRED
   completedDate  DateTime?
   expiryDate     DateTime?
@@ -1456,18 +1453,18 @@ model VolunteerTraining {
 }
 
 model DBSCheck {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   volunteerId       String
   checkDate         DateTime
   expiryDate        DateTime
   certificateNumber String?
-  level             String    @default("BASIC") // BASIC | STANDARD | ENHANCED
-  status            String    @default("PENDING") // PENDING | CLEARED | ISSUES_FOUND | EXPIRED
+  level             String   @default("BASIC") // BASIC | STANDARD | ENHANCED
+  status            String   @default("PENDING") // PENDING | CLEARED | ISSUES_FOUND | EXPIRED
   cost              Float?
   documentUrl       String?
   notes             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 
@@ -1476,29 +1473,29 @@ model DBSCheck {
 }
 
 model DrivingLicence {
-  id              String    @id @default(cuid())
-  volunteerId     String    @unique
-  licenceNumber   String?
-  expiryDate      DateTime?
-  categories      String?   // comma-separated: B, C1, etc.
-  verifiedAt      DateTime?
-  verifiedById    String?
-  notes           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  volunteerId   String    @unique
+  licenceNumber String?
+  expiryDate    DateTime?
+  categories    String? // comma-separated: B, C1, etc.
+  verifiedAt    DateTime?
+  verifiedById  String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 }
 
 model OnboardingStep {
-  id           String    @id @default(cuid())
-  volunteerId  String
-  stepName     String    // APPLICATION_RECEIVED | DBS_SUBMITTED | DBS_CLEARED | INDUCTION | TRAINING_ASSIGNED | TRAINING_COMPLETED | FULLY_ONBOARDED
-  completedAt  DateTime?
+  id            String    @id @default(cuid())
+  volunteerId   String
+  stepName      String // APPLICATION_RECEIVED | DBS_SUBMITTED | DBS_CLEARED | INDUCTION | TRAINING_ASSIGNED | TRAINING_COMPLETED | FULLY_ONBOARDED
+  completedAt   DateTime?
   completedById String?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   volunteer VolunteerProfile @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
 
@@ -1506,10 +1503,10 @@ model OnboardingStep {
 }
 
 model DepartmentTraining {
-  id            String @id @default(cuid())
-  departmentId  String
-  courseId       String
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  departmentId String
+  courseId     String
+  createdAt    DateTime @default(now())
 
   department Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   course     TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -1524,10 +1521,10 @@ model DepartmentTraining {
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String
-  action     String   // CREATE | UPDATE | DELETE | ARCHIVE | LOGIN | LOGOUT | EXPORT | MERGE | ANONYMISE
-  entityType String   // Contact | Organisation | Volunteer | Donation | etc.
+  action     String // CREATE | UPDATE | DELETE | ARCHIVE | LOGIN | LOGOUT | EXPORT | MERGE | ANONYMISE
+  entityType String // Contact | Organisation | Volunteer | Donation | etc.
   entityId   String?
-  details    String?  // JSON with changed fields
+  details    String? // JSON with changed fields
   ipAddress  String?
   createdAt  DateTime @default(now())
 
@@ -1545,8 +1542,8 @@ model AuditLog {
 model DataRetentionPolicy {
   id              String   @id @default(cuid())
   entityType      String   @unique // Contact | Donation | etc.
-  retentionMonths Int      // how many months to keep records
-  action          String   // ARCHIVE | ANONYMISE | DELETE
+  retentionMonths Int // how many months to keep records
+  action          String // ARCHIVE | ANONYMISE | DELETE
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1557,54 +1554,54 @@ model DataRetentionPolicy {
 // ============================================
 
 model Dpia {
-  id                String    @id @default(cuid())
-  title             String
-  description       String
-  projectOrSystem   String    // which system/project this covers (e.g. "DeepCharity CRM")
-  dataController    String    // org name
-  dpoName           String?   // DPO who will sign off
-  dpoEmail          String?
-  csoName           String?   // Clinical Safety Officer name
-  csoSignedOff      Boolean   @default(false)
-  csoSignedOffAt    DateTime?
-  status            String    @default("DRAFT") // DRAFT | IN_REVIEW | DPO_REVIEW | APPROVED | REJECTED | REQUIRES_UPDATE
-  legalBasis        String?   // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
-  dataSubjects      String?   // e.g. "Patients, Donors, Volunteers, Staff"
-  dataCategories    String?   // e.g. "Contact details, Health data, Financial data"
-  specialCategories Boolean   @default(false) // true if processing special category data (health, ethnicity, etc.)
-  dataMinimisation  String?   // how data minimisation is achieved
-  retentionPeriod   String?   // how long data is retained
-  securityMeasures  String?   // encryption, access controls, etc.
-  internationalTransfers Boolean @default(false)
-  transferSafeguards String?  // if international transfers, what safeguards
-  consultationRequired Boolean @default(false) // whether ICO consultation is needed
-  dpoAdvice         String?   // DPO's written advice
-  dpoSignedOff      Boolean   @default(false)
-  dpoSignedOffAt    DateTime?
-  dpoOverruled      Boolean   @default(false)
-  overruleReason    String?   // if DPO advice overruled, document why
-  reviewDate        DateTime? // when to next review this DPIA
-  createdById       String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                     String    @id @default(cuid())
+  title                  String
+  description            String
+  projectOrSystem        String // which system/project this covers (e.g. "DeepCharity CRM")
+  dataController         String // org name
+  dpoName                String? // DPO who will sign off
+  dpoEmail               String?
+  csoName                String? // Clinical Safety Officer name
+  csoSignedOff           Boolean   @default(false)
+  csoSignedOffAt         DateTime?
+  status                 String    @default("DRAFT") // DRAFT | IN_REVIEW | DPO_REVIEW | APPROVED | REJECTED | REQUIRES_UPDATE
+  legalBasis             String? // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
+  dataSubjects           String? // e.g. "Patients, Donors, Volunteers, Staff"
+  dataCategories         String? // e.g. "Contact details, Health data, Financial data"
+  specialCategories      Boolean   @default(false) // true if processing special category data (health, ethnicity, etc.)
+  dataMinimisation       String? // how data minimisation is achieved
+  retentionPeriod        String? // how long data is retained
+  securityMeasures       String? // encryption, access controls, etc.
+  internationalTransfers Boolean   @default(false)
+  transferSafeguards     String? // if international transfers, what safeguards
+  consultationRequired   Boolean   @default(false) // whether ICO consultation is needed
+  dpoAdvice              String? // DPO's written advice
+  dpoSignedOff           Boolean   @default(false)
+  dpoSignedOffAt         DateTime?
+  dpoOverruled           Boolean   @default(false)
+  overruleReason         String? // if DPO advice overruled, document why
+  reviewDate             DateTime? // when to next review this DPIA
+  createdById            String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   createdBy User       @relation("DpiaCreatedBy", fields: [createdById], references: [id])
   risks     DpiaRisk[]
 }
 
 model DpiaRisk {
-  id              String   @id @default(cuid())
-  dpiaId          String
-  description     String   // what is the risk
-  likelihood      String   // LOW | MEDIUM | HIGH | VERY_HIGH
-  severity        String   // LOW | MEDIUM | HIGH | VERY_HIGH
-  riskLevel       String   // LOW | MEDIUM | HIGH | VERY_HIGH (calculated or set)
-  mitigation      String?  // how this risk is mitigated
-  residualRisk    String?  // LOW | MEDIUM | HIGH | VERY_HIGH after mitigation
-  riskOwner       String?  // who is responsible
-  status          String   @default("OPEN") // OPEN | MITIGATED | ACCEPTED | TRANSFERRED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  dpiaId       String
+  description  String // what is the risk
+  likelihood   String // LOW | MEDIUM | HIGH | VERY_HIGH
+  severity     String // LOW | MEDIUM | HIGH | VERY_HIGH
+  riskLevel    String // LOW | MEDIUM | HIGH | VERY_HIGH (calculated or set)
+  mitigation   String? // how this risk is mitigated
+  residualRisk String? // LOW | MEDIUM | HIGH | VERY_HIGH after mitigation
+  riskOwner    String? // who is responsible
+  status       String   @default("OPEN") // OPEN | MITIGATED | ACCEPTED | TRANSFERRED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   dpia Dpia @relation(fields: [dpiaId], references: [id], onDelete: Cascade)
 }
@@ -1614,29 +1611,29 @@ model DpiaRisk {
 // ============================================
 
 model DataBreach {
-  id                String    @id @default(cuid())
-  title             String
-  description       String
-  discoveredAt      DateTime
-  reportedAt        DateTime?  // when reported to DPO
-  icoNotified       Boolean   @default(false) // reported to ICO within 72 hours?
-  icoNotifiedAt     DateTime?
-  icoReference      String?   // ICO reference number
-  dataSubjectsNotified Boolean @default(false)
+  id                     String    @id @default(cuid())
+  title                  String
+  description            String
+  discoveredAt           DateTime
+  reportedAt             DateTime? // when reported to DPO
+  icoNotified            Boolean   @default(false) // reported to ICO within 72 hours?
+  icoNotifiedAt          DateTime?
+  icoReference           String? // ICO reference number
+  dataSubjectsNotified   Boolean   @default(false)
   dataSubjectsNotifiedAt DateTime?
-  severity          String    @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
-  category          String?   // CONFIDENTIALITY | INTEGRITY | AVAILABILITY
-  dataSubjectsAffected Int?   // approximate number
-  dataTypesAffected String?   // e.g. "Contact details, Health data"
-  cause             String?   // e.g. "Phishing, Misconfiguration, Insider"
-  containmentActions String?
-  remediationActions String?
-  lessonsLearned    String?
-  status            String    @default("OPEN") // OPEN | CONTAINED | INVESTIGATING | RESOLVED | CLOSED
-  dpoReview         String?   // DPO's assessment
-  createdById       String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  severity               String    @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
+  category               String? // CONFIDENTIALITY | INTEGRITY | AVAILABILITY
+  dataSubjectsAffected   Int? // approximate number
+  dataTypesAffected      String? // e.g. "Contact details, Health data"
+  cause                  String? // e.g. "Phishing, Misconfiguration, Insider"
+  containmentActions     String?
+  remediationActions     String?
+  lessonsLearned         String?
+  status                 String    @default("OPEN") // OPEN | CONTAINED | INVESTIGATING | RESOLVED | CLOSED
+  dpoReview              String? // DPO's assessment
+  createdById            String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   createdBy User @relation("BreachCreatedBy", fields: [createdById], references: [id])
 }
@@ -1646,27 +1643,27 @@ model DataBreach {
 // ============================================
 
 model SubjectAccessRequest {
-  id                String    @id @default(cuid())
-  requesterName     String
-  requesterEmail    String?
-  requesterPhone    String?
-  contactId         String?   // FK → Contact (if matched to a contact)
-  requestDate       DateTime
-  dueDate           DateTime  // must respond within 1 calendar month
-  description       String?   // what data they're requesting
-  idVerified        Boolean   @default(false) // identity verification completed
-  idVerifiedAt      DateTime?
-  status            String    @default("RECEIVED") // RECEIVED | VERIFIED | IN_PROGRESS | READY | SENT | CLOSED | REFUSED
-  refusalReason     String?   // if refused, why (must be a valid exemption)
-  extensionApplied  Boolean   @default(false) // extended by 2 months for complex requests
-  extensionReason   String?
-  responseNotes     String?
-  dataSentAt        DateTime?
-  dataSentMethod    String?   // EMAIL | POST | PORTAL
-  assignedToId      String?   // FK → User (staff handling the SAR)
-  createdById       String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  requesterName    String
+  requesterEmail   String?
+  requesterPhone   String?
+  contactId        String? // FK → Contact (if matched to a contact)
+  requestDate      DateTime
+  dueDate          DateTime // must respond within 1 calendar month
+  description      String? // what data they're requesting
+  idVerified       Boolean   @default(false) // identity verification completed
+  idVerifiedAt     DateTime?
+  status           String    @default("RECEIVED") // RECEIVED | VERIFIED | IN_PROGRESS | READY | SENT | CLOSED | REFUSED
+  refusalReason    String? // if refused, why (must be a valid exemption)
+  extensionApplied Boolean   @default(false) // extended by 2 months for complex requests
+  extensionReason  String?
+  responseNotes    String?
+  dataSentAt       DateTime?
+  dataSentMethod   String? // EMAIL | POST | PORTAL
+  assignedToId     String? // FK → User (staff handling the SAR)
+  createdById      String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   assignedTo User? @relation("SarAssignedTo", fields: [assignedToId], references: [id])
   createdBy  User  @relation("SarCreatedBy", fields: [createdById], references: [id])
@@ -1677,27 +1674,27 @@ model SubjectAccessRequest {
 // ============================================
 
 model ProcessingActivity {
-  id                  String   @id @default(cuid())
-  name                String   // e.g. "Donor Contact Management"
-  purpose             String   // why this processing happens
-  legalBasis          String   // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
-  dataController      String   // org name
-  dataProcessor       String?  // if using a processor (e.g. Mailchimp)
-  dataSubjectCategories String // e.g. "Donors, Volunteers"
-  dataCategories      String   // e.g. "Name, Email, Phone, Address"
-  specialCategories   String?  // e.g. "Health data, Disability info"
-  recipientCategories String?  // who data is shared with
-  internationalTransfers Boolean @default(false)
-  transferSafeguards  String?
-  retentionPeriod     String   // e.g. "7 years after last interaction"
-  securityMeasures    String?  // e.g. "Encrypted at rest, role-based access"
-  dpaInPlace          Boolean  @default(false) // Data Processing Agreement
-  dpaReference        String?  // reference number for the DPA
-  lastReviewDate      DateTime?
-  nextReviewDate      DateTime?
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  name                   String // e.g. "Donor Contact Management"
+  purpose                String // why this processing happens
+  legalBasis             String // CONSENT | PUBLIC_TASK | LEGITIMATE_INTEREST | LEGAL_OBLIGATION | VITAL_INTEREST | CONTRACT
+  dataController         String // org name
+  dataProcessor          String? // if using a processor (e.g. Mailchimp)
+  dataSubjectCategories  String // e.g. "Donors, Volunteers"
+  dataCategories         String // e.g. "Name, Email, Phone, Address"
+  specialCategories      String? // e.g. "Health data, Disability info"
+  recipientCategories    String? // who data is shared with
+  internationalTransfers Boolean   @default(false)
+  transferSafeguards     String?
+  retentionPeriod        String // e.g. "7 years after last interaction"
+  securityMeasures       String? // e.g. "Encrypted at rest, role-based access"
+  dpaInPlace             Boolean   @default(false) // Data Processing Agreement
+  dpaReference           String? // reference number for the DPA
+  lastReviewDate         DateTime?
+  nextReviewDate         DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 }
 
 // ============================================
@@ -1705,28 +1702,28 @@ model ProcessingActivity {
 // ============================================
 
 model InformationAsset {
-  id                String   @id @default(cuid())
-  name              String   // e.g. "CRM Database", "Volunteer Records"
-  description       String?
-  assetOwner        String   // person responsible
-  assetType         String   // DATABASE | FILE_SYSTEM | CLOUD_SERVICE | PAPER | APPLICATION | EMAIL
-  location          String?  // where is it stored
-  dataClassification String  @default("OFFICIAL") // OFFICIAL | OFFICIAL_SENSITIVE | SECRET
-  personalData      Boolean  @default(false)
-  specialCategoryData Boolean @default(false)
-  riskLevel         String   @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
-  encryptionAtRest  Boolean  @default(false)
-  encryptionInTransit Boolean @default(false)
-  accessControls    String?  // who has access
-  backupFrequency   String?  // e.g. "Daily", "Weekly"
-  retentionPeriod   String?
-  disposalMethod    String?  // how it's securely destroyed
-  lastReviewDate    DateTime?
-  nextReviewDate    DateTime?
-  notes             String?
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  name                String // e.g. "CRM Database", "Volunteer Records"
+  description         String?
+  assetOwner          String // person responsible
+  assetType           String // DATABASE | FILE_SYSTEM | CLOUD_SERVICE | PAPER | APPLICATION | EMAIL
+  location            String? // where is it stored
+  dataClassification  String    @default("OFFICIAL") // OFFICIAL | OFFICIAL_SENSITIVE | SECRET
+  personalData        Boolean   @default(false)
+  specialCategoryData Boolean   @default(false)
+  riskLevel           String    @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
+  encryptionAtRest    Boolean   @default(false)
+  encryptionInTransit Boolean   @default(false)
+  accessControls      String? // who has access
+  backupFrequency     String? // e.g. "Daily", "Weekly"
+  retentionPeriod     String?
+  disposalMethod      String? // how it's securely destroyed
+  lastReviewDate      DateTime?
+  nextReviewDate      DateTime?
+  notes               String?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 // ============================================
@@ -1734,28 +1731,28 @@ model InformationAsset {
 // ============================================
 
 model ClinicalHazard {
-  id                String   @id @default(cuid())
-  hazardNumber      String   @unique // e.g. "HAZ-001"
-  name              String
-  description       String
-  cause             String?  // what causes this hazard
-  effect            String?  // what happens if hazard occurs
-  category          String?  // PATIENT_SAFETY | DATA_LOSS | SYSTEM_FAILURE | ACCESS_CONTROL | CLINICAL_DECISION | OTHER
-  initialSeverity   String   // CATASTROPHIC | MAJOR | CONSIDERABLE | SIGNIFICANT | MINOR
-  initialLikelihood String   // VERY_HIGH | HIGH | MEDIUM | LOW | VERY_LOW
-  initialRiskLevel  String   // calculated from severity x likelihood
-  controls          String?  // what controls are in place
-  residualSeverity  String?
+  id                 String    @id @default(cuid())
+  hazardNumber       String    @unique // e.g. "HAZ-001"
+  name               String
+  description        String
+  cause              String? // what causes this hazard
+  effect             String? // what happens if hazard occurs
+  category           String? // PATIENT_SAFETY | DATA_LOSS | SYSTEM_FAILURE | ACCESS_CONTROL | CLINICAL_DECISION | OTHER
+  initialSeverity    String // CATASTROPHIC | MAJOR | CONSIDERABLE | SIGNIFICANT | MINOR
+  initialLikelihood  String // VERY_HIGH | HIGH | MEDIUM | LOW | VERY_LOW
+  initialRiskLevel   String // calculated from severity x likelihood
+  controls           String? // what controls are in place
+  residualSeverity   String?
   residualLikelihood String?
-  residualRiskLevel String?
-  riskAcceptability String   @default("UNACCEPTABLE") // ACCEPTABLE | TOLERABLE | UNACCEPTABLE
-  status            String   @default("OPEN") // OPEN | MITIGATED | CLOSED | TRANSFERRED
-  assignedTo        String?  // who is responsible
-  csoReview         String?  // Clinical Safety Officer review notes
-  csoSignedOff      Boolean  @default(false)
-  csoSignedOffAt    DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  residualRiskLevel  String?
+  riskAcceptability  String    @default("UNACCEPTABLE") // ACCEPTABLE | TOLERABLE | UNACCEPTABLE
+  status             String    @default("OPEN") // OPEN | MITIGATED | CLOSED | TRANSFERRED
+  assignedTo         String? // who is responsible
+  csoReview          String? // Clinical Safety Officer review notes
+  csoSignedOff       Boolean   @default(false)
+  csoSignedOffAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 // ============================================
@@ -1763,17 +1760,17 @@ model ClinicalHazard {
 // ============================================
 
 model ConsentRecord {
-  id              String   @id @default(cuid())
-  contactId       String
-  consentType     String   // POST | EMAIL | PHONE | SMS | DATA_PROCESSING | MARKETING | RESEARCH
-  action          String   // GRANTED | WITHDRAWN | UPDATED
-  previousValue   Boolean?
-  newValue        Boolean
-  source          String?  // WEB_FORM | PHONE | LETTER | IN_PERSON | SYSTEM
-  evidenceUrl     String?  // link to scanned form etc.
-  notes           String?
-  recordedById    String   // FK → User who recorded this
-  recordedAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  contactId     String
+  consentType   String // POST | EMAIL | PHONE | SMS | DATA_PROCESSING | MARKETING | RESEARCH
+  action        String // GRANTED | WITHDRAWN | UPDATED
+  previousValue Boolean?
+  newValue      Boolean
+  source        String? // WEB_FORM | PHONE | LETTER | IN_PERSON | SYSTEM
+  evidenceUrl   String? // link to scanned form etc.
+  notes         String?
+  recordedById  String // FK → User who recorded this
+  recordedAt    DateTime @default(now())
 
   recordedBy User @relation("ConsentRecordedBy", fields: [recordedById], references: [id])
 
@@ -1787,35 +1784,35 @@ model ConsentRecord {
 // ============================================
 
 model EmailProvider {
-  id            String   @id @default(cuid())
-  name          String   // Display name e.g. "Our SendGrid"
-  provider      String   // SENDGRID | SES | MAILGUN | MAILCHIMP
-  isActive      Boolean  @default(true)
-  isDefault     Boolean  @default(false)
+  id        String  @id @default(cuid())
+  name      String // Display name e.g. "Our SendGrid"
+  provider  String // SENDGRID | SES | MAILGUN | MAILCHIMP
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false)
 
   // Credentials (encrypted at rest via application layer)
-  apiKey        String?  // SendGrid API key or Mailgun API key
-  region        String?  // SES region e.g. "eu-west-1", Mailgun region "EU" or "US"
-  domain        String?  // Mailgun sending domain
+  apiKey String? // SendGrid API key or Mailgun API key
+  region String? // SES region e.g. "eu-west-1", Mailgun region "EU" or "US"
+  domain String? // Mailgun sending domain
 
   // SES-specific
-  accessKeyId   String?  // AWS access key
+  accessKeyId     String? // AWS access key
   secretAccessKey String? // AWS secret key
 
   // Sender settings
-  fromEmail     String   // e.g. "noreply@charity.org"
-  fromName      String   // e.g. "Our Charity"
-  replyToEmail  String?  // optional reply-to address
+  fromEmail    String // e.g. "noreply@charity.org"
+  fromName     String // e.g. "Our Charity"
+  replyToEmail String? // optional reply-to address
 
   // Status
-  lastTestedAt  DateTime?
+  lastTestedAt   DateTime?
   lastTestResult String? // "success" or error message
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdById   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
 
-  createdBy     User     @relation("EmailProviderCreatedBy", fields: [createdById], references: [id])
+  createdBy User @relation("EmailProviderCreatedBy", fields: [createdById], references: [id])
 
   @@index([isDefault])
 }
@@ -1827,20 +1824,20 @@ model EmailProvider {
 model PaymentProvider {
   id                   String   @id @default(cuid())
   name                 String
-  provider             String   // STRIPE | GOCARDLESS
+  provider             String // STRIPE | GOCARDLESS
   isActive             Boolean  @default(true)
   isDefault            Boolean  @default(false)
   stripeSecretKey      String?
   stripePublishableKey String?
   stripeWebhookSecret  String?
   gcAccessToken        String?
-  gcEnvironment        String?  // SANDBOX | LIVE
+  gcEnvironment        String? // SANDBOX | LIVE
   gcWebhookSecret      String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   createdById          String
 
-  createdBy     User          @relation("PaymentProviderCreatedBy", fields: [createdById], references: [id])
+  createdBy     User           @relation("PaymentProviderCreatedBy", fields: [createdById], references: [id])
   payments      Payment[]
   subscriptions Subscription[]
 
@@ -1848,26 +1845,26 @@ model PaymentProvider {
 }
 
 model Payment {
-  id              String    @id @default(cuid())
-  contactId       String
-  amount          Float
-  currency        String    @default("GBP")
-  status          String    @default("PENDING") // PENDING | SUCCEEDED | FAILED | REFUNDED | CANCELLED
-  type            String    // ONE_OFF | SUBSCRIPTION | EVENT_FEE | MEMBERSHIP_FEE
-  method          String?   // CARD | DIRECT_DEBIT | BANK_TRANSFER
-  providerId      String?
-  externalId      String?
-  externalUrl     String?
-  donationId      String?
-  subscriptionId  String?
-  membershipId    String?
-  description     String?
-  metadata        String?
-  failureReason   String?
-  paidAt          DateTime?
-  refundedAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  contactId      String
+  amount         Float
+  currency       String    @default("GBP")
+  status         String    @default("PENDING") // PENDING | SUCCEEDED | FAILED | REFUNDED | CANCELLED
+  type           String // ONE_OFF | SUBSCRIPTION | EVENT_FEE | MEMBERSHIP_FEE
+  method         String? // CARD | DIRECT_DEBIT | BANK_TRANSFER
+  providerId     String?
+  externalId     String?
+  externalUrl    String?
+  donationId     String?
+  subscriptionId String?
+  membershipId   String?
+  description    String?
+  metadata       String?
+  failureReason  String?
+  paidAt         DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   contact      Contact          @relation(fields: [contactId], references: [id])
   provider     PaymentProvider? @relation(fields: [providerId], references: [id])
@@ -1883,9 +1880,9 @@ model Subscription {
   contactId       String
   amount          Float
   currency        String    @default("GBP")
-  frequency       String    // WEEKLY | MONTHLY | QUARTERLY | ANNUALLY
+  frequency       String // WEEKLY | MONTHLY | QUARTERLY | ANNUALLY
   status          String    @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | EXPIRED
-  type            String    // DONATION | MEMBERSHIP
+  type            String // DONATION | MEMBERSHIP
   providerId      String?
   externalId      String?
   startDate       DateTime
@@ -1909,20 +1906,20 @@ model Subscription {
 // ============================================
 
 model MembershipType {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  price       Float
-  currency    String   @default("GBP")
-  duration    Int      @default(12) // months
-  benefits    String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  renewalPeriodMonths Int @default(12) // Renewal period in months
-  renewalGraceDays Int @default(30) // Grace period after expiration before marking as lapsed
-  autoRenewEnabled Boolean @default(true) // Whether auto-renewal is enabled for this membership type
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  description         String?
+  price               Float
+  currency            String   @default("GBP")
+  duration            Int      @default(12) // months
+  benefits            String?
+  isActive            Boolean  @default(true)
+  sortOrder           Int      @default(0)
+  renewalPeriodMonths Int      @default(12) // Renewal period in months
+  renewalGraceDays    Int      @default(30) // Grace period after expiration before marking as lapsed
+  autoRenewEnabled    Boolean  @default(true) // Whether auto-renewal is enabled for this membership type
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   memberships Membership[]
 }
@@ -1947,8 +1944,8 @@ model Membership {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  contact          Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  membershipType   MembershipType    @relation(fields: [membershipTypeId], references: [id])
+  contact          Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  membershipType   MembershipType      @relation(fields: [membershipTypeId], references: [id])
   renewals         MembershipRenewal[]
   renewalReminders RenewalReminder[]
 
@@ -1973,9 +1970,9 @@ model MembershipRenewal {
 model RenewalReminder {
   id           String   @id @default(cuid())
   membershipId String
-  type         String   // FIRST_REMINDER | SECOND_REMINDER | FINAL_REMINDER | EXPIRY_NOTICE | LAPSED_NOTICE
+  type         String // FIRST_REMINDER | SECOND_REMINDER | FINAL_REMINDER | EXPIRY_NOTICE | LAPSED_NOTICE
   sentAt       DateTime
-  emailId      String?  // Track which email was sent for audit purposes
+  emailId      String? // Track which email was sent for audit purposes
   createdAt    DateTime @default(now())
 
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
@@ -1990,42 +1987,42 @@ model RenewalReminder {
 // ============================================
 
 model GiftAidClaim {
-  id              String    @id @default(cuid())
-  claimReference  String    @unique
-  claimType       String    @default("STANDARD") // STANDARD | RETAIL
-  status          String    @default("DRAFT") // DRAFT | NOTIFICATIONS_SENT | READY | SUBMITTED | ACCEPTED | REJECTED | PARTIAL
-  totalDonations  Float     @default(0)
-  totalClaimable  Float     @default(0)
-  donationCount   Int       @default(0)
-  periodStart     DateTime
-  periodEnd       DateTime
-  submittedAt     DateTime?
-  hmrcReference   String?
-  hmrcResponse    String?
-  acceptedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-  amountReceived  Float?
-  receivedAt      DateTime?
-  correlationId   String?   // HMRC submission correlation ID for polling
-  submissionXml   String?   // Stored XML for audit
-  responseXml     String?   // HMRC response XML
-  gasdsAmount     Float?    // Small Donations Scheme amount if applicable
-  isTestMode      Boolean   @default(false) // true = test submission, not sent to real HMRC
-  submittedById   String?   // User who submitted to HMRC
-  notes           String?
+  id                    String    @id @default(cuid())
+  claimReference        String    @unique
+  claimType             String    @default("STANDARD") // STANDARD | RETAIL
+  status                String    @default("DRAFT") // DRAFT | NOTIFICATIONS_SENT | READY | SUBMITTED | ACCEPTED | REJECTED | PARTIAL
+  totalDonations        Float     @default(0)
+  totalClaimable        Float     @default(0)
+  donationCount         Int       @default(0)
+  periodStart           DateTime
+  periodEnd             DateTime
+  submittedAt           DateTime?
+  hmrcReference         String?
+  hmrcResponse          String?
+  acceptedAt            DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  amountReceived        Float?
+  receivedAt            DateTime?
+  correlationId         String? // HMRC submission correlation ID for polling
+  submissionXml         String? // Stored XML for audit
+  responseXml           String? // HMRC response XML
+  gasdsAmount           Float? // Small Donations Scheme amount if applicable
+  isTestMode            Boolean   @default(false) // true = test submission, not sent to real HMRC
+  submittedById         String? // User who submitted to HMRC
+  notes                 String?
   // Retail Gift Aid notification workflow fields
-  notificationsSentAt DateTime?  // When notifications were sent to donors
-  notificationDeadline DateTime? // 28 days after notifications sent
-  notificationsSentById String?  // User who triggered notifications
-  createdById     String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  notificationsSentAt   DateTime? // When notifications were sent to donors
+  notificationDeadline  DateTime? // 28 days after notifications sent
+  notificationsSentById String? // User who triggered notifications
+  createdById           String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  createdBy       User              @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
-  submittedBy     User?             @relation("GiftAidClaimSubmittedBy", fields: [submittedById], references: [id])
-  items           GiftAidClaimItem[]
-  notifications   RetailGiftAidNotification[]
+  createdBy     User                        @relation("GiftAidClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy   User?                       @relation("GiftAidClaimSubmittedBy", fields: [submittedById], references: [id])
+  items         GiftAidClaimItem[]
+  notifications RetailGiftAidNotification[]
 
   @@index([status])
   @@index([claimType])
@@ -2054,21 +2051,21 @@ model GiftAidClaimItem {
 
 // Tracks individual notifications sent to donors for Retail Gift Aid claims
 model RetailGiftAidNotification {
-  id          String    @id @default(cuid())
-  claimId     String
-  contactId   String
-  contactName String
-  contactEmail String?
-  method      String    // EMAIL | POST
-  status      String    @default("PENDING") // PENDING | SENT | FAILED
-  sentAt      DateTime?
-  token       String    @unique @default(cuid()) // Unique token for opt-out/consent URLs
-  optedOut    Boolean   @default(false)
-  optOutAt    DateTime?
-  optOutReason String?
-  emailConsented Boolean @default(false) // Did they consent to email for future claims?
+  id             String    @id @default(cuid())
+  claimId        String
+  contactId      String
+  contactName    String
+  contactEmail   String?
+  method         String // EMAIL | POST
+  status         String    @default("PENDING") // PENDING | SENT | FAILED
+  sentAt         DateTime?
+  token          String    @unique @default(cuid()) // Unique token for opt-out/consent URLs
+  optedOut       Boolean   @default(false)
+  optOutAt       DateTime?
+  optOutReason   String?
+  emailConsented Boolean   @default(false) // Did they consent to email for future claims?
   emailConsentAt DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt      DateTime  @default(now())
 
   claim   GiftAidClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
   contact Contact      @relation(fields: [contactId], references: [id])
@@ -2083,30 +2080,30 @@ model RetailGiftAidNotification {
 // ============================================
 
 model Form {
-  id              String   @id @default(cuid())
-  name            String
-  slug            String   @unique
-  type            String   // DONATION | SIGNUP | CONTACT | EVENT | VOLUNTEER | CUSTOM
-  status          String   @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ARCHIVED
-  title           String
-  description     String?
-  logoUrl         String?
-  primaryColor    String   @default("#4F46E5")
-  thankYouMessage String   @default("Thank you for your submission!")
-  redirectUrl     String?
-  collectPhone    Boolean  @default(false)
-  collectAddress  Boolean  @default(false)
-  consentRequired Boolean  @default(true)
-  consentText     String?  @default("I consent to being contacted about this submission")
-  captchaEnabled  Boolean  @default(true)
-  notifyEmail     String?
-  suggestedAmounts String?
-  allowCustomAmount Boolean @default(true)
-  giftAidEnabled  Boolean  @default(false)
-  recurringEnabled Boolean @default(false)
-  createdById     String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  type              String // DONATION | SIGNUP | CONTACT | EVENT | VOLUNTEER | CUSTOM
+  status            String   @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ARCHIVED
+  title             String
+  description       String?
+  logoUrl           String?
+  primaryColor      String   @default("#4F46E5")
+  thankYouMessage   String   @default("Thank you for your submission!")
+  redirectUrl       String?
+  collectPhone      Boolean  @default(false)
+  collectAddress    Boolean  @default(false)
+  consentRequired   Boolean  @default(true)
+  consentText       String?  @default("I consent to being contacted about this submission")
+  captchaEnabled    Boolean  @default(true)
+  notifyEmail       String?
+  suggestedAmounts  String?
+  allowCustomAmount Boolean  @default(true)
+  giftAidEnabled    Boolean  @default(false)
+  recurringEnabled  Boolean  @default(false)
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   createdBy   User             @relation("FormCreatedBy", fields: [createdById], references: [id])
   fields      FormField[]
@@ -2120,7 +2117,7 @@ model FormField {
   id          String   @id @default(cuid())
   formId      String
   label       String
-  type        String   // TEXT | EMAIL | PHONE | TEXTAREA | SELECT | CHECKBOX | NUMBER | DATE | AMOUNT
+  type        String // TEXT | EMAIL | PHONE | TEXTAREA | SELECT | CHECKBOX | NUMBER | DATE | AMOUNT
   placeholder String?
   helpText    String?
   isRequired  Boolean  @default(false)
@@ -2200,33 +2197,33 @@ model Grant {
 // ============================================
 
 model Legacy {
-  id              String    @id @default(cuid())
-  deceasedName    String
-  contactId       String?
-  status          String    @default("NOTIFIED") // NOTIFIED | INVESTIGATING | PROBATE | AWAITING_PAYMENT | RECEIVED | PARTIAL | DISPUTED | CLOSED
-  type            String    @default("PECUNIARY") // PECUNIARY | RESIDUARY | SPECIFIC | REVERSIONARY | LIFE_INTEREST
-  estimatedAmount Float?
-  receivedAmount  Float?
-  currency        String    @default("GBP")
-  executorName    String?
-  executorEmail   String?
-  executorPhone   String?
-  solicitorName   String?
-  solicitorFirm   String?
-  solicitorEmail  String?
-  solicitorPhone  String?
-  dateOfDeath     DateTime?
-  dateNotified    DateTime
-  probateGranted  DateTime?
-  dateReceived    DateTime?
+  id                  String    @id @default(cuid())
+  deceasedName        String
+  contactId           String?
+  status              String    @default("NOTIFIED") // NOTIFIED | INVESTIGATING | PROBATE | AWAITING_PAYMENT | RECEIVED | PARTIAL | DISPUTED | CLOSED
+  type                String    @default("PECUNIARY") // PECUNIARY | RESIDUARY | SPECIFIC | REVERSIONARY | LIFE_INTEREST
+  estimatedAmount     Float?
+  receivedAmount      Float?
+  currency            String    @default("GBP")
+  executorName        String?
+  executorEmail       String?
+  executorPhone       String?
+  solicitorName       String?
+  solicitorFirm       String?
+  solicitorEmail      String?
+  solicitorPhone      String?
+  dateOfDeath         DateTime?
+  dateNotified        DateTime
+  probateGranted      DateTime?
+  dateReceived        DateTime?
   expectedPaymentDate DateTime?
-  willReference   String?
-  description     String?
-  conditions      String?
-  notes           String?
-  createdById     String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  willReference       String?
+  description         String?
+  conditions          String?
+  notes               String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   contact   Contact? @relation(fields: [contactId], references: [id])
   createdBy User     @relation("LegacyCreatedBy", fields: [createdById], references: [id])
@@ -2272,7 +2269,7 @@ model CaseRecord {
 model CaseActivity {
   id          String   @id @default(cuid())
   caseId      String
-  type        String   // NOTE | PHONE_CALL | EMAIL | MEETING | REFERRAL | ACTION | STATUS_CHANGE
+  type        String // NOTE | PHONE_CALL | EMAIL | MEETING | REFERRAL | ACTION | STATUS_CHANGE
   description String
   createdById String
   createdAt   DateTime @default(now())
@@ -2288,13 +2285,13 @@ model CaseActivity {
 
 model SageAccountMapping {
   id              String   @id @default(cuid())
-  ledgerCodeId    String?  // Link to internal LedgerCode
-  donationType    String?  // e.g. DONATION, EVENT_FEE, SPONSORSHIP, etc
-  sageAccountNo   String   // Sage Intacct GL Account Number
-  sageAccountName String?  // Sage account description
-  sageDepartment  String?  // Sage dimension: department
-  sageLocation    String?  // Sage dimension: location
-  sageProject     String?  // Sage dimension: project/campaign
+  ledgerCodeId    String? // Link to internal LedgerCode
+  donationType    String? // e.g. DONATION, EVENT_FEE, SPONSORSHIP, etc
+  sageAccountNo   String // Sage Intacct GL Account Number
+  sageAccountName String? // Sage account description
+  sageDepartment  String? // Sage dimension: department
+  sageLocation    String? // Sage dimension: location
+  sageProject     String? // Sage dimension: project/campaign
   direction       String   @default("DEBIT") // DEBIT or CREDIT
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -2304,16 +2301,16 @@ model SageAccountMapping {
 }
 
 model SageSyncLog {
-  id            String   @id @default(cuid())
-  entityType    String   // DONATION, COST, CONTACT, VENDOR
-  entityId      String   // ID of the record synced
-  sageRef       String?  // Sage Intacct reference/key returned
-  status        String   @default("PENDING") // PENDING | SYNCED | ERROR | SKIPPED
-  errorMessage  String?
-  requestData   String?  // JSON of data sent
-  responseData  String?  // JSON of response
-  syncedAt      DateTime?
-  createdAt     DateTime @default(now())
+  id           String    @id @default(cuid())
+  entityType   String // DONATION, COST, CONTACT, VENDOR
+  entityId     String // ID of the record synced
+  sageRef      String? // Sage Intacct reference/key returned
+  status       String    @default("PENDING") // PENDING | SYNCED | ERROR | SKIPPED
+  errorMessage String?
+  requestData  String? // JSON of data sent
+  responseData String? // JSON of response
+  syncedAt     DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([entityType, entityId])
   @@index([status])
@@ -2324,16 +2321,16 @@ model SageSyncLog {
 // ============================================
 
 model EmailMarketingSync {
-  id              String   @id @default(cuid())
-  provider        String   // DOTDIGITAL | MAILCHIMP
-  status          String   @default("DISCONNECTED") // CONNECTED | DISCONNECTED | ERROR
-  apiKey          String?  // encrypted at application layer
-  apiEndpoint     String?  // nullable, mainly for Dotdigital
-  lastSyncAt      DateTime?
-  syncFrequency   String   @default("MANUAL") // MANUAL | HOURLY | DAILY | WEEKLY
-  settings        Json     @default("{}") // Provider-specific settings (list mappings, field mappings, etc)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  provider      String // DOTDIGITAL | MAILCHIMP
+  status        String    @default("DISCONNECTED") // CONNECTED | DISCONNECTED | ERROR
+  apiKey        String? // encrypted at application layer
+  apiEndpoint   String? // nullable, mainly for Dotdigital
+  lastSyncAt    DateTime?
+  syncFrequency String    @default("MANUAL") // MANUAL | HOURLY | DAILY | WEEKLY
+  settings      Json      @default("{}") // Provider-specific settings (list mappings, field mappings, etc)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   logs SyncLog[]
 
@@ -2343,17 +2340,17 @@ model EmailMarketingSync {
 }
 
 model SyncLog {
-  id              String   @id @default(cuid())
-  syncId          String   // FK to EmailMarketingSync
-  direction       String   // PUSH | PULL
-  recordsProcessed Int     @default(0)
-  recordsCreated  Int      @default(0)
-  recordsUpdated  Int      @default(0)
-  recordsFailed   Int      @default(0)
-  errors          Json     @default("[]") // Array of error details
-  startedAt       DateTime @default(now())
-  completedAt     DateTime?
-  status          String   @default("RUNNING") // RUNNING | COMPLETED | FAILED
+  id               String    @id @default(cuid())
+  syncId           String // FK to EmailMarketingSync
+  direction        String // PUSH | PULL
+  recordsProcessed Int       @default(0)
+  recordsCreated   Int       @default(0)
+  recordsUpdated   Int       @default(0)
+  recordsFailed    Int       @default(0)
+  errors           Json      @default("[]") // Array of error details
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  status           String    @default("RUNNING") // RUNNING | COMPLETED | FAILED
 
   emailMarketingSync EmailMarketingSync @relation(fields: [syncId], references: [id], onDelete: Cascade)
 
@@ -2368,19 +2365,19 @@ model SyncLog {
 // ============================================
 
 model AutomationRule {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
-  trigger     String   // DONATION_RECEIVED, CONTACT_CREATED, TAG_ADDED, EVENT_REGISTERED, MEMBERSHIP_RENEWED, GIFT_AID_DECLARED, CAMPAIGN_TARGET_MET
-  conditions  Json     @default("{}")
-  actions     Json     @default("[]")
-  isActive    Boolean  @default(true)
-  runCount    Int      @default(0)
+  trigger     String // DONATION_RECEIVED, CONTACT_CREATED, TAG_ADDED, EVENT_REGISTERED, MEMBERSHIP_RENEWED, GIFT_AID_DECLARED, CAMPAIGN_TARGET_MET
+  conditions  Json            @default("{}")
+  actions     Json            @default("[]")
+  isActive    Boolean         @default(true)
+  runCount    Int             @default(0)
   lastRunAt   DateTime?
   createdById String
-  createdBy   User     @relation("AutomationRulesCreated", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdBy   User            @relation("AutomationRulesCreated", fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   logs        AutomationLog[]
 
   @@index([trigger, isActive])
@@ -2388,33 +2385,33 @@ model AutomationRule {
 }
 
 model EmailTemplate {
-  id        String   @id @default(cuid())
-  name      String
-  subject   String
-  bodyHtml  String
-  bodyText  String?
-  logoUrl   String?  // URL or path for template header logo
-  category  String   @default("GENERAL") // THANK_YOU, WELCOME, RECEIPT, RENEWAL, CUSTOM, EVENT, VOLUNTEER, MEMBERSHIP
-  variables Json     @default("[]")
-  isActive  Boolean  @default(true)
+  id          String   @id @default(cuid())
+  name        String
+  subject     String
+  bodyHtml    String
+  bodyText    String?
+  logoUrl     String? // URL or path for template header logo
+  category    String   @default("GENERAL") // THANK_YOU, WELCOME, RECEIPT, RENEWAL, CUSTOM, EVENT, VOLUNTEER, MEMBERSHIP
+  variables   Json     @default("[]")
+  isActive    Boolean  @default(true)
   createdById String
-  createdBy User     @relation("EmailTemplatesCreated", fields: [createdById], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdBy   User     @relation("EmailTemplatesCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([createdById])
   @@index([category])
 }
 
 model AutomationLog {
-  id        String   @id @default(cuid())
-  ruleId    String
-  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  trigger   String
-  contactId String?
-  status    String   @default("SUCCESS") // SUCCESS, FAILED, SKIPPED
-  detail    String?
-  executedAt DateTime @default(now())
+  id         String         @id @default(cuid())
+  ruleId     String
+  rule       AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  trigger    String
+  contactId  String?
+  status     String         @default("SUCCESS") // SUCCESS, FAILED, SKIPPED
+  detail     String?
+  executedAt DateTime       @default(now())
 
   @@index([ruleId])
   @@index([executedAt])
@@ -2425,22 +2422,22 @@ model AutomationLog {
 // ============================================
 
 model SavedReport {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
-  entity      String   // CONTACTS, DONATIONS, EVENTS, CAMPAIGNS, VOLUNTEERS, MEMBERSHIPS
-  filters     Json     @default("[]") // Array of filter objects
-  columns     Json     @default("[]") // Array of column field names
+  entity      String // CONTACTS, DONATIONS, EVENTS, CAMPAIGNS, VOLUNTEERS, MEMBERSHIPS
+  filters     Json      @default("[]") // Array of filter objects
+  columns     Json      @default("[]") // Array of column field names
   groupBy     String?
   sortBy      String?
-  sortDir     String   @default("asc") // asc | desc
+  sortDir     String    @default("asc") // asc | desc
   createdById String
-  isShared    Boolean  @default(false)
+  isShared    Boolean   @default(false)
   lastRunAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  createdBy   User     @relation("SavedReportCreatedBy", fields: [createdById], references: [id])
+  createdBy User @relation("SavedReportCreatedBy", fields: [createdById], references: [id])
 
   @@index([createdById])
   @@index([entity])
@@ -2452,27 +2449,27 @@ model SavedReport {
 // ============================================
 
 model XeroConfig {
-  id                        String   @id @default("default")
+  id                        String    @id @default("default")
   clientId                  String?
   clientSecret              String?
   tenantId                  String?
   accessToken               String?
   refreshToken              String?
   tokenExpiresAt            DateTime?
-  isConnected               Boolean  @default(false)
+  isConnected               Boolean   @default(false)
   lastSyncAt                DateTime?
   defaultRevenueAccountCode String?
   defaultExpenseAccountCode String?
   defaultBankAccountCode    String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }
 
 model XeroSyncLog {
   id         String   @id @default(cuid())
-  entityType String   // DONATION, EXPENSE, CONTACT, INVOICE
+  entityType String // DONATION, EXPENSE, CONTACT, INVOICE
   entityId   String
-  xeroId     String?  // Xero's ID for the synced entity
+  xeroId     String? // Xero's ID for the synced entity
   direction  String   @default("PUSH") // PUSH or PULL
   status     String   @default("PENDING") // PENDING, SUCCESS, FAILED, SKIPPED
   detail     String?
@@ -2485,13 +2482,13 @@ model XeroSyncLog {
 }
 
 model XeroAccountMapping {
-  id               String   @id @default(cuid())
-  ledgerCodeId     String
-  xeroAccountCode  String
-  xeroAccountName  String?
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  ledgerCodeId    String
+  xeroAccountCode String
+  xeroAccountName String?
+  createdAt       DateTime @default(now())
 
-  ledgerCode       LedgerCode @relation("XeroAccountMappings", fields: [ledgerCodeId], references: [id], onDelete: Cascade)
+  ledgerCode LedgerCode @relation("XeroAccountMappings", fields: [ledgerCodeId], references: [id], onDelete: Cascade)
 
   @@unique([ledgerCodeId])
   @@index([xeroAccountCode])
@@ -2516,10 +2513,10 @@ model DonorOpportunity {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  contact           Contact   @relation("DonorOpportunitiesContact", fields: [contactId], references: [id], onDelete: Cascade)
-  campaign          Campaign? @relation("DonorOpportunitiesCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
-  assignedTo        User?     @relation("DonorOpportunitiesAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy         User      @relation("DonorOpportunitiesCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  contact    Contact   @relation("DonorOpportunitiesContact", fields: [contactId], references: [id], onDelete: Cascade)
+  campaign   Campaign? @relation("DonorOpportunitiesCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
+  assignedTo User?     @relation("DonorOpportunitiesAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy  User      @relation("DonorOpportunitiesCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([contactId])
   @@index([stage])
@@ -2533,20 +2530,20 @@ model DonorOpportunity {
 // ============================================
 
 model BankTransaction {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   date              DateTime
   description       String
   reference         String?
   amount            Float
-  type              String    @default("CREDIT") // CREDIT | DEBIT
+  type              String   @default("CREDIT") // CREDIT | DEBIT
   balance           Float?
   bankAccount       String?
-  status            String    @default("UNMATCHED") // UNMATCHED | MATCHED | EXCLUDED
+  status            String   @default("UNMATCHED") // UNMATCHED | MATCHED | EXCLUDED
   matchedDonationId String?
   matchedPaymentId  String?
   matchConfidence   String? // HIGH | MEDIUM | LOW
   importBatch       String?
-  createdAt         DateTime  @default(now())
+  createdAt         DateTime @default(now())
 
   @@index([status])
   @@index([date])
@@ -2575,21 +2572,21 @@ model ReconciliationSession {
 // ============================================
 
 model GasdsClaim {
-  id                  String    @id @default(cuid())
+  id                  String       @id @default(cuid())
   taxYear             String
   claimPeriodStart    DateTime
   claimPeriodEnd      DateTime
-  totalSmallDonations Float     @default(0)
-  claimAmount         Float     @default(0)
-  status              String    @default("DRAFT") // DRAFT | READY | SUBMITTED | ACCEPTED | REJECTED
+  totalSmallDonations Float        @default(0)
+  claimAmount         Float        @default(0)
+  status              String       @default("DRAFT") // DRAFT | READY | SUBMITTED | ACCEPTED | REJECTED
   hmrcReference       String?
   submittedAt         DateTime?
   responseAt          DateTime?
   notes               String?
   createdById         String
-  createdBy           User      @relation("GasdsClaimsCreated", fields: [createdById], references: [id])
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdBy           User         @relation("GasdsClaimsCreated", fields: [createdById], references: [id])
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
   entries             GasdsEntry[]
 
   @@index([taxYear])
@@ -2597,16 +2594,16 @@ model GasdsClaim {
 }
 
 model GasdsEntry {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   claimId       String
   claim         GasdsClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
   date          DateTime
-  source        String    @default("CASH") // CASH | CONTACTLESS | COLLECTION_TIN
+  source        String     @default("CASH") // CASH | CONTACTLESS | COLLECTION_TIN
   description   String?
   amount        Float
   donationId    String?
   tinLocationId String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime   @default(now())
 
   @@index([claimId])
 }
@@ -2616,24 +2613,24 @@ model GasdsEntry {
 // ============================================
 
 model CorporatePartnership {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   organisationId String
-  type           String   // SPONSOR | PARTNER | PATRON | CORPORATE_DONOR
-  status         String   @default("PROSPECT") // PROSPECT | ACTIVE | LAPSED | ENDED
+  type           String // SPONSOR | PARTNER | PATRON | CORPORATE_DONOR
+  status         String    @default("PROSPECT") // PROSPECT | ACTIVE | LAPSED | ENDED
   startDate      DateTime?
   endDate        DateTime?
   annualValue    Decimal?
   totalValue     Decimal?
   contactId      String?
   notes          String?
-  benefits       Json     @default("[]") // Array of benefit objects
+  benefits       Json      @default("[]") // Array of benefit objects
   renewalDate    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  organisation   Organisation          @relation("CorporatePartnerships", fields: [organisationId], references: [id], onDelete: Cascade)
-  contact        Contact?              @relation("PartnershipContact", fields: [contactId], references: [id], onDelete: SetNull)
-  activities     PartnershipActivity[]
+  organisation Organisation          @relation("CorporatePartnerships", fields: [organisationId], references: [id], onDelete: Cascade)
+  contact      Contact?              @relation("PartnershipContact", fields: [contactId], references: [id], onDelete: SetNull)
+  activities   PartnershipActivity[]
 
   @@index([organisationId])
   @@index([contactId])
@@ -2645,14 +2642,14 @@ model CorporatePartnership {
 model PartnershipActivity {
   id            String   @id @default(cuid())
   partnershipId String
-  type          String   // MEETING | EMAIL | CALL | EVENT | PAYMENT | NOTE
+  type          String // MEETING | EMAIL | CALL | EVENT | PAYMENT | NOTE
   date          DateTime
   description   String?
   userId        String?
   createdAt     DateTime @default(now())
 
-  partnership   CorporatePartnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
-  user          User?                @relation("PartnershipActivityUser", fields: [userId], references: [id], onDelete: SetNull)
+  partnership CorporatePartnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  user        User?                @relation("PartnershipActivityUser", fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([partnershipId])
   @@index([userId])
@@ -2665,19 +2662,19 @@ model PartnershipActivity {
 // ============================================
 
 model DonationImport {
-  id              String   @id @default(cuid())
-  filename        String
-  status          String   @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
-  totalRows       Int      @default(0)
-  processedRows   Int      @default(0)
-  successRows     Int      @default(0)
-  errorRows       Int      @default(0)
-  errors          Json     @default("[]") // Array of {row: number, field: string, message: string}
-  userId          String
-  createdAt       DateTime @default(now())
-  completedAt     DateTime?
+  id            String    @id @default(cuid())
+  filename      String
+  status        String    @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
+  totalRows     Int       @default(0)
+  processedRows Int       @default(0)
+  successRows   Int       @default(0)
+  errorRows     Int       @default(0)
+  errors        Json      @default("[]") // Array of {row: number, field: string, message: string}
+  userId        String
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
 
-  user            User     @relation("DonationImportCreatedBy", fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation("DonationImportCreatedBy", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -2689,28 +2686,28 @@ model DonationImport {
 // ============================================
 
 model Pledge {
-  id                 String   @id @default(cuid())
-  contactId          String
-  campaignId         String?
-  amount             Decimal
-  currency           String   @default("GBP")
-  frequency          String   @default("ONE_TIME") // ONE_TIME | MONTHLY | QUARTERLY | ANNUALLY
-  startDate          DateTime
-  endDate            DateTime?
-  status             String   @default("ACTIVE") // ACTIVE | FULFILLED | PARTIALLY_FULFILLED | CANCELLED | OVERDUE
-  totalPledged       Decimal  @default(0)
-  totalFulfilled     Decimal  @default(0)
-  nextReminderDate   DateTime?
-  reminderFrequency  String?  // WEEKLY | MONTHLY | QUARTERLY (how often to remind)
-  notes              String?
-  createdById        String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String    @id @default(cuid())
+  contactId         String
+  campaignId        String?
+  amount            Decimal
+  currency          String    @default("GBP")
+  frequency         String    @default("ONE_TIME") // ONE_TIME | MONTHLY | QUARTERLY | ANNUALLY
+  startDate         DateTime
+  endDate           DateTime?
+  status            String    @default("ACTIVE") // ACTIVE | FULFILLED | PARTIALLY_FULFILLED | CANCELLED | OVERDUE
+  totalPledged      Decimal   @default(0)
+  totalFulfilled    Decimal   @default(0)
+  nextReminderDate  DateTime?
+  reminderFrequency String? // WEEKLY | MONTHLY | QUARTERLY (how often to remind)
+  notes             String?
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  contact    Contact         @relation("PledgeContact", fields: [contactId], references: [id], onDelete: Cascade)
-  campaign   Campaign?       @relation("PledgeCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
-  createdBy  User            @relation("PledgeCreatedBy", fields: [createdById], references: [id])
-  payments   PledgePayment[]
+  contact   Contact         @relation("PledgeContact", fields: [contactId], references: [id], onDelete: Cascade)
+  campaign  Campaign?       @relation("PledgeCampaign", fields: [campaignId], references: [id], onDelete: SetNull)
+  createdBy User            @relation("PledgeCreatedBy", fields: [createdById], references: [id])
+  payments  PledgePayment[]
 
   @@index([contactId])
   @@index([campaignId])
@@ -2721,16 +2718,16 @@ model Pledge {
 }
 
 model PledgePayment {
-  id        String   @id @default(cuid())
-  pledgeId  String
+  id         String   @id @default(cuid())
+  pledgeId   String
   donationId String?  @unique
-  amount    Decimal
-  date      DateTime
-  notes     String?
-  createdAt DateTime @default(now())
+  amount     Decimal
+  date       DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
 
-  pledge   Pledge     @relation(fields: [pledgeId], references: [id], onDelete: Cascade)
-  donation Donation?  @relation("PledgePayment", fields: [donationId], references: [id], onDelete: SetNull)
+  pledge   Pledge    @relation(fields: [pledgeId], references: [id], onDelete: Cascade)
+  donation Donation? @relation("PledgePayment", fields: [donationId], references: [id], onDelete: SetNull)
 
   @@index([pledgeId])
   @@index([donationId])
@@ -2742,18 +2739,18 @@ model PledgePayment {
 // ============================================
 
 model SmsMessage {
-  id            String   @id @default(cuid())
-  contactId     String?
-  to            String   // recipient phone number (E.164 format)
-  from          String?  // sender phone number (nullable, from system settings)
-  body          String   // message body text
-  status        String   @default("QUEUED") // QUEUED | SENT | DELIVERED | FAILED
-  direction     String   @default("OUTBOUND") // INBOUND | OUTBOUND
-  externalId    String?  // Twilio Message SID
-  errorMessage  String?  // error details if status is FAILED
-  sentAt        DateTime?
-  deliveredAt   DateTime?
-  createdAt     DateTime @default(now())
+  id           String    @id @default(cuid())
+  contactId    String?
+  to           String // recipient phone number (E.164 format)
+  from         String? // sender phone number (nullable, from system settings)
+  body         String // message body text
+  status       String    @default("QUEUED") // QUEUED | SENT | DELIVERED | FAILED
+  direction    String    @default("OUTBOUND") // INBOUND | OUTBOUND
+  externalId   String? // Twilio Message SID
+  errorMessage String? // error details if status is FAILED
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime  @default(now())
 
   contact Contact? @relation("ContactSmsMessages", fields: [contactId], references: [id], onDelete: SetNull)
 
@@ -2765,13 +2762,13 @@ model SmsMessage {
 }
 
 model SmsTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  body        String   // template body with {{variable}} placeholders
-  variables   Json     @default("[]") // list of variable names, e.g. ["firstName", "eventDate"]
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  body      String // template body with {{variable}} placeholders
+  variables Json     @default("[]") // list of variable names, e.g. ["firstName", "eventDate"]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([isActive])
   @@index([createdAt])
@@ -2782,13 +2779,13 @@ model SmsTemplate {
 // ============================================
 
 model PreferenceToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   contactId String
-  token     String   @unique // randomly generated token for the preference link
+  token     String    @unique // randomly generated token for the preference link
   expiresAt DateTime? // nullable = no expiry
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([contactId])
@@ -2803,7 +2800,7 @@ model BoardReport {
   id            String   @id @default(cuid())
   title         String
   type          String   @default("QUARTERLY_SUMMARY") // QUARTERLY_SUMMARY | ANNUAL_REVIEW | FUNDRAISING_UPDATE | MEMBERSHIP_REPORT | COMPLIANCE_REPORT | CUSTOM
-  period        String   // e.g. "Q1 2025", "2024-25"
+  period        String // e.g. "Q1 2025", "2024-25"
   startDate     DateTime
   endDate       DateTime
   data          Json     @default("{}")
@@ -2826,13 +2823,13 @@ model BoardReport {
 // ============================================
 
 model MemberPortalToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   contactId String
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([contactId])
@@ -2843,20 +2840,20 @@ model MemberPortalToken {
 // ============================================
 
 model FinancialReport {
-  id             String   @id @default(cuid())
-  name           String
-  type           String   @default("SOFA")
-  financialYear  String
-  startDate      DateTime
-  endDate        DateTime
-  data           Json     @default("{}")
-  status         String   @default("DRAFT")
-  generatedAt    DateTime @default(now())
-  generatedById  String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  type          String   @default("SOFA")
+  financialYear String
+  startDate     DateTime
+  endDate       DateTime
+  data          Json     @default("{}")
+  status        String   @default("DRAFT")
+  generatedAt   DateTime @default(now())
+  generatedById String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  generatedBy    User     @relation("FinancialReportGeneratedBy", fields: [generatedById], references: [id])
+  generatedBy User @relation("FinancialReportGeneratedBy", fields: [generatedById], references: [id])
 
   @@index([type])
   @@index([status])
@@ -2864,89 +2861,25 @@ model FinancialReport {
 }
 
 // ============================================
-// FUND ACCOUNTING
-// ============================================
-
-model Fund {
-  id            String   @id @default(cuid())
-  name          String
-  type          String   @default("UNRESTRICTED") // UNRESTRICTED | RESTRICTED | ENDOWMENT
-  description   String?
-  isActive      Boolean  @default(true)
-  balance       Float    @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  transactions  FundTransaction[]
-  transfersFrom FundTransfer[]    @relation("FromFund")
-  transfersTo   FundTransfer[]    @relation("ToFund")
-
-  @@index([type])
-  @@index([isActive])
-  @@index([createdAt])
-}
-
-model FundTransaction {
-  id            String   @id @default(cuid())
-  fundId        String
-  type          String   // DEPOSIT | WITHDRAWAL | ADJUSTMENT | TRANSFER_IN | TRANSFER_OUT
-  amount        Float
-  description   String?
-  reference     String?
-  donationId    String?  @unique
-  date          DateTime
-  createdById   String
-  createdAt     DateTime @default(now())
-
-  fund          Fund      @relation(fields: [fundId], references: [id], onDelete: Cascade)
-  donation      Donation? @relation("DonationFundTransaction", fields: [donationId], references: [id], onDelete: SetNull)
-  createdBy     User      @relation("FundTransactionCreatedBy", fields: [createdById], references: [id])
-
-  @@index([fundId])
-  @@index([type])
-  @@index([date])
-  @@index([createdById])
-}
-
-model FundTransfer {
-  id            String   @id @default(cuid())
-  fromFundId    String
-  toFundId      String
-  amount        Float
-  reason        String?
-  approvedById  String?
-  date          DateTime
-  createdAt     DateTime @default(now())
-
-  fromFund      Fund     @relation("FromFund", fields: [fromFundId], references: [id], onDelete: Restrict)
-  toFund        Fund     @relation("ToFund", fields: [toFundId], references: [id], onDelete: Restrict)
-  approvedBy    User?    @relation("FundTransferApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
-
-  @@index([fromFundId])
-  @@index([toFundId])
-  @@index([date])
-}
-
-// ============================================
 // SCHEDULED JOBS/REMINDERS
 // ============================================
 
 model ScheduledJob {
-  id               String   @id @default(cuid())
-  name             String
-  type             String   // AUTO_RENEWAL | SEND_REMINDERS | SYNC_EMAIL_MARKETING | PROCESS_WEBHOOKS | GENERATE_REPORTS | CLEANUP_EXPIRED_TOKENS
-  description      String?
-  schedule         String?  // cron expression
-  isActive         Boolean  @default(true)
-  lastRunAt        DateTime?
-  lastRunStatus    String?  // SUCCESS | FAILED | ERROR
-  lastRunDuration  Int?     // milliseconds
-  nextRunAt        DateTime?
-  config           Json     @default("{}")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  type            String // AUTO_RENEWAL | SEND_REMINDERS | SYNC_EMAIL_MARKETING | PROCESS_WEBHOOKS | GENERATE_REPORTS | CLEANUP_EXPIRED_TOKENS
+  description     String?
+  schedule        String? // cron expression
+  isActive        Boolean   @default(true)
+  lastRunAt       DateTime?
+  lastRunStatus   String? // SUCCESS | FAILED | ERROR
+  lastRunDuration Int? // milliseconds
+  nextRunAt       DateTime?
+  config          Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  runs             JobRun[]
+  runs JobRun[]
 
   @@index([type])
   @@index([isActive])
@@ -2955,16 +2888,16 @@ model ScheduledJob {
 }
 
 model JobRun {
-  id               String   @id @default(cuid())
-  jobId            String
-  status           String   @default("RUNNING") // RUNNING | SUCCESS | FAILED | ERROR
-  startedAt        DateTime @default(now())
-  completedAt      DateTime?
-  duration         Int?     // milliseconds
-  result           Json?
-  error            String?
+  id          String    @id @default(cuid())
+  jobId       String
+  status      String    @default("RUNNING") // RUNNING | SUCCESS | FAILED | ERROR
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int? // milliseconds
+  result      Json?
+  error       String?
 
-  job              ScheduledJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job ScheduledJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
   @@index([status])
@@ -2976,36 +2909,36 @@ model JobRun {
 // ============================================
 
 model Webhook {
-  id               String   @id @default(cuid())
-  name             String
-  url              String
-  events           Json     @default("[]") // array of event types: CONTACT_CREATED, CONTACT_UPDATED, etc
-  secret           String?
-  isActive         Boolean  @default(true)
-  lastTriggeredAt  DateTime?
-  failCount        Int      @default(0)
-  createdById      String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  url             String
+  events          Json      @default("[]") // array of event types: CONTACT_CREATED, CONTACT_UPDATED, etc
+  secret          String?
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  failCount       Int       @default(0)
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  createdBy        User     @relation("WebhookCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  logs             WebhookLog[] @relation("WebhookLogs")
+  createdBy User         @relation("WebhookCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  logs      WebhookLog[] @relation("WebhookLogs")
 
   @@index([createdById])
   @@index([isActive])
 }
 
 model WebhookLog {
-  id               String   @id @default(cuid())
-  webhookId        String
-  event            String
-  payload          Json
-  statusCode       Int?
-  response         String?
-  success          Boolean
-  createdAt        DateTime @default(now())
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  statusCode Int?
+  response   String?
+  success    Boolean
+  createdAt  DateTime @default(now())
 
-  webhook          Webhook  @relation("WebhookLogs", fields: [webhookId], references: [id], onDelete: Cascade)
+  webhook Webhook @relation("WebhookLogs", fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
   @@index([createdAt])
@@ -3016,45 +2949,45 @@ model WebhookLog {
 // ============================================
 
 model TaskRule {
-  id               String   @id @default(cuid())
-  name             String
-  triggerEvent     String   // CONTACT_CREATED, DONATION_CREATED, etc
-  conditions       Json     @default("{}") // flexible JSON conditions
-  assignToUserId   String?
-  assignToRole     String?
-  taskTitle        String
-  taskDescription  String?
-  dueDays          Int      @default(7)
-  priority         String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  triggerEvent    String // CONTACT_CREATED, DONATION_CREATED, etc
+  conditions      Json     @default("{}") // flexible JSON conditions
+  assignToUserId  String?
+  assignToRole    String?
+  taskTitle       String
+  taskDescription String?
+  dueDays         Int      @default(7)
+  priority        String   @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  assignToUser     User?    @relation("TaskRuleAssignee", fields: [assignToUserId], references: [id], onDelete: SetNull)
-  autoTasks        AutoTask[] @relation("TaskRuleAutoTasks")
+  assignToUser User?      @relation("TaskRuleAssignee", fields: [assignToUserId], references: [id], onDelete: SetNull)
+  autoTasks    AutoTask[] @relation("TaskRuleAutoTasks")
 
   @@index([triggerEvent])
   @@index([isActive])
 }
 
 model AutoTask {
-  id               String   @id @default(cuid())
-  ruleId           String?
-  title            String
-  description      String?
-  assignedToId     String
-  status           String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | CANCELLED
-  priority         String   @default("MEDIUM")
-  dueDate          DateTime?
-  completedAt      DateTime?
-  relatedContactId String?
+  id                String    @id @default(cuid())
+  ruleId            String?
+  title             String
+  description       String?
+  assignedToId      String
+  status            String    @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | CANCELLED
+  priority          String    @default("MEDIUM")
+  dueDate           DateTime?
+  completedAt       DateTime?
+  relatedContactId  String?
   relatedDonationId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  rule             TaskRule? @relation("TaskRuleAutoTasks", fields: [ruleId], references: [id], onDelete: SetNull)
-  assignedTo       User     @relation("AutoTaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
-  relatedContact   Contact? @relation("AutoTaskContact", fields: [relatedContactId], references: [id], onDelete: SetNull)
+  rule           TaskRule? @relation("TaskRuleAutoTasks", fields: [ruleId], references: [id], onDelete: SetNull)
+  assignedTo     User      @relation("AutoTaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  relatedContact Contact?  @relation("AutoTaskContact", fields: [relatedContactId], references: [id], onDelete: SetNull)
 
   @@index([ruleId])
   @@index([assignedToId])
