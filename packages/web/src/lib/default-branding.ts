@@ -3,7 +3,7 @@
 
 export const DEFAULT_BRANDING = {
   orgName: "Parity CRM",
-  primaryColour: "#1b3a2d",
+  primaryColour: "#C9A84C",
   sidebarColour: "#1b3a2d",
   sidebarTextColour: "#f7f3ec",
   logoUrl:
