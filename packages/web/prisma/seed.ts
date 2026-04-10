@@ -355,8 +355,8 @@ async function main() {
   const dpia1 = await prisma.dpia.create({
     data: {
       title: "CRM System Implementation",
-      description: "Introduction of new DeepCharity CRM system for contact and donor management",
-      projectOrSystem: "DeepCharity CRM",
+      description: "Introduction of new Parity CRM CRM system for contact and donor management",
+      projectOrSystem: "Parity CRM CRM",
       dataController: "Hospice Care UK",
       dpoName: "Jane Smith",
       dpoEmail: "dpo@hospice.org.uk",
@@ -605,7 +605,7 @@ async function main() {
   // Information Assets
   await prisma.informationAsset.create({
     data: {
-      name: "DeepCharity CRM Database",
+      name: "Parity CRM CRM Database",
       description: "PostgreSQL database containing all contact, donor, and volunteer information",
       assetOwner: "IT Manager",
       assetType: "DATABASE",

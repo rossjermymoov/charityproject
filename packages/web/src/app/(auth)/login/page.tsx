@@ -41,7 +41,7 @@ export default async function LoginPage() {
           <div className="inline-flex h-12 w-12 rounded-xl bg-indigo-600 items-center justify-center mb-4">
             <span className="text-white font-bold text-xl">CO</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">DeepCharity</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Parity CRM</h1>
           <p className="text-gray-500 mt-1">Sign in to your account</p>
         </div>
         <LoginForm action={loginAction} />

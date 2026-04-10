@@ -376,7 +376,7 @@ export default function XeroPage() {
             <div>
               <h3 className="font-semibold text-gray-900">Account Mappings</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Map your DeepCharity ledger codes to Xero account codes
+                Map your Parity CRM ledger codes to Xero account codes
               </p>
             </div>
             <Link

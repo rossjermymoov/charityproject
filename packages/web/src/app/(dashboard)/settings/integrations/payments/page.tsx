@@ -80,7 +80,7 @@ export default async function PaymentProvidersPage() {
         <Card className="p-5">
           <ShieldCheck className="h-6 w-6 text-indigo-600 mb-2" />
           <h4 className="font-semibold text-gray-900 text-sm">PCI Compliant</h4>
-          <p className="text-xs text-gray-500 mt-1">Stripe handles all card data so DeepCharity never stores sensitive payment information</p>
+          <p className="text-xs text-gray-500 mt-1">Stripe handles all card data so Parity CRM never stores sensitive payment information</p>
         </Card>
         <Card className="p-5">
           <Globe className="h-6 w-6 text-indigo-600 mb-2" />

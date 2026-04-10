@@ -348,7 +348,7 @@ export function PublicForm({
         </button>
 
         <p className="text-xs text-center text-gray-400">
-          Powered by DeepCharity
+          Powered by Parity CRM
         </p>
       </form>
     </div>

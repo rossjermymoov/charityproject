@@ -13,12 +13,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "DeepCharity",
+  title: "Parity CRM",
   description: "Modular operating system for charities",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "DeepCharity",
+    title: "Parity CRM",
   },
 };
 

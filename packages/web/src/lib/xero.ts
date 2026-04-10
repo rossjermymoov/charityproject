@@ -309,7 +309,7 @@ export async function exchangeCodeForTokens(
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "DeepCharity-Xero-Integration",
+        "User-Agent": "ParityCRM-Xero-Integration",
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
@@ -352,7 +352,7 @@ export async function refreshAccessToken(
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "DeepCharity-Xero-Integration",
+        "User-Agent": "ParityCRM-Xero-Integration",
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
@@ -403,7 +403,7 @@ export async function makeXeroRequest<T = unknown>(
         Authorization: `Bearer ${accessToken}`,
         "Xero-tenant-id": tenantId,
         "Content-Type": "application/json",
-        "User-Agent": "DeepCharity-Xero-Integration",
+        "User-Agent": "ParityCRM-Xero-Integration",
       },
       body: body ? JSON.stringify(body) : undefined,
     });

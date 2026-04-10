@@ -46,7 +46,7 @@ export function MobileHome({ user, activeRuns, completedRuns }: Props) {
             <div style={{ width: 48, height: 48, background: "rgba(255,255,255,0.2)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 }}>TC</div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>Tin Collections</div>
-              <div style={{ fontSize: 13, opacity: 0.7 }}>DeepCharity</div>
+              <div style={{ fontSize: 13, opacity: 0.7 }}>Parity CRM</div>
             </div>
           </div>
           <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.push("/mobile/login"); }} style={{ fontSize: 16, color: "rgba(255,255,255,0.7)", padding: "8px 12px", background: "none", border: "none", cursor: "pointer" }}>

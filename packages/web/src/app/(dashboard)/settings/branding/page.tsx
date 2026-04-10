@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ArrowLeft, Palette } from "lucide-react";
 import { BrandingPreview } from "./branding-preview";
 import { ResetBrandingButton } from "./reset-branding-button";
+import { LogoUpload } from "./logo-upload";
 
 export default async function BrandingPage() {
   const user = await requireAuth();
@@ -107,24 +108,17 @@ export default async function BrandingPage() {
               <Palette className="h-5 w-5" /> Organisation Identity
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Organisation Name"
-                name="orgName"
-                defaultValue={settings.orgName || ""}
-                placeholder="Your Charity Name"
-              />
-              <Input
-                label="Logo URL"
-                name="logoUrl"
-                defaultValue={settings.logoUrl || ""}
-                placeholder="/uploads/logo.png or https://..."
-              />
-            </div>
-            <p className="text-xs text-gray-500">
-              The organisation name replaces &quot;DeepCharity&quot; in the sidebar. The logo appears next to it.
-              Upload your logo to your hosting and paste the URL, or use a relative path.
+            <Input
+              label="Organisation Name"
+              name="orgName"
+              defaultValue={settings.orgName || ""}
+              placeholder="Your Charity Name"
+            />
+            <p className="text-xs text-gray-500 -mt-4">
+              The organisation name replaces &quot;Parity CRM&quot; in the sidebar. The logo appears next to it.
             </p>
+
+            <LogoUpload currentLogoUrl={settings.logoUrl} />
           </CardContent>
         </Card>
 
@@ -212,7 +206,7 @@ export default async function BrandingPage() {
               defaultPrimary={settings.primaryColour}
               defaultSidebar={settings.sidebarColour}
               defaultSidebarText={settings.sidebarTextColour}
-              defaultOrgName={settings.orgName || "DeepCharity"}
+              defaultOrgName={settings.orgName || "Parity CRM"}
             />
           </CardContent>
         </Card>

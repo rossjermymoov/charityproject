@@ -45,7 +45,7 @@ export function MobileLogin() {
             <span className="text-3xl font-bold text-indigo-600">TC</span>
           </div>
           <h1 className="text-3xl font-bold text-white">Tin Collections</h1>
-          <p className="text-indigo-200 mt-2 text-lg">DeepCharity</p>
+          <p className="text-indigo-200 mt-2 text-lg">Parity CRM</p>
         </div>
 
         {/* Login form */}

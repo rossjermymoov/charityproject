@@ -109,7 +109,7 @@ export async function POST(request: Request) {
   let html = "";
   try {
     const res = await fetch(fullUrl, {
-      headers: { "User-Agent": "DeepCharity/1.0 (Letter Generator)" },
+      headers: { "User-Agent": "ParityCRM/1.0 (Letter Generator)" },
       signal: AbortSignal.timeout(10000),
     });
     html = await res.text();

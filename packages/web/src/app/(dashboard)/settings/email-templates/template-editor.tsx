@@ -48,7 +48,7 @@ const VARIABLES = [
   { key: "eventName", label: "Event Name", sample: "Annual Charity Gala" },
   { key: "eventDate", label: "Event Date", sample: "15-06-2026" },
   { key: "date", label: "Date", sample: "05-04-2026" },
-  { key: "orgName", label: "Organisation", sample: "DeepCharity" },
+  { key: "orgName", label: "Organisation", sample: "Parity CRM" },
 ];
 
 const SAMPLE_DATA: Record<string, string> = {};

@@ -90,7 +90,7 @@ async function sendWebhookRequest(
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "User-Agent": "DeepCharity/1.0",
+      "User-Agent": "ParityCRM/1.0",
     };
 
     // Add signature header if secret is configured
@@ -207,7 +207,7 @@ export async function sendTestWebhook(webhookId: string): Promise<{
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "User-Agent": "DeepCharity/1.0",
+      "User-Agent": "ParityCRM/1.0",
       "X-Webhook-Test": "true",
     };
 

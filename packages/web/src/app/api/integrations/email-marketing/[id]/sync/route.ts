@@ -66,13 +66,13 @@ export async function POST(
         : new MailchimpClient(integration.apiKey, listId);
 
       if (direction === "PULL") {
-        // Sync from Mailchimp to DeepCharity
+        // Sync from Mailchimp to Parity CRM
         const membersResponse = await client.getMembers();
         if (membersResponse?.members) {
           for (const member of membersResponse.members) {
             recordsProcessed++;
 
-            // Find or create contact in DeepCharity
+            // Find or create contact in Parity CRM
             try {
               const existingContact = await prisma.contact.findFirst({
                 where: { email: member.email_address },
@@ -132,7 +132,7 @@ export async function POST(
         : new DotdigitalClient(integration.apiKey, apiPassword, integration.apiEndpoint || undefined);
 
       if (direction === "PULL" && addressBookId) {
-        // Sync from Dotdigital to DeepCharity
+        // Sync from Dotdigital to Parity CRM
         const contactsResponse = await client.getContacts(addressBookId);
         if (contactsResponse?.list) {
           for (const contact of contactsResponse.list) {

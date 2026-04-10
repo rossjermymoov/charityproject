@@ -400,7 +400,7 @@ export function RouteInfographic({ stats }: { stats: RouteStats }) {
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 text-xs text-gray-400 flex items-center justify-between">
-          <span>DeepCharity Route Report · Generated {formatDate(new Date())}</span>
+          <span>Parity CRM Route Report · Generated {formatDate(new Date())}</span>
           <span>
             {stats.totalTinsCounted} tins · £{stats.totalCollected.toFixed(2)} ·{" "}
             {completionRate}% completion

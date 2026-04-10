@@ -215,7 +215,7 @@ export function mapDonationToJournal(
     lines,
     customFields: {
       campaignName: donation.campaignName || "General",
-      sourceType: "DeepCharity",
+      sourceType: "Parity CRM",
     },
   };
 }
