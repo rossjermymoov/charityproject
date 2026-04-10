@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, Palette } from "lucide-react";
 import { BrandingPreview } from "./branding-preview";
+import { ResetBrandingButton } from "./reset-branding-button";
 
 export default async function BrandingPage() {
   const user = await requireAuth();
@@ -45,6 +46,31 @@ export default async function BrandingPage() {
         primaryColour,
         sidebarColour,
         sidebarTextColour,
+      },
+    });
+
+    redirect("/settings/branding");
+  }
+
+  async function resetBranding() {
+    "use server";
+    const session = await requireAuth();
+    if (session.role !== "ADMIN") redirect("/");
+
+    await prisma.systemSettings.upsert({
+      where: { id: "default" },
+      update: {
+        orgName: null,
+        logoUrl: null,
+        primaryColour: "#4f46e5",
+        sidebarColour: "#111827",
+        sidebarTextColour: "#d1d5db",
+      },
+      create: {
+        id: "default",
+        primaryColour: "#4f46e5",
+        sidebarColour: "#111827",
+        sidebarTextColour: "#d1d5db",
       },
     });
 
@@ -196,9 +222,12 @@ export default async function BrandingPage() {
           <p className="text-sm text-gray-500">
             Changes will take effect immediately for all users after saving.
           </p>
-          <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-            Save Branding
-          </Button>
+          <div className="flex items-center gap-3">
+            <ResetBrandingButton resetAction={resetBranding} />
+            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+              Save Branding
+            </Button>
+          </div>
         </div>
       </form>
     </div>
